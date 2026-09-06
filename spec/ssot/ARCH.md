@@ -1,5 +1,5 @@
 # ARCH architecture
-> r1 | Technical foundation every task follows: stack, structure, conventions, verify, CI/CD, deploy
+> r2 | Technical foundation every task follows: stack, structure, conventions, verify, CI/CD, deploy
 
 ## decisions
 - ARCH-1 [o] platform: web service (browser SSR/SPA + REST API); mobile out of scope
@@ -19,7 +19,7 @@
 - ARCH-15 [o] validation: zod at boundaries — `nestjs-zod` DTOs in presentation, zod in `packages/contracts` shared with web; domain invariants live in value objects, not zod
 - ARCH-16 [o] API contract: REST + OpenAPI 3.1 generated from Nest (`@nestjs/swagger` + nestjs-zod) → `openapi-typescript` client in `packages/api-client`; web consumes generated types only ← external-consumer friendly, tool-compatible
 - ARCH-17 [o] API conventions: `/api/v1/<resource>` plural nouns · JSON · errors `{ code, message, details? }` with stable `code` per DomainError · pagination cursor-based
-- ARCH-18 [o] auth: self-built session cookie — httpOnly, Secure, SameSite=Lax; session id opaque random 256-bit; `auth` bounded context owns users/credentials/sessions; passwords argon2id
+- ARCH-18 [o] auth: OAuth-only (GitHub, Google) via Arctic for authorize URL + code→token exchange; session self-built — opaque random 256-bit id in an httpOnly, Secure, SameSite=Lax cookie; `auth` bounded context owns users, provider identities and sessions; no password store ← AUTH-1 has no local sign-in, so a credential table is dead weight and attack surface
 - ARCH-19 [o] session store: PostgreSQL `sessions` table behind `SessionStore` port ← zero extra infra; swap to Redis by adapter only
 - ARCH-20 [o] naming: files kebab-case · types/classes PascalCase · functions/vars camelCase · DB snake_case · use case class `<Verb><Noun>UseCase` · repository interface `<Noun>Repository`, adapter `Drizzle<Noun>Repository`
 - ARCH-21 [o] tests mandatory: domain/application unit (Vitest, no IO, in-memory fakes) · infrastructure integration (Vitest + Testcontainers PG) · presentation contract test per endpoint · web: unit per feature/entity (Vitest + Testing Library) · E2E core flows only (Playwright) ← fast inner loop, real DB where it matters
@@ -31,7 +31,7 @@
 - ARCH-27 [o] git: trunk-based on `main` · short-lived branches · Conventional Commits · squash merge · Husky + lint-staged runs `biome check --staged`
 - ARCH-28 [o] CI: GitHub Actions — PR: `pnpm turbo run lint typecheck test build --filter=...[origin/main]` + Playwright on web; main: build Docker images, push to GHCR, deploy
 - ARCH-29 [o] deploy: Docker image per app (`apps/web`, `apps/api`, multi-stage, distroless node) · managed PostgreSQL · `docker-compose.yml` for local parity (web, api, pg)
-- ARCH-30 [?] deploy target: single VPS (docker compose + Caddy) vs Fly.io — decide before first deploy task
+- ARCH-30 [o] deploy target: single VPS — the ARCH-29 compose stack behind Caddy (automatic TLS, reverse proxy to web+api); PostgreSQL managed or on the same box; horizontal scale-out deferred ← fixed monthly cost, and the images/compose from ARCH-29 deploy unchanged
 - ARCH-31 [o] config: env via `process.env` validated once at boot with zod (`packages/config`); no env reads outside that module; `.env.example` committed
 - ARCH-32 [o] observability: pino JSON logs with request id · `/health` `/ready` endpoints; metrics/tracing deferred until SSOT demands
 - ARCH-33 [o] cache: none at start; TanStack Query is the only cache layer ← avoid premature infra
@@ -49,15 +49,24 @@
   packages/contracts/  zod schemas shared web↔api
   packages/api-client/ openapi-typescript output + openapi-fetch wrapper
   packages/config/     env schema
+  packages/email/      React Email templates + render
   packages/tsconfig/   base tsconfigs
   .github/workflows/   ci.yml deploy.yml
   docker-compose.yml turbo.json biome.json pnpm-workspace.yaml
   ```
 
+- ARCH-35 [o] jobs & scheduling: pg-boss on the same PostgreSQL — delayed jobs for every timer (slot release, auto-accept warning/settle, mission expiry) and for post-commit side effects; a `JobScheduler` port in application, pg-boss adapter in infrastructure; jobs enqueued inside the use case transaction; handlers idempotent (at-least-once delivery); pg-boss owns its own `pgboss` schema, created by its migration, not by drizzle-kit ← zero extra infra (ARCH-33) and a job can be scheduled atomically with the state change that needs it
+- ARCH-36 [o] email: `Mailer` port in application; Resend adapter in production, console adapter in development/test (chosen by env, never by an `if` in a use case); templates are React Email components in `packages/email` rendered to HTML at send time; every send happens in a pg-boss job, never inline in a request ← a mail outage must not fail a credit settlement
+- ARCH-37 [o] object storage: S3-compatible (Cloudflare R2 in production, MinIO in docker-compose for local) behind a `FileStorage` port; the browser uploads directly via a presigned PUT issued by the api, which stores only the resulting key; binaries never pass through the api; uploads restricted by content-type allowlist (png/jpeg/webp) and a size cap enforced in the presign policy
+- ARCH-38 [o] transactions: one database transaction per use case via a `TransactionManager` port — the Drizzle tx is held in AsyncLocalStorage and every repository in that call joins it, so a flow spanning contexts (feedback settle → credit ledger → mission state) commits or fails as one ← the credit invariant must never be observably broken; cross-context writes stay in-process, no outbox
+- ARCH-39 [o] domain events: collected on the aggregate, dispatched in-process only after the transaction commits; handlers may only enqueue jobs or write to other contexts through their application services — never re-enter the committed transaction
+- ARCH-40 [o] outbound HTTP: one `HttpProbe`/`HttpClient` port with SSRF guard — resolve the host first and reject private, loopback, link-local and metadata ranges; https only; max 3 redirects (each re-checked); 5s timeout; response body capped ← project live-URL verification (PROJ-2) takes a user-supplied URL
+- ARCH-41 [o] rate limiting: `@nestjs/throttler` with a PG-backed storage; strict buckets on auth callback and every mutating endpoint, keyed by session user id when signed in, else client IP; read endpoints get a loose global bucket ← v1 has no admin tooling (AUTH-7), so abuse pressure must be blunted in code
+
 ## flow
 - request: web(feature api hook) → api-client → controller(zod DTO) → use case → domain → repository port → Drizzle adapter → PG
 - error: DomainError(Result) → result mapper → HTTP `{code,message}` → api-client typed error → feature UI
-- auth: login use case → argon2 verify → SessionStore.create → Set-Cookie → guard reads cookie → SessionStore.find → request.user
+- auth: provider redirect → Arctic callback(code→token→provider profile) → find identity | create account+identity → SessionStore.create → Set-Cookie → guard reads cookie → SessionStore.find → request.user
 
 ## constraints
 - domain/application never import from infrastructure/presentation or any framework
@@ -65,6 +74,10 @@
 - web never hand-writes API types; regenerate `packages/api-client` when OpenAPI changes
 - every task's acceptance includes tests per ARCH-21 unless ARCH gains an explicit [o] exemption
 - no cross-context DB joins; cross-context reads go through application services
+- every job handler is idempotent — pg-boss delivers at-least-once
+- side effects (email, external calls) run in jobs enqueued inside the use case transaction, never inline in a request
+- uploaded binaries never pass through the api; the browser talks to object storage with a presigned URL
 
 ## chg
+- r2 260907 ARCH-18✎ self-built password auth(argon2id)→OAuth-only via Arctic; ARCH-30✎ [?]→[o] single VPS + compose + Caddy; ARCH-35+ pg-boss jobs, ARCH-36+ Resend mailer port, ARCH-37+ S3 presigned storage, ARCH-38+ single-transaction UoW, ARCH-39+ post-commit events, ARCH-40+ SSRF-guarded outbound HTTP, ARCH-41+ throttler
 - r1 260906 initial
