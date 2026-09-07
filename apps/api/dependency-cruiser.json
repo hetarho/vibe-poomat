@@ -4,30 +4,42 @@
       "name": "domain-imports-inward-only",
       "comment": "domain is the innermost layer and reaches nothing outside itself (ARCH-10)",
       "severity": "error",
-      "from": { "path": "(?:^|/)src/([^/]+)/domain/" },
-      "to": { "path": "(?:^|/)src/$1/(?:application|infrastructure|presentation)/" }
+      "from": {
+        "path": "(?:^|/)src/([^/]+)/domain/"
+      },
+      "to": {
+        "path": "(?:^|/)src/$1/(?:application|infrastructure|presentation)/"
+      }
     },
     {
       "name": "application-imports-inward-only",
       "comment": "application may use domain, never infrastructure or presentation (ARCH-10)",
       "severity": "error",
-      "from": { "path": "(?:^|/)src/([^/]+)/application/" },
-      "to": { "path": "(?:^|/)src/$1/(?:infrastructure|presentation)/" }
+      "from": {
+        "path": "(?:^|/)src/([^/]+)/application/"
+      },
+      "to": {
+        "path": "(?:^|/)src/$1/(?:infrastructure|presentation)/"
+      }
     },
     {
       "name": "pure-layers-are-framework-free",
       "comment": "domain, application and the shared kernel import no framework (ARCH-11)",
       "severity": "error",
       "from": {
-        "path": "(?:^|/)src/(?:[^/]+/(?:domain|application)|shared/(?:kernel|result))/"
+        "path": "(?:^|/)src/(?:[^/]+/(?:domain|application)|shared/(?:kernel|result|application))/"
       },
-      "to": { "path": "node_modules/(?:@nestjs/|drizzle-orm/|fastify/|pino/|pino-http/)" }
+      "to": {
+        "path": "node_modules/(?:@nestjs/|drizzle-orm/|fastify/|pino/|pino-http/)"
+      }
     },
     {
       "name": "no-cross-context-deep-import",
       "comment": "a context is entered through its module file only; the rest is private to it",
       "severity": "error",
-      "from": { "path": "(?:^|/)src/([^/]+)/" },
+      "from": {
+        "path": "(?:^|/)src/([^/]+)/"
+      },
       "to": {
         "path": "(?:^|/)src/[^/]+/",
         "pathNot": ["(?:^|/)src/$1/", "(?:^|/)src/shared/", "(?:^|/)src/[^/]+/[^/]+\\.module\\.ts$"]
@@ -35,9 +47,15 @@
     }
   ],
   "options": {
-    "doNotFollow": { "path": "node_modules" },
-    "exclude": { "path": "\\.test\\.ts$" },
+    "doNotFollow": {
+      "path": "node_modules"
+    },
+    "exclude": {
+      "path": "\\.test\\.ts$"
+    },
     "tsPreCompilationDeps": true,
-    "tsConfig": { "fileName": "tsconfig.json" }
+    "tsConfig": {
+      "fileName": "tsconfig.json"
+    }
   }
 }

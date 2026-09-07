@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ConfigModule } from '../config/config.module'
+import { EventsModule } from '../events/events.module'
 import { HealthModule } from '../health/health.module'
 import { ReadinessRegistry } from '../health/readiness-registry'
 import { DbModule } from './db.module'
@@ -14,7 +15,7 @@ describe('DbModule against a real PostgreSQL', () => {
 
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({
-      imports: [ConfigModule, HealthModule, DbModule],
+      imports: [ConfigModule, HealthModule, EventsModule, DbModule],
     }).compile()
     await moduleRef.init()
     db = moduleRef.get<Db>(DB)

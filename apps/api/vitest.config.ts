@@ -30,7 +30,9 @@ export default defineConfig({
       // measured only where ARCH-22 asks for it: widening this would make the
       // number meaningless and would block honest refactors elsewhere
       include: ['src/*/domain/**/*.ts', 'src/*/application/**/*.ts'],
-      exclude: ['**/*.test.ts'],
+      // `src/shared/application` holds only ports — types and Symbol tokens — and
+      // would otherwise be swept in by the `src/*/application/**` glob
+      exclude: ['**/*.test.ts', 'src/shared/**'],
       thresholds: { lines: 80 },
     },
   },
