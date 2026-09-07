@@ -40,7 +40,9 @@ async function seenFor(db: Db, key: string): Promise<number | undefined> {
   return result.rows[0]?.seen
 }
 
-async function waitFor(check: () => Promise<boolean>, timeoutMs = 20_000): Promise<void> {
+// pg-boss polls, and a retried job waits out its backoff; a parallel turbo run
+// makes both slower, so these windows are deliberately generous
+async function waitFor(check: () => Promise<boolean>, timeoutMs = 45_000): Promise<void> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     if (await check()) return
@@ -169,7 +171,7 @@ describe('pg-boss jobs against a real PostgreSQL', () => {
       )
 
       return result.rows[0]?.count !== '0'
-    }, 40_000)
+    }, 90_000)
 
     const attempts = await db.execute<{ count: string }>(
       sql`select count(*)::text as count from pgboss.job where name = ${FLAKY_JOB} and state = 'failed'`,

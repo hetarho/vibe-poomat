@@ -19,7 +19,25 @@ export const envSchema = z.object({
   DATABASE_POOL_MAX: z.coerce.number().int().positive().max(100).default(10),
   // lets a future instance serve requests without also running the workers
   JOBS_ENABLED: z.stringbool().default(true),
+  MAIL_DRIVER: z.enum(['resend', 'console']).default('console'),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  MAIL_FROM: z.email().default('no-reply@vibe-poomat.local'),
+  MAIL_FROM_NAME: z.string().min(1).default('vibe poomat'),
 })
+
+/** The Resend driver is useless without a key, so the pair is validated together. */
+const withMailDriverKey = <TSchema extends z.ZodObject>(schema: TSchema) =>
+  schema.check((ctx) => {
+    const value = ctx.value as { MAIL_DRIVER?: string; RESEND_API_KEY?: string }
+    if (value.MAIL_DRIVER === 'resend' && value.RESEND_API_KEY === undefined) {
+      ctx.issues.push({
+        code: 'custom',
+        input: value.RESEND_API_KEY,
+        path: ['RESEND_API_KEY'],
+        message: 'is required when MAIL_DRIVER is resend',
+      })
+    }
+  })
 
 export type Env = Readonly<z.infer<typeof envSchema>>
 
@@ -66,7 +84,7 @@ export function parseEnvWith<TSchema extends z.ZodObject>(
 }
 
 export function parseEnv(raw: Record<string, string | undefined>): Env {
-  return parseEnvWith(envSchema, raw)
+  return parseEnvWith(withMailDriverKey(envSchema), raw)
 }
 
 /**

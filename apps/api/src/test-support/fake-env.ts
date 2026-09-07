@@ -11,6 +11,9 @@ export function fakeEnv(overrides: Partial<Env> = {}): Env {
     DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/vibe_poomat_test',
     DATABASE_POOL_MAX: 10,
     JOBS_ENABLED: true,
+    MAIL_DRIVER: 'console',
+    MAIL_FROM: 'no-reply@vibe-poomat.test',
+    MAIL_FROM_NAME: 'vibe poomat',
     ...overrides,
   }
 }

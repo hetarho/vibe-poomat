@@ -23,6 +23,7 @@
     "@nestjs/swagger": "11.4.7",
     "@repo/config": "workspace:*",
     "@repo/contracts": "workspace:*",
+    "@repo/email": "workspace:*",
     "drizzle-orm": "0.45.2",
     "fastify": "5.11.3",
     "nestjs-pino": "5.1.0",

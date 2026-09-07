@@ -1,17 +1,14 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7-labs
 
 FROM node:22-bookworm-slim AS base
 RUN npm install --global pnpm@10.30.3
 WORKDIR /repo
 
 FROM base AS deps
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
-COPY apps/api/package.json apps/api/
-COPY apps/web/package.json apps/web/
-COPY packages/api-client/package.json packages/api-client/
-COPY packages/config/package.json packages/config/
-COPY packages/contracts/package.json packages/contracts/
-COPY packages/tsconfig/package.json packages/tsconfig/
+# every workspace manifest, and nothing else, so this layer caches on
+# dependency changes alone and a new package needs no edit here
+COPY --parents pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY --parents apps/*/package.json packages/*/package.json ./
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build

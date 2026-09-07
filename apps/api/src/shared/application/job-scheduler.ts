@@ -27,6 +27,17 @@ export type JobRetryPolicy = {
   retryBackoff?: boolean
 }
 
+/**
+ * Thrown by a handler when repeating the work cannot help. The worker sends the
+ * job straight to its dead-letter queue instead of retrying it.
+ */
+export class PermanentJobFailure extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'PermanentJobFailure'
+  }
+}
+
 export type JobHandler<TData extends object = object> = {
   readonly jobName: string
   /** Overrides the default three attempts with exponential backoff. */

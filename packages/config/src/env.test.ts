@@ -102,3 +102,27 @@ describe('parseWebEnv', () => {
     ).toThrow(/API_URL/)
   })
 })
+
+describe('the mail driver', () => {
+  it('defaults to the console driver, which needs no key', () => {
+    const env = parseEnv(valid)
+
+    expect(env.MAIL_DRIVER).toBe('console')
+    expect(env.MAIL_FROM_NAME).toBe('vibe poomat')
+  })
+
+  it('requires a Resend key when the Resend driver is chosen', () => {
+    expect(() => parseEnv({ ...valid, MAIL_DRIVER: 'resend' })).toThrow(/RESEND_API_KEY/)
+  })
+
+  it('accepts the Resend driver once the key is there', () => {
+    const env = parseEnv({ ...valid, MAIL_DRIVER: 'resend', RESEND_API_KEY: 're_test_key' })
+
+    expect(env.MAIL_DRIVER).toBe('resend')
+    expect(env.RESEND_API_KEY).toBe('re_test_key')
+  })
+
+  it('rejects a from address that is not an address', () => {
+    expect(() => parseEnv({ ...valid, MAIL_FROM: 'not-an-email' })).toThrow(/MAIL_FROM/)
+  })
+})

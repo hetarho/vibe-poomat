@@ -6,6 +6,7 @@ import {
   type OnApplicationShutdown,
 } from '@nestjs/common'
 import PgBoss from 'pg-boss'
+import { PermanentJobFailure } from '../../application'
 import { ENV, type Env } from '../../config/env.token'
 import { ReadinessRegistry } from '../../health/readiness-registry'
 import { deadLetterQueueFor, queueOptionsFor } from './job-policy'
@@ -72,9 +73,29 @@ export class PgBossService implements OnApplicationBootstrap, OnApplicationShutd
     for (const name of this.registry.names()) {
       const handler = this.registry.require(name)
       await this.boss.work<object>(name, async (jobs) => {
-        for (const job of jobs) await handler.handle(job.data)
+        for (const job of jobs) await this.runOne(name, job.data, handler.handle.bind(handler))
       })
     }
     this.logger.log(`workers attached: ${this.registry.names().join(', ') || 'none'}`)
+  }
+
+  /**
+   * A thrown error retries, which is what pg-boss does anyway. A
+   * PermanentJobFailure instead goes straight to the dead-letter queue, because
+   * repeating that work can only fail the same way.
+   */
+  private async runOne(
+    name: string,
+    data: object,
+    handle: (data: object) => Promise<void>,
+  ): Promise<void> {
+    try {
+      await handle(data)
+    } catch (error) {
+      if (!(error instanceof PermanentJobFailure)) throw error
+
+      this.logger.error(`${name} failed permanently: ${error.message}`)
+      await this.boss.send(deadLetterQueueFor(name), { data, reason: error.message })
+    }
   }
 }
