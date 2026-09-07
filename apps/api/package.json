@@ -17,6 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1127.0",
+    "@aws-sdk/s3-request-presigner": "3.1127.0",
     "@nestjs/common": "11.2.3",
     "@nestjs/core": "11.2.3",
     "@nestjs/platform-fastify": "11.2.3",
@@ -46,6 +48,7 @@
     "@nestjs/testing": "11.2.3",
     "@repo/tsconfig": "workspace:*",
     "@swc/core": "1.16.2",
+    "@testcontainers/minio": "12.1.0",
     "@testcontainers/postgresql": "12.1.0",
     "@types/node": "catalog:",
     "@types/pg": "8.23.1",

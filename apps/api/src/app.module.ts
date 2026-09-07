@@ -6,9 +6,11 @@ import { HealthModule } from './shared/health/health.module'
 import { HttpModule } from './shared/infrastructure/http/http.module'
 import { JobsModule } from './shared/infrastructure/jobs/jobs.module'
 import { MailModule } from './shared/infrastructure/mail/mail.module'
+import { StorageModule } from './shared/infrastructure/storage/storage.module'
 import { ThrottlingModule } from './shared/infrastructure/throttling/throttling.module'
 import { LoggerModule } from './shared/logging/logger.module'
 import { PresentationModule } from './shared/presentation/presentation.module'
+import { UploadsModule } from './uploads/uploads.module'
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { PresentationModule } from './shared/presentation/presentation.module'
     MailModule,
     HttpModule,
     ThrottlingModule,
+    StorageModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

@@ -45,6 +45,7 @@ expect_body() {
 
 if [ "$SKIP_BUILD" = "0" ]; then
   log 'building the api and web images'
+  # migrate shares the api's image tag, so building api updates it too
   docker compose build api web
 fi
 
@@ -59,6 +60,20 @@ expect_status "$API_URL/ready" 200
 expect_body "$API_URL/health" '"status":"ok"'
 expect_body "$API_URL/ready" '"db":true'
 expect_body "$API_URL/ready" '"jobs":true'
+
+log 'checking that an upload can be signed'
+# the api never takes the bytes; this proves it hands out a URL that could
+UPLOAD=$(curl -s -X POST "$API_URL/api/v1/uploads" \
+  -H 'content-type: application/json' \
+  -d '{"purpose":"avatar","contentType":"image/png","sizeBytes":1024}')
+if printf '%s' "$UPLOAD" | grep -q '"X-Amz-Signature'; then
+  echo "  ok   POST /api/v1/uploads returned a signed URL"
+elif printf '%s' "$UPLOAD" | grep -q 'X-Amz-Signature'; then
+  echo "  ok   POST /api/v1/uploads returned a signed URL"
+else
+  echo "  FAIL POST /api/v1/uploads did not return a signed URL: $UPLOAD" >&2
+  exit 1
+fi
 
 log 'checking the web app'
 expect_status "$WEB_URL/" 200

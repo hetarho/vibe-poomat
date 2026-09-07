@@ -23,6 +23,11 @@ export const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.email().default('no-reply@vibe-poomat.local'),
   MAIL_FROM_NAME: z.string().min(1).default('vibe poomat'),
+  S3_ENDPOINT: z.url().default('http://localhost:9000'),
+  S3_BUCKET: z.string().min(1).default('vibe-poomat'),
+  S3_ACCESS_KEY_ID: z.string().min(1).default('minioadmin'),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).default('minioadmin'),
+  S3_PUBLIC_BASE_URL: z.url().default('http://localhost:9000/vibe-poomat'),
 })
 
 /** The Resend driver is useless without a key, so the pair is validated together. */

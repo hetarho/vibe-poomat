@@ -4,3 +4,4 @@
  * name like `createSchema` can exist once per domain.
  */
 export * from './common'
+export * as uploads from './uploads'

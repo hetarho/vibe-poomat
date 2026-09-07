@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T014 | object storage & presigned uploads | ARCH | T006 | todo |
 | T016 | deploy pipeline | ARCH | T009 T010 | todo |
 | T017 | auth context: schema & domain model | AUTH ARCH | T011 | todo |
 | T018 | OAuth sign-in & session issue | AUTH ARCH | T017 | todo |
@@ -53,11 +52,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T014 — the throttler it needs now exists; then T016 deploy
-- order: T014 then T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T016 — the last infra task: GHCR build, VPS deploy behind Caddy. It needs a VPS host, an SSH key and GHCR access as repository secrets, so it cannot be verified from here beyond actionlint
+- order: T016 infra (needs deploy secrets) → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T014 done: S3/MinIO FileStorage with signed content-type+length, uploads endpoint, delete job; openapi generator now uses Nest preview mode
 - 260907 T015 done: SSRF-guarded undici probe, PG-backed throttler with trustProxy=1, first real migration; fixed migrate running a stale image
 - 260907 T013 done: @repo/email templates, console+Resend adapters, email.send job with PermanentJobFailure dead-lettering; Dockerfiles now copy every workspace manifest
 - 260907 T012 done: pg-boss 11 scheduler joining the ambient tx, queue-level retry+dead-letter, JOBS_ENABLED; tx manager rewritten to pool-based for the raw connection
@@ -77,4 +77,3 @@
 - 260907 create-task done: ARCH r2 delta → T011..T016; AUTH CRED PROJ FDBK NOTI → T017..T040 (40 tasks total)
 - 260907 create-task ARCH(r2 delta) AUTH PROJ CRED FDBK NOTI start
 - 260907 update-ssot done: AUTH PROJ CRED FDBK NOTI r2 — all open [?] closed
-- 260907 update-ssot AUTH PROJ CRED FDBK NOTI start (resolve open [?])

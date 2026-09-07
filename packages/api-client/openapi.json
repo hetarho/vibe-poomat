@@ -28,6 +28,30 @@
           "Health"
         ]
       }
+    },
+    "/api/v1/uploads": {
+      "post": {
+        "operationId": "UploadsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Uploads"
+        ]
+      }
     }
   },
   "info": {
@@ -43,6 +67,37 @@
     }
   ],
   "components": {
-    "schemas": {}
+    "schemas": {
+      "CreateUploadUrlDto": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "project-cover"
+            ]
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 2097152
+          }
+        },
+        "required": [
+          "purpose",
+          "contentType",
+          "sizeBytes"
+        ]
+      }
+    }
   }
 }

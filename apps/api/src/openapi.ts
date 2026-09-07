@@ -15,8 +15,11 @@ import { GLOBAL_PREFIX, PREFIX_EXCLUDED_ROUTES } from './bootstrap'
 const OUTPUT_PATH = resolve(process.cwd(), '../../packages/api-client/openapi.json')
 
 async function generate(): Promise<void> {
+  // preview mode builds the module graph and registers routes without running
+  // any provider's lifecycle, so no database or queue has to be reachable
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
     logger: false,
+    preview: true,
   })
   app.setGlobalPrefix(GLOBAL_PREFIX, { exclude: PREFIX_EXCLUDED_ROUTES })
   await app.init()
