@@ -1,0 +1,5 @@
+export { AggregateRoot } from './aggregate-root'
+export { DomainEvent } from './domain-event'
+export { Entity } from './entity'
+export { EntityId } from './entity-id'
+export { ValueObject } from './value-object'
