@@ -16,6 +16,7 @@ describe('parseEnv', () => {
     expect(env.LOG_LEVEL).toBe('info')
     expect(env.API_PORT).toBe(3001)
     expect(env.DATABASE_POOL_MAX).toBe(10)
+    expect(env.JOBS_ENABLED).toBe(true)
     expect(env.DATABASE_URL).toBe(valid.DATABASE_URL)
     expect(Object.isFrozen(env)).toBe(true)
   })
@@ -65,6 +66,11 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...valid, DATABASE_URL: secret })).toThrow(
       expect.not.stringContaining(secret) as unknown as string,
     )
+  })
+
+  it('reads JOBS_ENABLED as a real boolean, so "false" means false', () => {
+    expect(parseEnv({ ...valid, JOBS_ENABLED: 'false' }).JOBS_ENABLED).toBe(false)
+    expect(parseEnv({ ...valid, JOBS_ENABLED: 'true' }).JOBS_ENABLED).toBe(true)
   })
 
   it('ignores unknown extra keys', () => {

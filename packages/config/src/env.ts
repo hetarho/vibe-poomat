@@ -17,6 +17,8 @@ export const envSchema = z.object({
       message: 'must be a postgres:// or postgresql:// connection URL',
     }),
   DATABASE_POOL_MAX: z.coerce.number().int().positive().max(100).default(10),
+  // lets a future instance serve requests without also running the workers
+  JOBS_ENABLED: z.stringbool().default(true),
 })
 
 export type Env = Readonly<z.infer<typeof envSchema>>

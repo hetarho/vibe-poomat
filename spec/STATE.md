@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T012 | pg-boss job infrastructure | ARCH | T011 | todo |
 | T013 | mailer port, Resend adapter & email templates | ARCH | T012 | todo |
 | T014 | object storage & presigned uploads | ARCH | T006 | todo |
 | T015 | outbound HTTP probe & rate limiting | ARCH | T003 | todo |
@@ -56,11 +55,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T012 — transactions are in place, so jobs can be enqueued inside them
-- order: T012-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T013 — jobs exist, so mail can be sent from one
+- order: T013-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T012 done: pg-boss 11 scheduler joining the ambient tx, queue-level retry+dead-letter, JOBS_ENABLED; tx manager rewritten to pool-based for the raw connection
 - 260907 T011 done: ALS transaction manager with getDb(), post-commit in-process event bus with an in-transaction guard
 - 260907 T010 done: distroless images for api+web, compose stack with a one-shot migrate service, docker-smoke.sh green end to end
 - 260907 T009 done: PR workflow (affected verify + coverage gate + contract check + playwright), actionlint in turbo lint
@@ -80,4 +80,3 @@
 - 260907 update-ssot AUTH PROJ CRED FDBK NOTI start (resolve open [?])
 - 260907 create-architecture done: ARCH r2 (ARCH-18✎ OAuth-only, ARCH-30✎ VPS+Caddy, ARCH-35..41+ jobs·mail·storage·tx·events·http·throttle)
 - 260907 create-narrative done: NARRATIVE.md (reader: future self, as of all@r1)
-- 260907 create-architecture start (ARCH revise: ARCH-18 OAuth-only, ARCH-30, infra gaps)

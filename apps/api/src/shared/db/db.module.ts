@@ -39,8 +39,8 @@ import { ScopedDomainEventCollector } from './scoped-event-collector'
     },
     {
       provide: TRANSACTION_MANAGER,
-      inject: [DB, EVENT_BUS],
-      useFactory: (db: Db, eventBus: EventBus) => new DrizzleTransactionManager(db, eventBus),
+      inject: [PG_POOL, EVENT_BUS],
+      useFactory: (pool: Pool, eventBus: EventBus) => new DrizzleTransactionManager(pool, eventBus),
     },
     { provide: DOMAIN_EVENT_COLLECTOR, useClass: ScopedDomainEventCollector },
   ],

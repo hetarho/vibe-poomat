@@ -12,6 +12,7 @@ const testEnv: Record<string, string> = {
   WEB_URL: 'http://localhost:3000',
   DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/vibe_poomat_test',
   DATABASE_POOL_MAX: '10',
+  JOBS_ENABLED: 'true',
 }
 
 for (const [key, value] of Object.entries(testEnv)) {

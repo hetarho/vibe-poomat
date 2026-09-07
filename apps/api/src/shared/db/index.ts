@@ -11,6 +11,7 @@ export { ScopedDomainEventCollector } from './scoped-event-collector'
 export type { TransactionScope } from './transaction-scope'
 export {
   currentTransaction,
+  currentTransactionClient,
   hasAmbientTransaction,
   transactionScope,
 } from './transaction-scope'

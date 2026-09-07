@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common'
+import type { PoolClient } from 'pg'
 import { describe, expect, it, vi } from 'vitest'
 import type { DomainEventHandler } from '../application'
 import type { Db } from '../db/db.token'
@@ -71,8 +72,9 @@ describe('InProcessEventBus', () => {
     const bus = new InProcessEventBus(registry)
 
     await expect(
-      transactionScope.run({ tx: {} as unknown as Db, events: [] }, async () =>
-        bus.publish([new ThingHappened(EntityId.generate())]),
+      transactionScope.run(
+        { tx: {} as unknown as Db, client: {} as unknown as PoolClient, events: [] },
+        async () => bus.publish([new ThingHappened(EntityId.generate())]),
       ),
     ).rejects.toThrow(IN_TRANSACTION_DISPATCH_MESSAGE)
 

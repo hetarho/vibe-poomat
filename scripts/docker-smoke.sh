@@ -58,6 +58,7 @@ expect_status "$API_URL/health" 200
 expect_status "$API_URL/ready" 200
 expect_body "$API_URL/health" '"status":"ok"'
 expect_body "$API_URL/ready" '"db":true'
+expect_body "$API_URL/ready" '"jobs":true'
 
 log 'checking the web app'
 expect_status "$WEB_URL/" 200

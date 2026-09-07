@@ -29,6 +29,7 @@
     "nestjs-zod": "5.5.0",
     "neverthrow": "8.2.0",
     "pg": "8.23.0",
+    "pg-boss": "11.1.2",
     "pino": "10.3.1",
     "pino-http": "11.0.0",
     "reflect-metadata": "0.2.2",
