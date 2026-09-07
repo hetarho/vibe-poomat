@@ -51,6 +51,7 @@ describe('codeForHttpStatus', () => {
     [HttpStatus.NOT_FOUND, 'NOT_FOUND'],
     [HttpStatus.CONFLICT, 'CONFLICT'],
     [HttpStatus.UNPROCESSABLE_ENTITY, 'VALIDATION_FAILED'],
+    [HttpStatus.TOO_MANY_REQUESTS, 'RATE_LIMITED'],
     [HttpStatus.SERVICE_UNAVAILABLE, 'SERVICE_UNAVAILABLE'],
   ])('names status %i', (status, expected) => {
     expect(codeForHttpStatus(status)).toBe(expected)

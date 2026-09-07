@@ -12,7 +12,7 @@ const MESSAGE_BY_CODE: Readonly<Record<string, string>> = {
   FORBIDDEN: 'You do not have access to that.',
   NOT_FOUND: 'That is not here any more.',
   CONFLICT: 'That clashes with something that already exists.',
-  TOO_MANY_REQUESTS: 'That was a lot at once. Give it a moment.',
+  RATE_LIMITED: 'That was a lot at once. Give it a moment.',
   SERVICE_UNAVAILABLE: 'The service is briefly unavailable. Try again shortly.',
   INTERNAL: FALLBACK_ERROR_MESSAGE,
 }

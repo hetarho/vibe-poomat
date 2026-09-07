@@ -21,6 +21,7 @@
     "@nestjs/core": "11.2.3",
     "@nestjs/platform-fastify": "11.2.3",
     "@nestjs/swagger": "11.4.7",
+    "@nestjs/throttler": "6.5.0",
     "@repo/config": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/email": "workspace:*",
@@ -35,6 +36,7 @@
     "pino-http": "11.0.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "undici": "8.10.2",
     "uuid": "10.0.0",
     "zod": "catalog:"
   },

@@ -1,5 +1,16 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import type { Env } from './shared/config/env.token'
+import { requestIdFastifyOptions } from './shared/logging/request-id'
+
+/**
+ * Everything the Fastify server itself needs. `trustProxy: 1` matches ARCH-30
+ * exactly: one Caddy hop in front, so the client IP is the last entry a single
+ * trusted proxy added and a spoofed X-Forwarded-For cannot reach past it.
+ */
+export const fastifyServerOptions = {
+  ...requestIdFastifyOptions,
+  trustProxy: 1,
+} as const
 
 export const GLOBAL_PREFIX = 'api/v1'
 

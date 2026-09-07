@@ -19,8 +19,11 @@ services:
       timeout: 5s
       retries: 10
 
-  # a one-shot step, never app boot (ARCH-13); the api waits for it to succeed
+  # A one-shot step, never app boot (ARCH-13); the api waits for it to succeed.
+  # It shares the api's image tag on purpose, so building api also updates this
+  # and a deploy can never apply migrations from an older build than it runs.
   migrate:
+    image: vibe-poomat-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -36,6 +39,7 @@ services:
     restart: 'no'
 
   api:
+    image: vibe-poomat-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -69,6 +73,7 @@ services:
       retries: 12
 
   web:
+    image: vibe-poomat-web
     build:
       context: .
       dockerfile: apps/web/Dockerfile
