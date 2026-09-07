@@ -16,6 +16,7 @@ export const envSchema = z.object({
     .refine((value) => /^postgres(ql)?:\/\//.test(value), {
       message: 'must be a postgres:// or postgresql:// connection URL',
     }),
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().max(100).default(10),
 })
 
 export type Env = Readonly<z.infer<typeof envSchema>>

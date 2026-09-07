@@ -8,11 +8,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "lint": "biome check .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter api run db:generate",
+    "db:migrate": "pnpm --filter api run db:migrate",
+    "db:up": "docker compose up -d pg",
     "format": "biome format --write .",
-    "prepare": "husky"
+    "lint": "biome check .",
+    "prepare": "husky",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

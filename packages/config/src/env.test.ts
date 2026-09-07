@@ -15,6 +15,7 @@ describe('parseEnv', () => {
     expect(env.NODE_ENV).toBe('development')
     expect(env.LOG_LEVEL).toBe('info')
     expect(env.API_PORT).toBe(3001)
+    expect(env.DATABASE_POOL_MAX).toBe(10)
     expect(env.DATABASE_URL).toBe(valid.DATABASE_URL)
     expect(Object.isFrozen(env)).toBe(true)
   })

@@ -14,15 +14,14 @@ export default defineConfig({
     }),
   ],
   test: {
-    name: 'api',
-    root: import.meta.dirname,
-    include: ['src/**/*.test.ts'],
-    exclude: ['**/*.int.test.ts', '**/node_modules/**', '**/dist/**'],
+    name: 'api-int',
+    include: ['src/**/*.int.test.ts'],
     environment: 'node',
-    setupFiles: ['./vitest.setup.ts'],
-    // booting a NestJS testing module is slow on a cold worker, and vitest's
-    // 10s hook default is reached on a loaded machine (turbo runs tasks in parallel)
+    globalSetup: ['./test-harness/int-global-setup.ts'],
+    setupFiles: ['./vitest.setup.ts', './test-harness/int-truncate.ts'],
+    // one shared database means files must not race each other
+    fileParallelism: false,
     testTimeout: 30_000,
-    hookTimeout: 60_000,
+    hookTimeout: 180_000,
   },
 })
