@@ -14,7 +14,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/api-client": "workspace:*",
+    "@repo/config": "workspace:*",
+    "@repo/contracts": "workspace:*",
     "@tailwindcss/vite": "4.3.3",
+    "@tanstack/react-query": "5.102.8",
     "@tanstack/react-router": "1.170.33",
     "@tanstack/react-start": "1.168.50",
     "class-variance-authority": "0.7.1",
@@ -26,7 +30,8 @@
     "react-dom": "19.2.8",
     "sonner": "2.0.8",
     "tailwind-merge": "3.6.0",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@feature-sliced/steiger-plugin": "0.7.0",

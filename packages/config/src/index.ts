@@ -1,7 +1,7 @@
 import { parseEnv } from './env'
 
 export type { Env } from './env'
-export { EnvValidationError, envSchema, parseEnv } from './env'
+export { EnvValidationError, envSchema, parseEnv, parseEnvWith } from './env'
 
 /**
  * Validated at import time on purpose (ARCH-31): a bad env kills the process at

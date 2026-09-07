@@ -39,8 +39,15 @@ export class EnvValidationError extends Error {
   }
 }
 
-export function parseEnv(raw: Record<string, string | undefined>): Env {
-  const parsed = envSchema.safeParse(raw)
+/**
+ * The one place env parsing happens. Takes the schema so a narrower entry point
+ * (see `web.ts`) can validate its own pick with identical error reporting.
+ */
+export function parseEnvWith<TSchema extends z.ZodObject>(
+  schema: TSchema,
+  raw: Record<string, string | undefined>,
+): Readonly<z.infer<TSchema>> {
+  const parsed = schema.safeParse(raw)
   if (parsed.success) return Object.freeze(parsed.data)
 
   const byKey = new Map<string, string[]>()
@@ -54,4 +61,25 @@ export function parseEnv(raw: Record<string, string | undefined>): Env {
   const keys = [...byKey.keys()].sort()
   const reasons = keys.map((key) => `${key}: ${(byKey.get(key) ?? []).join('; ')}`)
   throw new EnvValidationError(keys, reasons)
+}
+
+export function parseEnv(raw: Record<string, string | undefined>): Env {
+  return parseEnvWith(envSchema, raw)
+}
+
+/**
+ * The subset a browser-facing server may hold. Picked from the schema above
+ * rather than declared again, so a key can never drift between the two.
+ */
+export const webEnvSchema = envSchema.pick({
+  NODE_ENV: true,
+  LOG_LEVEL: true,
+  API_URL: true,
+  WEB_URL: true,
+})
+
+export type WebEnv = Readonly<z.infer<typeof webEnvSchema>>
+
+export function parseWebEnv(raw: Record<string, string | undefined>): WebEnv {
+  return parseEnvWith(webEnvSchema, raw)
 }

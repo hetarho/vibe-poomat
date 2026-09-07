@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EnvValidationError, parseEnv } from './env'
+import { EnvValidationError, parseEnv, parseWebEnv } from './env'
 
 const valid = {
   NODE_ENV: 'development',
@@ -71,5 +71,28 @@ describe('parseEnv', () => {
     const env = parseEnv({ ...valid, TOTALLY_UNKNOWN: 'x' })
 
     expect('TOTALLY_UNKNOWN' in env).toBe(false)
+  })
+})
+
+describe('parseWebEnv', () => {
+  it('accepts an env that has no server-only keys', () => {
+    const env = parseWebEnv({
+      NODE_ENV: 'production',
+      API_URL: 'https://api.example',
+      WEB_URL: 'https://example',
+    })
+
+    expect(env).toEqual({
+      NODE_ENV: 'production',
+      LOG_LEVEL: 'info',
+      API_URL: 'https://api.example',
+      WEB_URL: 'https://example',
+    })
+  })
+
+  it('still refuses a bad API_URL, since it is the same schema', () => {
+    expect(() =>
+      parseWebEnv({ NODE_ENV: 'production', API_URL: 'nope', WEB_URL: 'https://example' }),
+    ).toThrow(/API_URL/)
   })
 })
