@@ -24,5 +24,14 @@ export default defineConfig({
     // 10s hook default is reached on a loaded machine (turbo runs tasks in parallel)
     testTimeout: 30_000,
     hookTimeout: 60_000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      // measured only where ARCH-22 asks for it: widening this would make the
+      // number meaningless and would block honest refactors elsewhere
+      include: ['src/*/domain/**/*.ts', 'src/*/application/**/*.ts'],
+      exclude: ['**/*.test.ts'],
+      thresholds: { lines: 80 },
+    },
   },
 })

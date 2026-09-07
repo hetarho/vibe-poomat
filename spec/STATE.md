@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T009 | CI pipeline | ARCH | T005 T007 | todo |
 | T010 | docker images & local parity | ARCH | T005 T007 | todo |
 | T011 | transaction manager & domain event dispatch | ARCH | T004 T005 | todo |
 | T012 | pg-boss job infrastructure | ARCH | T011 | todo |
@@ -59,12 +58,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T009 — everything CI has to check now exists
-- order: T009-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
-- T009 must wire `pnpm api:contract:check` into CI, and run `pnpm --filter web test:e2e` there — T007 could not launch a browser locally
+- implement-task T010 — CI is in place; docker images and the compose stack are next
+- order: T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T009 done: PR workflow (affected verify + coverage gate + contract check + playwright), actionlint in turbo lint
 - 260907 T008 done: per-request QueryClient with SSR hydration, api client + error copy, zustand convention in shared/model; @repo/config gained a ./web entry
 - 260907 T007 claimed (op5)
 - 260907 T007 done: TanStack Start SSR shell, FSD+Steiger, tailwind v4+shadcn seed, vitest jsdom; vitest catalog 3.2.7->4.1.11 (vite 8); e2e written but unrun (no browser libs)
@@ -84,4 +83,3 @@
 - 260907 create-architecture start (ARCH revise: ARCH-18 OAuth-only, ARCH-30, infra gaps)
 - 260906 create-narrative start
 - 260906 create-task done: ARCH r1 → T001..T010 (scaffolding); AUTH PROJ CRED FDBK NOTI held on ARCH-18 revision + open [?]
-- 260906 create-task ARCH AUTH PROJ CRED FDBK NOTI start

@@ -1,0 +1,17 @@
+# Deliberately broken. workflows.test.ts asserts actionlint still catches it.
+name: Broken
+on: pull_request
+jobs:
+  first:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
+  second:
+    # `needs` names a job that does not exist
+    needs: [does-not-exist]
+    runs-on: ubuntu-latest
+    steps:
+      # `nosuchcontext` is not a workflow context
+      - run: echo "${{ nosuchcontext.value }}"
+      # a step output from an id that was never declared
+      - run: echo "${{ steps.never-declared.outputs.thing }}"

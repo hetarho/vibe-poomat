@@ -11,6 +11,7 @@
     "openapi:generate": "nest build && node --env-file=../../.env.example dist/openapi.js",
     "start": "node dist/main.js",
     "test": "vitest run && vitest run -c vitest.int.config.ts",
+    "test:coverage": "vitest run --coverage",
     "test:int": "vitest run -c vitest.int.config.ts",
     "test:unit": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -45,6 +46,7 @@
     "@types/node": "catalog:",
     "@types/pg": "8.23.1",
     "@types/uuid": "10.0.0",
+    "@vitest/coverage-v8": "4.1.11",
     "dependency-cruiser": "18.2.0",
     "drizzle-kit": "0.31.10",
     "typescript": "catalog:",
