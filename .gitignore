@@ -4,13 +4,23 @@
 # node
 node_modules/
 dist/
+build/
 .turbo/
 coverage/
+*.tsbuildinfo
+
+# app build output
+.output/
+
+# test artifacts
+playwright-report/
+test-results/
 
 # env
 .env
 .env.*
 !.env.example
+*.local
 
 # os / editor
 .DS_Store

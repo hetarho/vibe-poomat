@@ -1,0 +1,33 @@
+{
+  "name": "vibe-poomat",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "biome format --write .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@repo/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "husky": "9.1.7",
+    "lint-staged": "15.5.2",
+    "turbo": "2.10.12",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "yaml": "2.8.1"
+  },
+  "lint-staged": {
+    "*": [
+      "biome check --staged --write --files-ignore-unknown=true --no-errors-on-unmatched"
+    ]
+  }
+}

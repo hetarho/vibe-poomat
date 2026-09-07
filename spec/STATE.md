@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T001 | monorepo & tooling bootstrap | ARCH | - | todo |
 | T002 | env config package | ARCH | T001 | todo |
 | T003 | api app skeleton | ARCH | T002 | todo |
 | T004 | shared kernel, Result & error mapping | ARCH | T003 | todo |
@@ -67,11 +66,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T001 — every SSOT is tasked (ARCH@2 AUTH@2 PROJ@2 CRED@2 FDBK@2 NOTI@2) and no [?] is open
-- order: T001-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T002 — T001 is done, so the env config package unblocks T003 and T007
+- order: T002-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T001 done: pnpm/turbo workspace + biome + vitest projects + husky, verify loop green
 - 260907 create-narrative done: NARRATIVE.md refreshed to ARCH@2 + domains r2 + T001..T040
 - 260907 create-task done: ARCH r2 delta → T011..T016; AUTH CRED PROJ FDBK NOTI → T017..T040 (40 tasks total)
 - 260907 create-task ARCH(r2 delta) AUTH PROJ CRED FDBK NOTI start
