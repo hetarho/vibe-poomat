@@ -8,12 +8,16 @@
     "node": ">=22"
   },
   "scripts": {
+    "api:contract": "pnpm openapi:generate && pnpm client:generate",
+    "api:contract:check": "pnpm api:contract && git diff --exit-code -- packages/api-client/openapi.json packages/api-client/src/schema.d.ts",
+    "client:generate": "pnpm --filter @repo/api-client run generate",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter api run db:generate",
     "db:migrate": "pnpm --filter api run db:migrate",
     "db:up": "docker compose up -d pg",
     "format": "biome format --write .",
     "lint": "biome check .",
+    "openapi:generate": "pnpm --filter api run openapi:generate",
     "prepare": "husky",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

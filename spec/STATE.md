@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T006 | openapi contract pipeline | ARCH | T004 | todo |
 | T007 | web app skeleton | ARCH | T002 | todo |
 | T008 | web data layer | ARCH | T006 T007 | todo |
 | T009 | CI pipeline | ARCH | T005 T007 | todo |
@@ -62,11 +61,13 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T006 — db and kernel are in place; T007 (web) and T010 (docker) are also unblocked
-- order: T006-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T007 — the api contract and client exist; T008 (web data layer) follows it
+- order: T007-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- T009 must wire `pnpm api:contract:check` into CI (T006 left it as a root script only)
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T006 done: @repo/contracts zod schemas, OpenAPI 3.1 generator, @repo/api-client with ApiError middleware, contract staleness check
 - 260907 T005 done: drizzle+pg DbModule, compose pg, Testcontainers int harness; fixed pool error crash and flaky hook timeout
 - 260907 T004 done: kernel(VO/Entity/AggregateRoot/EntityId), neverthrow Result, DomainError->HTTP map, dependency-cruiser layering
 - 260907 T003 done: NestJS+Fastify skeleton, pino reqId, readiness registry; biome useImportType off for apps/api (NestJS DI)
@@ -86,4 +87,3 @@
 - 260906 create-ssot done: AUTH PROJ FDBK CRED NOTI r1; ideation vibe-showcase converted
 - 260906 create-ssot AUTH PROJ FDBK CRED NOTI start (from ideation vibe-showcase)
 - 260906 ideation vibe-showcase ready (5 domains: AUTH PROJ FDBK CRED NOTI)
-- 260906 ideation vibe-showcase start

@@ -19,6 +19,8 @@
       "!.claude",
       "!.codex",
       "!.haeram-spec-creator-lock.json",
+      "!packages/api-client/openapi.json",
+      "!packages/api-client/src/schema.d.ts",
       "!**/*.gen.ts",
       "!**/drizzle/**/*.sql",
       "!pnpm-lock.yaml"
