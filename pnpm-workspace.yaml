@@ -3,6 +3,7 @@ packages:
   - "packages/*"
 
 onlyBuiltDependencies:
+  - "@swc/core"
   - esbuild
 
 catalog:

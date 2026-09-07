@@ -1,0 +1,37 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.2.3",
+    "@nestjs/core": "11.2.3",
+    "@nestjs/platform-fastify": "11.2.3",
+    "@repo/config": "workspace:*",
+    "fastify": "5.11.3",
+    "nestjs-pino": "5.1.0",
+    "pino": "10.3.1",
+    "pino-http": "11.0.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "uuid": "10.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.24",
+    "@nestjs/schematics": "11.0.9",
+    "@nestjs/testing": "11.2.3",
+    "@repo/tsconfig": "workspace:*",
+    "@swc/core": "1.16.2",
+    "@types/node": "catalog:",
+    "@types/uuid": "10.0.0",
+    "typescript": "catalog:",
+    "unplugin-swc": "1.5.11",
+    "vitest": "catalog:"
+  }
+}

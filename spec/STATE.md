@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T003 | api app skeleton | ARCH | T002 | todo |
 | T004 | shared kernel, Result & error mapping | ARCH | T003 | todo |
 | T005 | postgres, drizzle & integration test harness | ARCH | T003 | todo |
 | T006 | openapi contract pipeline | ARCH | T004 | todo |
@@ -65,11 +64,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T003 — @repo/config exists, so the api skeleton and the web skeleton (T007) are both unblocked
-- order: T003-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T004 — api skeleton is up; T005 (postgres) and T007 (web) are also unblocked
+- order: T004-T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T003 done: NestJS+Fastify skeleton, pino reqId, readiness registry; biome useImportType off for apps/api (NestJS DI)
 - 260907 T002 done: @repo/config zod env, CJS package build convention, no-process-env guard
 - 260907 T001 done: pnpm/turbo workspace + biome + vitest projects + husky, verify loop green
 - 260907 create-narrative done: NARRATIVE.md refreshed to ARCH@2 + domains r2 + T001..T040

@@ -15,7 +15,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           root: import.meta.dirname,
-          include: ['{apps,packages}/*/src/**/*.test.ts?(x)'],
+          include: ['packages/*/src/**/*.test.ts?(x)'],
           exclude: ['**/*.int.test.ts', '**/node_modules/**', '**/dist/**'],
           environment: 'node',
         },

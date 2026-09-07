@@ -36,6 +36,7 @@ type TurboConfig = { tasks?: Record<string, TurboTask> }
 
 type BiomeConfig = {
   formatter?: { enabled?: boolean }
+  javascript?: { parser?: { unsafeParameterDecoratorsEnabled?: boolean } }
   linter?: {
     enabled?: boolean
     rules?: {
@@ -44,6 +45,10 @@ type BiomeConfig = {
     }
   }
   assist?: { actions?: { source?: Record<string, unknown> } }
+  overrides?: {
+    includes?: string[]
+    linter?: { rules?: { style?: Record<string, string> } }
+  }[]
 }
 
 type TsconfigFile = {
@@ -165,6 +170,20 @@ describe('biome', () => {
     expect(biome.formatter?.enabled).toBe(true)
     expect(biome.linter?.enabled).toBe(true)
     expect(biome.linter?.rules?.suspicious?.noExplicitAny).toBe('error')
+  })
+
+  it('parses the parameter decorators NestJS depends on', () => {
+    expect(biome.javascript?.parser?.unsafeParameterDecoratorsEnabled).toBe(true)
+  })
+
+  it('leaves NestJS value imports alone, so decorator metadata survives', () => {
+    // useImportType would rewrite `import { Foo }` to `import type { Foo }`, and swc
+    // then emits Object for that constructor parameter, breaking NestJS DI
+    const apiOverride = (biome.overrides ?? []).find((override) =>
+      (override.includes ?? []).some((pattern) => pattern.startsWith('apps/api')),
+    )
+
+    expect(apiOverride?.linter?.rules?.style?.useImportType).toBe('off')
   })
 
   it('enforces kebab-case filenames and organizes imports', () => {
