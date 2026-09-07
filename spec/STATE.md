@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T010 | docker images & local parity | ARCH | T005 T007 | todo |
 | T011 | transaction manager & domain event dispatch | ARCH | T004 T005 | todo |
 | T012 | pg-boss job infrastructure | ARCH | T011 | todo |
 | T013 | mailer port, Resend adapter & email templates | ARCH | T012 | todo |
@@ -58,11 +57,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T010 — CI is in place; docker images and the compose stack are next
-- order: T010 scaffolding → T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T011 — scaffolding is complete; the infra block (transactions, jobs, mail, storage, http, deploy) starts here
+- order: T011-T016 infra → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - review-code after the backend contexts land (around T031) before the web tasks
 
 ## log
+- 260907 T010 done: distroless images for api+web, compose stack with a one-shot migrate service, docker-smoke.sh green end to end
 - 260907 T009 done: PR workflow (affected verify + coverage gate + contract check + playwright), actionlint in turbo lint
 - 260907 T008 done: per-request QueryClient with SSR hydration, api client + error copy, zustand convention in shared/model; @repo/config gained a ./web entry
 - 260907 T007 claimed (op5)
@@ -82,4 +82,3 @@
 - 260907 create-narrative done: NARRATIVE.md (reader: future self, as of all@r1)
 - 260907 create-architecture start (ARCH revise: ARCH-18 OAuth-only, ARCH-30, infra gaps)
 - 260906 create-narrative start
-- 260906 create-task done: ARCH r1 → T001..T010 (scaffolding); AUTH PROJ CRED FDBK NOTI held on ARCH-18 revision + open [?]

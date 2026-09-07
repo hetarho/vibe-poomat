@@ -21,6 +21,7 @@
     "openapi:generate": "pnpm --filter api run openapi:generate",
     "prepare": "husky",
     "test": "vitest run",
+    "test:docker": "bash scripts/docker-smoke.sh",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

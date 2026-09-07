@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Builds both images, brings the stack up, checks the endpoints a deploy depends
+# on, then tears everything down. Not part of `turbo run test`: too slow for the
+# inner loop, and it is the pre-deploy check instead.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+API_URL=${SMOKE_API_URL:-http://127.0.0.1:3001}
+WEB_URL=${SMOKE_WEB_URL:-http://127.0.0.1:3000}
+SKIP_BUILD=${SMOKE_SKIP_BUILD:-0}
+SKIP_STACK=${SMOKE_SKIP_STACK:-0}
+
+log() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
+
+teardown() {
+  if [ "$SKIP_STACK" = "0" ]; then
+    log 'tearing the stack down'
+    docker compose down --remove-orphans --volumes >/dev/null 2>&1 || true
+  fi
+}
+trap teardown EXIT
+
+# Polls until the endpoint answers with the expected status, or gives up.
+expect_status() {
+  local url=$1 expected=$2 attempts=${3:-60} status=''
+  for _ in $(seq 1 "$attempts"); do
+    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url" || true)
+    [ "$status" = "$expected" ] && { echo "  ok   $url -> $status"; return 0; }
+    sleep 2
+  done
+  echo "  FAIL $url -> ${status:-no response} (wanted $expected)" >&2
+  return 1
+}
+
+expect_body() {
+  local url=$1 needle=$2
+  if curl -s --max-time 10 "$url" | grep -q -- "$needle"; then
+    echo "  ok   $url contains '$needle'"
+  else
+    echo "  FAIL $url does not contain '$needle'" >&2
+    return 1
+  fi
+}
+
+if [ "$SKIP_BUILD" = "0" ]; then
+  log 'building the api and web images'
+  docker compose build api web
+fi
+
+if [ "$SKIP_STACK" = "0" ]; then
+  log 'starting pg, running migrations, then api and web'
+  docker compose up -d --wait web
+fi
+
+log 'checking the api'
+expect_status "$API_URL/health" 200
+expect_status "$API_URL/ready" 200
+expect_body "$API_URL/health" '"status":"ok"'
+expect_body "$API_URL/ready" '"db":true'
+
+log 'checking the web app'
+expect_status "$WEB_URL/" 200
+expect_body "$WEB_URL/" '<footer'
+expect_body "$WEB_URL/" 'Trade real feedback'
+
+log 'docker smoke passed'
