@@ -11,6 +11,7 @@ coverage/
 
 # app build output
 .output/
+.nitro/
 
 # test artifacts
 playwright-report/

@@ -1,0 +1,21 @@
+{
+  "extends": "@repo/tsconfig/react.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "app",
+    "src",
+    "e2e",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "playwright.config.ts"
+  ]
+}
