@@ -20,10 +20,13 @@ import { ClaimSlotUseCase } from './application/claim-slot.use-case'
 import { ReadFeedbackUseCase } from './application/read-feedback.use-case'
 import { SettleFeedbackUseCase } from './application/settle-feedback.use-case'
 import { SubmitFeedbackUseCase } from './application/submit-feedback.use-case'
+import { ThreadUseCase } from './application/thread.use-case'
 import { CLAIM_REPOSITORY, type ClaimRepository } from './domain/claim.repository'
 import { FEEDBACK_REPOSITORY, type FeedbackRepository } from './domain/feedback.repository'
+import { REPLY_REPOSITORY, type ReplyRepository } from './domain/reply.repository'
 import { DrizzleClaimRepository } from './infrastructure/persistence/drizzle-claim.repository'
 import { DrizzleFeedbackRepository } from './infrastructure/persistence/drizzle-feedback.repository'
+import { DrizzleReplyRepository } from './infrastructure/persistence/drizzle-reply.repository'
 import { ReleaseSlotJob } from './infrastructure/release-slot.job'
 import { AutoAcceptFeedbackJob, WarnMakerJob } from './infrastructure/settlement-timers.job'
 import { ClaimsController } from './presentation/claims.controller'
@@ -113,6 +116,24 @@ export class ClaimStoreModule {}
       ) =>
         new SettleFeedbackUseCase(feedbacks, claims, missions, credits, users, jobs, transactions),
     },
+    { provide: REPLY_REPOSITORY, useClass: DrizzleReplyRepository },
+    {
+      provide: ThreadUseCase,
+      inject: [
+        FEEDBACK_REPOSITORY,
+        REPLY_REPOSITORY,
+        MISSION_READER,
+        USER_SUMMARY_READER,
+        TRANSACTION_MANAGER,
+      ],
+      useFactory: (
+        feedbacks: FeedbackRepository,
+        replies: ReplyRepository,
+        missions: MissionReader,
+        users: UserSummaryReader,
+        transactions: TransactionManager,
+      ) => new ThreadUseCase(feedbacks, replies, missions, users, transactions),
+    },
     ReleaseSlotJob,
     WarnMakerJob,
     AutoAcceptFeedbackJob,
@@ -123,6 +144,7 @@ export class ClaimStoreModule {}
     SubmitFeedbackUseCase,
     ReadFeedbackUseCase,
     SettleFeedbackUseCase,
+    ThreadUseCase,
   ],
 })
 export class FeedbackModule {}

@@ -597,6 +597,74 @@
         ]
       }
     },
+    "/api/v1/feedbacks/{id}/replies": {
+      "post": {
+        "operationId": "FeedbacksController_reply",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostReplyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Reply in the thread on a report",
+        "tags": [
+          "Feedbacks"
+        ]
+      },
+      "get": {
+        "operationId": "FeedbacksController_replies",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The thread on a report, oldest first",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
     "/api/v1/missions/{missionId}/feedbacks": {
       "get": {
         "operationId": "FeedbacksController_forMission",
@@ -938,6 +1006,19 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "PostReplyDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "body"
         ]
       },
       "CreateUploadUrlDto": {

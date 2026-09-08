@@ -362,6 +362,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feedbacks/{id}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The thread on a report, oldest first */
+        get: operations["FeedbacksController_replies"];
+        put?: never;
+        /** Reply in the thread on a report */
+        post: operations["FeedbacksController_reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/missions/{missionId}/feedbacks": {
         parameters: {
             query?: never;
@@ -444,6 +462,9 @@ export interface components {
             /** @enum {string} */
             reason: "task_not_done" | "no_substance" | "spam_abuse";
             note?: string | null;
+        };
+        PostReplyDto: {
+            body: string;
         };
         CreateUploadUrlDto: {
             /** @enum {string} */
@@ -927,6 +948,51 @@ export interface operations {
         };
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FeedbacksController_replies: {
+        parameters: {
+            query?: {
+                limit?: unknown;
+                cursor?: unknown;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FeedbacksController_reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostReplyDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

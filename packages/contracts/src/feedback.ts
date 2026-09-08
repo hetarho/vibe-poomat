@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { entityId, isoDate } from './common'
+import { cursorPageSchema, entityId, isoDate } from './common'
 
 /**
  * `held`, `submitted` and `settled` all occupy a slot; `released` is the only
@@ -94,3 +94,27 @@ export const rejectFeedbackRequestSchema = z.object({
 })
 
 export type RejectFeedbackRequest = z.infer<typeof rejectFeedbackRequestSchema>
+
+export const REPLY_MIN_LENGTH = 1
+export const REPLY_MAX_LENGTH = 2000
+
+export const postReplyRequestSchema = z.object({
+  body: z.string().trim().min(REPLY_MIN_LENGTH).max(REPLY_MAX_LENGTH),
+})
+
+export type PostReplyRequest = z.infer<typeof postReplyRequestSchema>
+
+export const feedbackReplySchema = z.object({
+  id: entityId,
+  feedbackId: entityId,
+  /** Null once the account is gone (AUTH-9), rendered as a deleted user. */
+  author: feedbackAuthorSchema,
+  body: z.string(),
+  createdAt: isoDate,
+})
+
+export type FeedbackReply = z.infer<typeof feedbackReplySchema>
+
+export const threadPageSchema = cursorPageSchema(feedbackReplySchema)
+
+export type ThreadPage = z.infer<typeof threadPageSchema>

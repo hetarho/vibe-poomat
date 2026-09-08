@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
-import { ApiOperation } from '@nestjs/swagger'
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common'
+import { ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import { feedback as contract } from '@repo/contracts'
 import { createZodDto } from 'nestjs-zod'
@@ -9,9 +9,16 @@ import type { FeedbackView } from '../application/feedback-view'
 import { ReadFeedbackUseCase } from '../application/read-feedback.use-case'
 import { SettleFeedbackUseCase } from '../application/settle-feedback.use-case'
 import { SubmitFeedbackUseCase } from '../application/submit-feedback.use-case'
+import type { ReplyView } from '../application/thread.use-case'
+import { ThreadUseCase } from '../application/thread.use-case'
 
 class SubmitFeedbackDto extends createZodDto(contract.submitFeedbackRequestSchema) {}
 class RejectFeedbackDto extends createZodDto(contract.rejectFeedbackRequestSchema) {}
+class PostReplyDto extends createZodDto(contract.postReplyRequestSchema) {}
+
+function renderReply(view: ReplyView): contract.FeedbackReply {
+  return { ...view, createdAt: view.createdAt.toISOString() }
+}
 
 function render(view: FeedbackView): contract.Feedback {
   return {
@@ -33,6 +40,7 @@ export class FeedbacksController {
     private readonly submit: SubmitFeedbackUseCase,
     private readonly read: ReadFeedbackUseCase,
     private readonly settlement: SettleFeedbackUseCase,
+    private readonly thread: ThreadUseCase,
   ) {}
 
   @Post('claims/:claimId/feedback')
@@ -104,6 +112,45 @@ export class FeedbacksController {
         }),
       ),
     )
+  }
+
+  /**
+   * FDBK-5: everyone reads, and only the two of them write. There is no window —
+   * the conversation about a rejection is exactly the one worth having.
+   */
+  @Post('feedbacks/:id/replies')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ [WRITE_THROTTLER]: {} })
+  @ApiOperation({ summary: 'Reply in the thread on a report' })
+  async reply(
+    @Param('id') id: string,
+    @CurrentUser() actorId: string,
+    @Body() body: PostReplyDto,
+  ): Promise<contract.FeedbackReply> {
+    return renderReply(
+      unwrap(await this.thread.reply({ feedbackId: id, actorId, body: body.body })),
+    )
+  }
+
+  @Get('feedbacks/:id/replies')
+  @Public()
+  @ApiOperation({ summary: 'The thread on a report, oldest first' })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async replies(
+    @Param('id') id: string,
+    @Query('cursor') cursor: string | undefined,
+    @Query('limit') limit: string | undefined,
+  ): Promise<contract.ThreadPage> {
+    const page = unwrap(
+      await this.thread.read({
+        feedbackId: id,
+        cursor,
+        limit: limit === undefined ? undefined : Number(limit),
+      }),
+    )
+
+    return { items: page.items.map(renderReply), nextCursor: page.nextCursor }
   }
 
   @Get('missions/:missionId/feedbacks')

@@ -81,3 +81,24 @@ export const feedbacks = pgTable(
     index('feedbacks_project_idx').on(table.projectId),
   ],
 )
+
+/**
+ * FDBK-5's flat two-party thread. There is no participants table, because the
+ * pair is fixed for the life of the thread: the report's author and the project
+ * owner, resolved per request from rows that already exist.
+ *
+ * `author_id` is nullable for the same reason the report's is — AUTH-9
+ * anonymises rather than deletes — and there is no `updated_at`, because a reply
+ * is never edited in v1.
+ */
+export const feedbackReplies = pgTable(
+  'feedback_replies',
+  {
+    id: entityId(),
+    feedbackId: uuid('feedback_id').notNull(),
+    authorId: uuid('author_id'),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('feedback_replies_thread_idx').on(table.feedbackId, table.createdAt)],
+)

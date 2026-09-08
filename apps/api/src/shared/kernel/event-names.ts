@@ -19,6 +19,8 @@ export const CROSS_CONTEXT_EVENTS = {
   feedbackSubmitted: 'feedback.submitted',
   /** The maker has not answered in 48 hours and has 24 left (FDBK-7). */
   autoAcceptWarning: 'feedback.auto-accept-warning',
+  /** One side of a thread said something to the other (FDBK-5). */
+  threadReplied: 'feedback.thread-replied',
   /** One slot's credit moved (CRED-4). The aggregate id is the feedback. */
   slotSettled: 'feedback.slot-settled',
 } as const

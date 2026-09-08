@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T028 | feedback thread | FDBK AUTH ARCH | T026 | todo |
 | T029 | maker rejection stats | FDBK CRED AUTH | T027 | todo |
 | T030 | notification context: events, emails & preferences | NOTI AUTH ARCH | T013 T027 | todo |
 | T031 | account deletion | AUTH CRED PROJ FDBK ARCH | T027 T023 T021 | todo |
@@ -40,11 +39,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T028 — the feedback thread, or T029 maker rejection stats; both are unblocked
-- order: T028-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T029 — maker rejection stats, or T030 notification context; both are unblocked
+- order: T029-T031 feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T028 done: flat two-party thread on each report, participants resolved per request rather than stored, public keyset read oldest-first, ThreadReplied for T030; the page now walks (created_at, id) so the mandated index is the one it uses
 - 260908 T027 done: accept/reject/auto-accept through one settle path with identical credit movement, 48h warn + 72h auto-accept bodies, SlotSettled completing the mission; fixed three repositories never draining their aggregates' events (T023 MissionEnded had been going nowhere)
 - 260908 T026 done: fixed-shape report with per-field 20-char rule, immutable by having no update path, slot flipped to submitted and FDBK-7 timers started; the two timer queues registered with logging placeholders for T027
 - 260908 note: PROJ-9 ranks on "has an open mission" not "has a takeable slot" — coarse once slots can be held (T024/T025 results); candidate for create-task
@@ -64,4 +64,3 @@
 - 260907 T013 done: @repo/email templates, console+Resend adapters, email.send job with PermanentJobFailure dead-lettering; Dockerfiles now copy every workspace manifest
 - 260907 T012 done: pg-boss 11 scheduler joining the ambient tx, queue-level retry+dead-letter, JOBS_ENABLED; tx manager rewritten to pool-based for the raw connection
 - 260907 T011 done: ALS transaction manager with getDb(), post-commit in-process event bus with an in-transaction guard
-- 260907 T010 done: distroless images for api+web, compose stack with a one-shot migrate service, docker-smoke.sh green end to end
