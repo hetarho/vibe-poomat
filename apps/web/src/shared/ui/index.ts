@@ -12,5 +12,6 @@ export {
   DialogTrigger,
 } from './dialog'
 export { Input } from './input'
+export { Markdown } from './markdown'
 export { Toaster } from './sonner'
 export { Textarea } from './textarea'

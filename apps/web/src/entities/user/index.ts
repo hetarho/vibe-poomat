@@ -3,6 +3,7 @@ export { fetchProfile, profileQueryKey, profileQueryOptions } from './model/prof
 export {
   givenFeedbackQueryKey,
   givenFeedbackQueryOptions,
+  OWNED_PROJECTS_QUERY_ROOT,
   ownedProjectsQueryKey,
   ownedProjectsQueryOptions,
   PROFILE_LIST_SIZE,

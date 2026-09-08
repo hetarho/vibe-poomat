@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T034 | web: project create & edit | PROJ ARCH | T032 T022 T014 | todo |
 | T035 | web: feed, project detail & upvote | PROJ ARCH | T032 T024 | todo |
 | T036 | web: mission management | PROJ CRED ARCH | T035 T023 | todo |
 | T037 | web: slot claim & report form | FDBK ARCH | T035 T025 T026 | todo |
@@ -34,12 +33,14 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T034 — web project create & edit, or T035 the feed; both are unblocked
-- order: T033-T039 web → T040 e2e; the api is complete
+- implement-task T035 — the feed, project detail and upvote; T039 notification settings is also unblocked
+- order: T035 → T036/T037 → T038 → T039 → T040 e2e; the api is complete
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
-- update-ssot candidate: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031 result)
+- update-ssot candidates: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031). PROJ-7 does not say whether the title is frozen with the URL; T034 froze it and the api does not (T034)
 
 ## log
+- 260908 T034 done: PROJ-1's create and edit forms sharing one ProjectFields group, the api's per-field refusal codes mapped onto their fields with the probed status shown, PROJ-7 freezing title+URL with the reason, PROJ-8 delete behind a confirmation that states what survives; one sanitising Markdown in shared/ui and one image upload in shared/upload, which the avatar flow now uses too
+- 260908 note: apps/api mail.int.test.ts times out under a full parallel `turbo run test` and passes alone — CI will flake on it; candidate for review-code
 - 260908 T033 done: /@handle profile with CRED-7 counters and FDBK-8 stats, settings with avatar presign, handle change, notification toggles and AUTH-9 deletion; the feed gained ?owner= and GET /users/:authorId/feedbacks was added, because the profile lists had no endpoint at all
 - 260908 note: create-task candidates — annotate the api's responses with DTOs so the generated client is typed both ways (shared/api/body.ts exists only for that), and the two profile endpoints deserved a task of their own
 - 260908 T032 done: session resolved once in the root beforeLoad with the cookie forwarded during SSR, so the header never flashes the wrong state; sign-in as a dialog carrying returnTo, /sign-in for the callback's ?error=, requireSession as a beforeLoad guard; smoke now asserts the server-rendered header
@@ -58,5 +59,3 @@
 - 260908 T023 done: missions with escrow-on-open in one transaction, PROJ-5 as a partial unique index, close/expire refunding only unheld slots, expiry job + slot-settled completion handler; CREDIT_OPERATIONS published as the ledger write port
 - 260908 T022 done: project context with probe-verified live url, PROJ-7/8 mission locks behind an ACTIVE_MISSION_READER port stubbed until T023, soft delete owner-only; SessionGuard now identifies the caller on @Public() routes too
 - 260908 T021 done: append-only ledger with cached balances, five named operations idempotent on their (type,account,ref) key, seed on AccountCreated, /credits/me; randomised invariant + concurrent-escrow int tests
-- 260908 T020 done: Avatar VO (provider URL or upload key), public profile by handle, PATCH me + me/handle, credits reserved at zero; fixed DrizzleTransactionManager committing partial writes behind an errored Result (ARCH-38)
-- 260908 T019 done: global SessionGuard with @Public in shared/presentation, /auth/me + /auth/logout, hourly session.cleanup via a new JobHandler.cron; uploads is now authenticated, smoke asserts the 401

@@ -1,4 +1,4 @@
-import { auth, uploads } from '@repo/contracts'
+import { auth } from '@repo/contracts'
 
 /**
  * The same limits the server enforces, checked here so somebody learns before
@@ -7,8 +7,6 @@ import { auth, uploads } from '@repo/contracts'
  */
 export const BIO_MAX_LENGTH = auth.BIO_MAX_LENGTH
 export const DISPLAY_NAME_MAX_LENGTH = 50
-export const MAX_AVATAR_BYTES = uploads.maxUploadBytes
-export const ALLOWED_AVATAR_TYPES = uploads.allowedUploadContentTypes
 
 /** Counted in code points, as the server does, so an emoji costs one character. */
 export function bioLength(value: string): number {
@@ -51,17 +49,6 @@ export function linkProblem(value: string): string | null {
 
   if (url.protocol !== 'https:') return 'A link must start with https://.'
   if (url.username !== '' || url.password !== '') return 'A link must not carry a password.'
-
-  return null
-}
-
-export function avatarProblem(file: { type: string; size: number }): string | null {
-  if (!ALLOWED_AVATAR_TYPES.includes(file.type as (typeof ALLOWED_AVATAR_TYPES)[number])) {
-    return 'Pick a PNG, JPEG or WebP image.'
-  }
-  if (file.size > MAX_AVATAR_BYTES) {
-    return `That image is larger than ${Math.round(MAX_AVATAR_BYTES / 1024 / 1024)}MB.`
-  }
 
   return null
 }

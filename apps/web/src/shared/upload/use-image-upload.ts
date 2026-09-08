@@ -1,31 +1,28 @@
 import type { uploads } from '@repo/contracts'
 import { useMutation } from '@tanstack/react-query'
-import { apiClient, expectBody } from '../../../shared/api'
-import { type ALLOWED_AVATAR_TYPES, avatarProblem } from '../lib/profile-rules'
+import { apiClient, expectBody } from '../api'
+import { checkImage } from './image-policy'
 
-export class AvatarNotAllowed extends Error {}
+/** A file this side already knows the presign policy would refuse. */
+export class ImageNotAllowed extends Error {}
 
 /**
  * ARCH-37: the browser asks the api for a signed URL and then PUTs the bytes
  * straight to storage, so an image never passes through the api at all.
  *
- * The type and size are checked here first, against the same policy the api
- * enforces, so somebody learns before a 2MB upload rather than after it.
+ * One hook for every image the product uploads — the avatar and the project
+ * cover differ only in their `purpose`, and two copies of this is how one of
+ * them ends up storing the URL instead of the key.
  */
-export function useAvatarUpload() {
+export function useImageUpload(purpose: uploads.UploadPurpose) {
   return useMutation({
     mutationFn: async (file: File): Promise<string> => {
-      const problem = avatarProblem(file)
-      if (problem !== null) throw new AvatarNotAllowed(problem)
+      const checked = checkImage(file)
+      if (!checked.allowed) throw new ImageNotAllowed(checked.problem)
 
       const client = await apiClient()
       const { data } = await client.POST('/api/v1/uploads', {
-        body: {
-          purpose: 'avatar',
-          // narrowed by `avatarProblem` a line above, which is the same list
-          contentType: file.type as (typeof ALLOWED_AVATAR_TYPES)[number],
-          sizeBytes: file.size,
-        },
+        body: { purpose, contentType: checked.contentType, sizeBytes: file.size },
       })
       const ticket = expectBody<uploads.UploadTicket>(data)
 

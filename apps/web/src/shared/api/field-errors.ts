@@ -1,4 +1,4 @@
-import { ApiError } from '../../../shared/api'
+import { ApiError } from '@repo/api-client'
 
 /**
  * T006 puts a `details` map on a validation failure, keyed by the field that was

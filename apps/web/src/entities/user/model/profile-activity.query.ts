@@ -5,8 +5,11 @@ import { apiClient, asBody } from '../../../shared/api'
 /** How much of each list a profile shows before asking for more. */
 export const PROFILE_LIST_SIZE = 6
 
+/** The prefix every owner's project list shares, so one write invalidates all. */
+export const OWNED_PROJECTS_QUERY_ROOT = ['user', 'projects'] as const
+
 export function ownedProjectsQueryKey(userId: string) {
-  return ['user', 'projects', userId] as const
+  return [...OWNED_PROJECTS_QUERY_ROOT, userId] as const
 }
 
 export function givenFeedbackQueryKey(userId: string) {

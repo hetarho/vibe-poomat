@@ -14,6 +14,8 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as AtChar123handleChar125RouteImport } from './routes/@{$handle}'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as ProjectsNewRouteImport } from './routes/projects.new'
+import { Route as ProjectsIdEditRouteImport } from './routes/projects.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +42,16 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsNewRoute = ProjectsNewRouteImport.update({
+  id: '/projects/new',
+  path: '/projects/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIdEditRoute = ProjectsIdEditRouteImport.update({
+  id: '/projects/$id/edit',
+  path: '/projects/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +59,8 @@ export interface FileRoutesByFullPath {
   '/@{$handle}': typeof AtChar123handleChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/new': typeof ProjectsNewRoute
+  '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +68,8 @@ export interface FileRoutesByTo {
   '/@{$handle}': typeof AtChar123handleChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/new': typeof ProjectsNewRoute
+  '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +78,37 @@ export interface FileRoutesById {
   '/@{$handle}': typeof AtChar123handleChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/new': typeof ProjectsNewRoute
+  '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$' | '/@{$handle}' | '/settings' | '/sign-in'
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/@{$handle}'
+    | '/settings'
+    | '/sign-in'
+    | '/projects/new'
+    | '/projects/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$' | '/@{$handle}' | '/settings' | '/sign-in'
-  id: '__root__' | '/' | '/$' | '/@{$handle}' | '/settings' | '/sign-in'
+  to:
+    | '/'
+    | '/$'
+    | '/@{$handle}'
+    | '/settings'
+    | '/sign-in'
+    | '/projects/new'
+    | '/projects/$id/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/@{$handle}'
+    | '/settings'
+    | '/sign-in'
+    | '/projects/new'
+    | '/projects/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +117,8 @@ export interface RootRouteChildren {
   AtChar123handleChar125Route: typeof AtChar123handleChar125Route
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  ProjectsNewRoute: typeof ProjectsNewRoute
+  ProjectsIdEditRoute: typeof ProjectsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +158,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects/new': {
+      id: '/projects/new'
+      path: '/projects/new'
+      fullPath: '/projects/new'
+      preLoaderRoute: typeof ProjectsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$id/edit': {
+      id: '/projects/$id/edit'
+      path: '/projects/$id/edit'
+      fullPath: '/projects/$id/edit'
+      preLoaderRoute: typeof ProjectsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +181,8 @@ const rootRouteChildren: RootRouteChildren = {
   AtChar123handleChar125Route: AtChar123handleChar125Route,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  ProjectsNewRoute: ProjectsNewRoute,
+  ProjectsIdEditRoute: ProjectsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,14 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ALLOWED_AVATAR_TYPES,
-  avatarProblem,
   BIO_MAX_LENGTH,
   bioLength,
   bioProblem,
   DISPLAY_NAME_MAX_LENGTH,
   displayNameProblem,
   linkProblem,
-  MAX_AVATAR_BYTES,
 } from './profile-rules'
 
 describe('the rules this form mirrors from the server', () => {
@@ -76,25 +73,6 @@ describe('the rules this form mirrors from the server', () => {
     /** The server's reason: credentials in a public link are a mistake or an attack. */
     it('refuses one carrying a password', () => {
       expect(linkProblem('https://ada:secret@ada.test')).not.toBeNull()
-    })
-  })
-
-  describe('avatar (T014)', () => {
-    it.each(ALLOWED_AVATAR_TYPES)('accepts a small %s', (type) => {
-      expect(avatarProblem({ type, size: 1024 })).toBeNull()
-    })
-
-    it('refuses a type the storage policy does not allow', () => {
-      expect(avatarProblem({ type: 'image/gif', size: 1024 })).not.toBeNull()
-    })
-
-    it('accepts exactly the limit and refuses one byte more', () => {
-      expect(avatarProblem({ type: 'image/png', size: MAX_AVATAR_BYTES })).toBeNull()
-      expect(avatarProblem({ type: 'image/png', size: MAX_AVATAR_BYTES + 1 })).not.toBeNull()
-    })
-
-    it('says the limit in the unit somebody chose the file in', () => {
-      expect(avatarProblem({ type: 'image/png', size: MAX_AVATAR_BYTES + 1 })).toContain('2MB')
     })
   })
 })
