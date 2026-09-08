@@ -71,6 +71,8 @@ export const feedbacks = pgTable(
     rejectionNote: text('rejection_note'),
     submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
     settledAt: timestamp('settled_at', { withTimezone: true }),
+    /** FDBK-7: true when the 72-hour clock decided rather than the maker. */
+    automatic: boolean('automatic').notNull().default(false),
     ...timestamps(),
   },
   (table) => [

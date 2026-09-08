@@ -35,7 +35,12 @@ export class FeedbackNotFoundError extends NotFoundError {
 
 /** FDBK-4: a settled report is finished; there is nothing left to decide. */
 export class FeedbackNotPendingError extends ConflictError {
-  override readonly code = 'FEEDBACK_NOT_PENDING'
+  override readonly code = 'FEEDBACK_ALREADY_SETTLED'
+}
+
+/** One report per slot: a retried submit finds the first one already there. */
+export class FeedbackAlreadySubmittedError extends ConflictError {
+  override readonly code = 'FEEDBACK_ALREADY_SUBMITTED'
 }
 
 /** FDBK-1: the hold ran out before anything was submitted. */

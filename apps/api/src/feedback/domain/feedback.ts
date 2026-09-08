@@ -9,9 +9,46 @@ export const FEEDBACK_STATES = ['pending', 'accepted', 'rejected'] as const
 export type FeedbackState = (typeof FEEDBACK_STATES)[number]
 
 /** FDBK-6: a fixed list, so a rejection says something the feedbacker can read. */
-export const REJECTION_REASONS = ['task-not-done', 'no-substance', 'spam-abuse'] as const
+export const REJECTION_REASONS = ['task_not_done', 'no_substance', 'spam_abuse'] as const
 
 export type RejectionReason = (typeof REJECTION_REASONS)[number]
+
+/**
+ * One slot's credit has moved (CRED-4). The mission listens for this to notice
+ * its last slot settling (PROJ-6), which is why `missionId` is on it: a
+ * subscriber in another context cannot reach in for it.
+ */
+export class SlotSettled extends DomainEvent {
+  readonly name = CROSS_CONTEXT_EVENTS.slotSettled
+
+  constructor(
+    feedbackId: EntityId,
+    readonly missionId: string,
+    readonly projectId: string,
+    readonly makerId: string,
+    readonly feedbackerId: string,
+    readonly outcome: 'accepted' | 'rejected',
+    /** True when the 72-hour clock decided rather than the maker (FDBK-7). */
+    readonly automatic: boolean,
+    occurredAt?: Date,
+  ) {
+    super(feedbackId, occurredAt)
+  }
+}
+
+/** FDBK-7: 24 hours left before the decision is made for the maker. */
+export class AutoAcceptWarning extends DomainEvent {
+  readonly name = CROSS_CONTEXT_EVENTS.autoAcceptWarning
+
+  constructor(
+    feedbackId: EntityId,
+    readonly missionId: string,
+    readonly makerId: string,
+    occurredAt?: Date,
+  ) {
+    super(feedbackId, occurredAt)
+  }
+}
 
 export class FeedbackSubmitted extends DomainEvent {
   readonly name = CROSS_CONTEXT_EVENTS.feedbackSubmitted
@@ -40,6 +77,8 @@ type FeedbackProps = {
   rejectionNote: string | null
   submittedAt: Date
   settledAt: Date | null
+  /** FDBK-7: true when the 72-hour clock decided rather than the maker. */
+  automatic: boolean
 }
 
 /**
@@ -75,6 +114,7 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
       rejectionNote: null,
       submittedAt: now,
       settledAt: null,
+      automatic: false,
     })
     feedback.record(
       new FeedbackSubmitted(
@@ -139,23 +179,45 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
     return this.props.state === 'pending'
   }
 
-  /** FDBK-6 and FDBK-7 both land here; T027 decides which and when. */
-  accept(now: Date = new Date()): Result<void, FeedbackNotPendingError> {
-    return this.settle('accepted', null, null, now)
+  /**
+   * FDBK-6 and FDBK-7 both land here. `automatic` says which — the credit
+   * movement is identical either way, and only the announcement differs.
+   */
+  accept(input: {
+    missionId: string
+    makerId: string
+    automatic: boolean
+    now?: Date
+  }): Result<void, FeedbackNotPendingError> {
+    return this.settle('accepted', null, null, input, input.now ?? new Date())
   }
 
-  reject(
-    reason: RejectionReason,
-    note: string | null,
-    now: Date = new Date(),
-  ): Result<void, FeedbackNotPendingError> {
-    return this.settle('rejected', reason, note, now)
+  reject(input: {
+    reason: RejectionReason
+    note: string | null
+    missionId: string
+    makerId: string
+    now?: Date
+  }): Result<void, FeedbackNotPendingError> {
+    return this.settle(
+      'rejected',
+      input.reason,
+      input.note,
+      { ...input, automatic: false },
+      input.now ?? new Date(),
+    )
+  }
+
+  /** FDBK-7 keeps this, so a settled report can say who decided it. */
+  get wasAutomatic(): boolean {
+    return this.props.automatic
   }
 
   private settle(
     state: Exclude<FeedbackState, 'pending'>,
     reason: RejectionReason | null,
     note: string | null,
+    by: { missionId: string; makerId: string; automatic: boolean },
     now: Date,
   ): Result<void, FeedbackNotPendingError> {
     if (!this.isPending()) {
@@ -170,7 +232,29 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
     this.props.rejectionReason = reason
     this.props.rejectionNote = note
     this.props.settledAt = now
+    this.props.automatic = by.automatic
+    this.record(
+      new SlotSettled(
+        this.id,
+        by.missionId,
+        this.props.projectId.value,
+        by.makerId,
+        this.props.authorId?.value ?? '',
+        state,
+        by.automatic,
+        now,
+      ),
+    )
 
     return ok(undefined)
+  }
+
+  /** FDBK-7's nudge, recorded on the aggregate so it reaches NOTI after commit. */
+  warnMaker(input: { missionId: string; makerId: string; now?: Date }): void {
+    if (!this.isPending()) return
+
+    this.record(
+      new AutoAcceptWarning(this.id, input.missionId, input.makerId, input.now ?? new Date()),
+    )
   }
 }

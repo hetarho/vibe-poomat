@@ -328,6 +328,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feedbacks/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a report and pay the feedbacker */
+        post: operations["FeedbacksController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/feedbacks/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a report with a reason the feedbacker can read */
+        post: operations["FeedbacksController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/missions/{missionId}/feedbacks": {
         parameters: {
             query?: never;
@@ -405,6 +439,11 @@ export interface components {
             suggestion: string;
             /** @default [] */
             answers: string[];
+        };
+        RejectFeedbackDto: {
+            /** @enum {string} */
+            reason: "task_not_done" | "no_substance" | "spam_abuse";
+            note?: string | null;
         };
         CreateUploadUrlDto: {
             /** @enum {string} */
@@ -844,6 +883,48 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FeedbacksController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FeedbacksController_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectFeedbackDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

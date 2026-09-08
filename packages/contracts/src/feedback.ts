@@ -31,7 +31,7 @@ export const feedbackStateSchema = z.enum(FEEDBACK_STATES)
 export type FeedbackState = z.infer<typeof feedbackStateSchema>
 
 /** FDBK-6: a fixed list, so a rejection says something the feedbacker can read. */
-export const REJECTION_REASONS = ['task-not-done', 'no-substance', 'spam-abuse'] as const
+export const REJECTION_REASONS = ['task_not_done', 'no_substance', 'spam_abuse'] as const
 
 export const rejectionReasonSchema = z.enum(REJECTION_REASONS)
 
@@ -81,6 +81,16 @@ export const feedbackSchema = z.object({
   rejectionNote: z.string().nullable(),
   submittedAt: isoDate,
   settledAt: isoDate.nullable(),
+  /** FDBK-7: true when the 72-hour clock settled it rather than the maker. */
+  automatic: z.boolean(),
 })
 
 export type Feedback = z.infer<typeof feedbackSchema>
+
+export const rejectFeedbackRequestSchema = z.object({
+  reason: rejectionReasonSchema,
+  /** Optional: the reason is the fixed part, this is what the maker adds. */
+  note: z.string().trim().min(1).max(1000).nullable().optional(),
+})
+
+export type RejectFeedbackRequest = z.infer<typeof rejectFeedbackRequestSchema>

@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { asc, eq } from 'drizzle-orm'
+import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
 import type { DomainError, Result } from '../../../shared/result'
-import { FeedbackNotPendingError } from '../../domain/claim-errors'
+import { FeedbackAlreadySubmittedError } from '../../domain/claim-errors'
 import { Feedback, type FeedbackState, type RejectionReason } from '../../domain/feedback'
 import type { FeedbackRepository } from '../../domain/feedback.repository'
 import { ReportField } from '../../domain/report'
@@ -47,11 +48,14 @@ function toFeedback(row: Row): Feedback {
     rejectionNote: row.rejectionNote,
     submittedAt: row.submittedAt,
     settledAt: row.settledAt,
+    automatic: row.automatic,
   })
 }
 
 @Injectable()
 export class DrizzleFeedbackRepository implements FeedbackRepository {
+  constructor(@Inject(DOMAIN_EVENT_COLLECTOR) private readonly events: DomainEventCollector) {}
+
   async findById(id: EntityId): Promise<Feedback | null> {
     const rows = await getDb().select().from(feedbacks).where(eq(feedbacks.id, id.value)).limit(1)
     const row = rows[0]
@@ -103,6 +107,7 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
       rejectionNote: feedback.rejectionNote,
       submittedAt: feedback.submittedAt,
       settledAt: feedback.settledAt,
+      automatic: feedback.wasAutomatic,
     }
 
     try {
@@ -117,14 +122,19 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
             rejectionReason: row.rejectionReason,
             rejectionNote: row.rejectionNote,
             settledAt: row.settledAt,
+            automatic: row.automatic,
             updatedAt: new Date(),
           },
         })
     } catch (error) {
       if (isUniqueViolation(error, ONE_PER_CLAIM)) {
-        throw new FeedbackNotPendingError('this slot already has a report')
+        throw new FeedbackAlreadySubmittedError('this slot already has a report')
       }
       throw error
     }
+
+    // drained here rather than by the use case, so an aggregate's events cannot
+    // be published without the write that produced them having landed (ARCH-39)
+    this.events.collect(feedback.pullEvents())
   }
 }

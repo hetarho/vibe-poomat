@@ -1,7 +1,10 @@
 import { Global, Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
+import { CreditModule } from '../credit/credit.module'
 import { ProjectModule } from '../project/project.module'
 import {
+  CREDIT_OPERATIONS,
+  type CreditOperations,
   JOB_SCHEDULER,
   type JobScheduler,
   MISSION_READER,
@@ -15,6 +18,7 @@ import {
 import { JobsModule } from '../shared/infrastructure/jobs/jobs.module'
 import { ClaimSlotUseCase } from './application/claim-slot.use-case'
 import { ReadFeedbackUseCase } from './application/read-feedback.use-case'
+import { SettleFeedbackUseCase } from './application/settle-feedback.use-case'
 import { SubmitFeedbackUseCase } from './application/submit-feedback.use-case'
 import { CLAIM_REPOSITORY, type ClaimRepository } from './domain/claim.repository'
 import { FEEDBACK_REPOSITORY, type FeedbackRepository } from './domain/feedback.repository'
@@ -49,7 +53,7 @@ export class ClaimStoreModule {}
  * question crosses a boundary and so goes through a port, never a join (ARCH-14).
  */
 @Module({
-  imports: [AuthModule, ClaimStoreModule, JobsModule, ProjectModule],
+  imports: [AuthModule, ClaimStoreModule, CreditModule, JobsModule, ProjectModule],
   controllers: [ClaimsController, FeedbacksController],
   providers: [
     {
@@ -87,10 +91,38 @@ export class ClaimStoreModule {}
       useFactory: (feedbacks: FeedbackRepository, users: UserSummaryReader) =>
         new ReadFeedbackUseCase(feedbacks, users),
     },
+    {
+      provide: SettleFeedbackUseCase,
+      inject: [
+        FEEDBACK_REPOSITORY,
+        CLAIM_REPOSITORY,
+        MISSION_READER,
+        CREDIT_OPERATIONS,
+        USER_SUMMARY_READER,
+        JOB_SCHEDULER,
+        TRANSACTION_MANAGER,
+      ],
+      useFactory: (
+        feedbacks: FeedbackRepository,
+        claims: ClaimRepository,
+        missions: MissionReader,
+        credits: CreditOperations,
+        users: UserSummaryReader,
+        jobs: JobScheduler,
+        transactions: TransactionManager,
+      ) =>
+        new SettleFeedbackUseCase(feedbacks, claims, missions, credits, users, jobs, transactions),
+    },
     ReleaseSlotJob,
     WarnMakerJob,
     AutoAcceptFeedbackJob,
   ],
-  exports: [ClaimStoreModule, ClaimSlotUseCase, SubmitFeedbackUseCase, ReadFeedbackUseCase],
+  exports: [
+    ClaimStoreModule,
+    ClaimSlotUseCase,
+    SubmitFeedbackUseCase,
+    ReadFeedbackUseCase,
+    SettleFeedbackUseCase,
+  ],
 })
 export class FeedbackModule {}

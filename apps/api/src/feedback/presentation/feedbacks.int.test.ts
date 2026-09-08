@@ -324,7 +324,7 @@ describe('feedback reports, against a real PostgreSQL', () => {
       // T027 owns the settle endpoint; the row is what the read has to render
       await db.execute(sql`
         update feedbacks
-        set state = 'rejected', rejection_reason = 'no-substance', rejection_note = 'too thin',
+        set state = 'rejected', rejection_reason = 'no_substance', rejection_note = 'too thin',
             settled_at = now()
         where id = ${written.id}
       `)
@@ -333,7 +333,7 @@ describe('feedback reports, against a real PostgreSQL', () => {
 
       const body = contract.feedbackSchema.parse(response.json())
       expect(body.state).toBe('rejected')
-      expect(body.rejectionReason).toBe('no-substance')
+      expect(body.rejectionReason).toBe('no_substance')
       expect(body.rejectionNote).toBe('too thin')
     })
 

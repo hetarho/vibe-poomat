@@ -7,9 +7,11 @@ import { WRITE_THROTTLER } from '../../shared/infrastructure/throttling/throttle
 import { CurrentUser, Public, unwrap } from '../../shared/presentation'
 import type { FeedbackView } from '../application/feedback-view'
 import { ReadFeedbackUseCase } from '../application/read-feedback.use-case'
+import { SettleFeedbackUseCase } from '../application/settle-feedback.use-case'
 import { SubmitFeedbackUseCase } from '../application/submit-feedback.use-case'
 
 class SubmitFeedbackDto extends createZodDto(contract.submitFeedbackRequestSchema) {}
+class RejectFeedbackDto extends createZodDto(contract.rejectFeedbackRequestSchema) {}
 
 function render(view: FeedbackView): contract.Feedback {
   return {
@@ -30,6 +32,7 @@ export class FeedbacksController {
   constructor(
     private readonly submit: SubmitFeedbackUseCase,
     private readonly read: ReadFeedbackUseCase,
+    private readonly settlement: SettleFeedbackUseCase,
   ) {}
 
   @Post('claims/:claimId/feedback')
@@ -65,6 +68,42 @@ export class FeedbacksController {
   @ApiOperation({ summary: 'A submitted report' })
   async byId(@Param('id') id: string): Promise<contract.Feedback> {
     return render(unwrap(await this.read.byId(id)))
+  }
+
+  /**
+   * FDBK-6. Both answers are 200 rather than POST's default 201: a decision
+   * creates nothing, it finishes something.
+   */
+  @Post('feedbacks/:id/accept')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [WRITE_THROTTLER]: {} })
+  @ApiOperation({ summary: 'Accept a report and pay the feedbacker' })
+  async accept(
+    @Param('id') id: string,
+    @CurrentUser() actorId: string,
+  ): Promise<contract.Feedback> {
+    return render(unwrap(await this.settlement.accept({ feedbackId: id, actorId })))
+  }
+
+  @Post('feedbacks/:id/reject')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ [WRITE_THROTTLER]: {} })
+  @ApiOperation({ summary: 'Reject a report with a reason the feedbacker can read' })
+  async reject(
+    @Param('id') id: string,
+    @CurrentUser() actorId: string,
+    @Body() body: RejectFeedbackDto,
+  ): Promise<contract.Feedback> {
+    return render(
+      unwrap(
+        await this.settlement.reject({
+          feedbackId: id,
+          actorId,
+          reason: body.reason,
+          note: body.note ?? null,
+        }),
+      ),
+    )
   }
 
   @Get('missions/:missionId/feedbacks')

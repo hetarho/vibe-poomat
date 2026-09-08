@@ -21,6 +21,8 @@ export type FeedbackView = {
   rejectionNote: string | null
   submittedAt: Date
   settledAt: Date | null
+  /** FDBK-7: whether the clock settled it rather than the maker. */
+  automatic: boolean
 }
 
 export function toFeedbackView(
@@ -43,5 +45,6 @@ export function toFeedbackView(
     rejectionNote: feedback.rejectionNote,
     submittedAt: feedback.submittedAt,
     settledAt: feedback.settledAt,
+    automatic: feedback.wasAutomatic,
   }
 }

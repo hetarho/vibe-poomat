@@ -1,0 +1,1 @@
+ALTER TABLE "feedbacks" ADD COLUMN "automatic" boolean DEFAULT false NOT NULL;

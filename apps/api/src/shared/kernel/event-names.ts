@@ -17,6 +17,8 @@ export const CROSS_CONTEXT_EVENTS = {
   claimReleased: 'feedback.claim-released',
   /** A report landed and is waiting on the maker (FDBK-3). */
   feedbackSubmitted: 'feedback.submitted',
+  /** The maker has not answered in 48 hours and has 24 left (FDBK-7). */
+  autoAcceptWarning: 'feedback.auto-accept-warning',
   /** One slot's credit moved (CRED-4). The aggregate id is the feedback. */
   slotSettled: 'feedback.slot-settled',
 } as const

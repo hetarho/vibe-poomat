@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import type { SlotOccupancy } from '../../../shared/application'
-import { NO_OCCUPANCY } from '../../../shared/application'
+import {
+  DOMAIN_EVENT_COLLECTOR,
+  type DomainEventCollector,
+  NO_OCCUPANCY,
+} from '../../../shared/application'
 import { getDb } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
 import type { ClaimRepository } from '../../domain/claim.repository'
@@ -39,6 +43,8 @@ function tally(
 
 @Injectable()
 export class DrizzleClaimRepository implements ClaimRepository {
+  constructor(@Inject(DOMAIN_EVENT_COLLECTOR) private readonly events: DomainEventCollector) {}
+
   async findById(id: EntityId): Promise<FeedbackClaim | null> {
     const rows = await getDb()
       .select()
@@ -145,5 +151,9 @@ export class DrizzleClaimRepository implements ClaimRepository {
         target: feedbackClaims.id,
         set: { state: row.state, releasedAt: row.releasedAt, updatedAt: row.updatedAt },
       })
+
+    // drained here rather than by the use case, so an aggregate's events cannot
+    // be published without the write that produced them having landed (ARCH-39)
+    this.events.collect(claim.pullEvents())
   }
 }

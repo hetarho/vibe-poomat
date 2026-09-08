@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { and, eq } from 'drizzle-orm'
+import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
 import type { DomainError, Result } from '../../../shared/result'
@@ -36,6 +37,8 @@ function toMission(row: Row): Mission {
 
 @Injectable()
 export class DrizzleMissionRepository implements MissionRepository {
+  constructor(@Inject(DOMAIN_EVENT_COLLECTOR) private readonly events: DomainEventCollector) {}
+
   async findById(id: EntityId): Promise<Mission | null> {
     const rows = await getDb().select().from(missions).where(eq(missions.id, id.value)).limit(1)
     const row = rows[0]
@@ -87,5 +90,9 @@ export class DrizzleMissionRepository implements MissionRepository {
       }
       throw error
     }
+
+    // drained here rather than by the use case, so an aggregate's events cannot
+    // be published without the write that produced them having landed (ARCH-39)
+    this.events.collect(mission.pullEvents())
   }
 }
