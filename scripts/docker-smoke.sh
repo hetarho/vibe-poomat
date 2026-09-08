@@ -89,5 +89,9 @@ log 'checking the web app'
 expect_status "$WEB_URL/" 200
 expect_body "$WEB_URL/" '<footer'
 expect_body "$WEB_URL/" 'Trade real feedback'
+# the header is server-rendered from the session the api answered with, so this
+# proves the whole SSR round trip and not just that a page came back
+expect_body "$WEB_URL/" 'Sign in'
+expect_body "$WEB_URL/sign-in?error=AUTH_PROVIDER_DENIED" 'provider refused'
 
 log 'docker smoke passed'

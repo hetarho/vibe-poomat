@@ -4,7 +4,7 @@ export const PRODUCT_NAME = 'vibe poomat'
 
 type AppShellProps = {
   children: ReactNode
-  /** Filled by the AUTH tasks; empty here on purpose. */
+  /** The root route puts the header's account corner here; the shell stays unaware of auth. */
   authSlot?: ReactNode
 }
 

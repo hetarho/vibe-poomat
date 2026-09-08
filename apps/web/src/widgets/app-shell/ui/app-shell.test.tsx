@@ -11,7 +11,8 @@ describe('AppShell', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent(PRODUCT_NAME)
   })
 
-  it('leaves the auth slot empty until the AUTH tasks fill it', () => {
+  /** The shell stays unaware of auth; the root route is what fills the slot. */
+  it('leaves the auth slot empty when nothing is put in it', () => {
     render(<AppShell>body</AppShell>)
 
     expect(screen.getByTestId('auth-slot')).toBeEmptyDOMElement()

@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T032 | web: auth shell & sign-in | AUTH ARCH | T008 T019 | todo |
 | T033 | web: profile & settings | AUTH CRED FDBK ARCH | T032 T020 T021 | todo |
 | T034 | web: project create & edit | PROJ ARCH | T032 T022 T014 | todo |
 | T035 | web: feed, project detail & upvote | PROJ ARCH | T032 T024 | todo |
@@ -36,12 +35,14 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T032 — the web auth shell, which every other web task depends on
-- order: T032-T039 web → T040 e2e; the api is complete
+- implement-task T033 — web profile & settings, or T034/T035; all three are unblocked
+- order: T033-T039 web → T040 e2e; the api is complete
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
 - update-ssot candidate: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031 result)
 
 ## log
+- 260908 T032 done: session resolved once in the root beforeLoad with the cookie forwarded during SSR, so the header never flashes the wrong state; sign-in as a dialog carrying returnTo, /sign-in for the callback's ?error=, requireSession as a beforeLoad guard; smoke now asserts the server-rendered header
+- 260908 note: the account menu links to /users/:handle and /settings with plain anchors — T033 turns them into typed Links once those routes exist
 - 260908 T031 done: AUTH-9's sequence across four contexts in one transaction, each asked through its own port, with the step order exported and asserted; pending reports found by maker_id because closing a mission settles nothing; the session cookie's name moved to shared/presentation so deletion can clear it
 - 260908 T030 done: notification context subscribing to five published events for NOTI-2's seven email types, lazy per-type opt-out with the credit-moving warning always on, HMAC unsubscribe links, seven React Email templates; each event's published payload is now declared in the kernel and implemented by the emitting class
 - 260908 note: web must build /feedbacks/:id, /projects/:id and /settings/notifications — every notification email deep-links to them (T032-T039)
@@ -60,5 +61,3 @@
 - 260908 T019 done: global SessionGuard with @Public in shared/presentation, /auth/me + /auth/logout, hourly session.cleanup via a new JobHandler.cron; uploads is now authenticated, smoke asserts the 401
 - 260908 T018 done: arctic OAuth start+callback behind redirect-only endpoints, sign-in use case with all four AUTH-5 branches, session cookie + rotation, AccountCreated after commit; arctic is ESM so it loads via import() in the module factory
 - 260908 note: 4 pre-existing biome warnings in shared int tests (unused import/var, non-null assertion) — candidates for review-code
-- 260908 T017 done: auth schema (citext handle, partial verified-email index), User/Session/ProviderIdentity domain, three Drizzle repositories; isUniqueViolation now walks Drizzle's cause chain
-- 260908 T016 done: GHCR buildx push, ssh+compose roll behind Caddy with migrate-first and a tag roll back; docker-smoke.sh gained SMOKE_REMOTE; actionlint wrapper now ignores its stale vars context
