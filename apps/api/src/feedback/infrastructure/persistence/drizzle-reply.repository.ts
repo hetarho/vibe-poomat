@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
@@ -55,6 +55,14 @@ export class DrizzleReplyRepository implements ReplyRepository {
     `)
 
     return rows.map(toReply)
+  }
+
+  /** One statement: a reply is immutable (FDBK-5), so there is no aggregate path. */
+  async anonymiseAuthor(userId: EntityId): Promise<void> {
+    await getDb()
+      .update(feedbackReplies)
+      .set({ authorId: null })
+      .where(eq(feedbackReplies.authorId, userId.value))
   }
 
   async save(reply: FeedbackReply): Promise<void> {

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AccountModule } from './account/account.module'
 import { AuthModule } from './auth/auth.module'
 import { CreditModule } from './credit/credit.module'
 import { FeedbackModule } from './feedback/feedback.module'
@@ -35,6 +36,7 @@ import { UploadsModule } from './uploads/uploads.module'
     ProjectModule,
     FeedbackModule,
     NotificationModule,
+    AccountModule,
     UploadsModule,
   ],
 })

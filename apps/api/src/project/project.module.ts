@@ -11,6 +11,7 @@ import {
   JOB_SCHEDULER,
   type JobScheduler,
   MISSION_READER,
+  PROJECT_PURGE,
   SLOT_OCCUPANCY_READER,
   type SlotOccupancyReader,
   TRANSACTION_MANAGER,
@@ -31,6 +32,7 @@ import { ACTIVE_MISSION_READER, type ActiveMissionReader } from './domain/missio
 import { MISSION_REPOSITORY, type MissionRepository } from './domain/mission-store.repository'
 import { PROJECT_REPOSITORY, type ProjectRepository } from './domain/project.repository'
 import { UPVOTE_REPOSITORY, type UpvoteRepository } from './domain/upvote.repository'
+import { ProjectAccountPurge } from './infrastructure/account-purge-adapter'
 import { CompleteMissionOnSlotSettled } from './infrastructure/complete-mission-on-slot-settled'
 import { ExpireMissionJob } from './infrastructure/expire-mission.job'
 import { MissionAccessAdapter } from './infrastructure/mission-access-adapter'
@@ -141,12 +143,16 @@ import { ProjectsController } from './presentation/projects.controller'
         storage: FileStorage,
       ) => new GetProjectUseCase(repository, missions, users, storage),
     },
+    ProjectAccountPurge,
+    // AUTH-9 asks this context for two things and nothing else
+    { provide: PROJECT_PURGE, useExisting: ProjectAccountPurge },
   ],
   exports: [
     PROJECT_REPOSITORY,
     MISSION_REPOSITORY,
     ACTIVE_MISSION_READER,
     MISSION_READER,
+    PROJECT_PURGE,
     ManageMissionUseCase,
   ],
 })

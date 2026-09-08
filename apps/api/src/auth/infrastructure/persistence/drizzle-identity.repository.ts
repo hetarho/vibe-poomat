@@ -56,6 +56,10 @@ export class DrizzleIdentityRepository implements IdentityRepository {
     return rows.map(toProviderIdentity)
   }
 
+  async deleteAllFor(userId: EntityId): Promise<void> {
+    await getDb().delete(identities).where(eq(identities.userId, userId.value))
+  }
+
   async save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>> {
     const row = fromProviderIdentity(identity)
 

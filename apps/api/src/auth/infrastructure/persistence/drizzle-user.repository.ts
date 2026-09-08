@@ -81,6 +81,11 @@ export class DrizzleUserRepository implements UserRepository {
    * Exhausting the batch means either a very popular username or a race, and a
    * random suffix ends the walk rather than paging further through it.
    */
+  /** AUTH-9: the row itself, with nothing left behind to reconstruct it from. */
+  async delete(id: EntityId): Promise<void> {
+    await getDb().delete(users).where(eq(users.id, id.value))
+  }
+
   async generateAvailableHandle(seed: string): Promise<Handle> {
     const candidates = handleCandidatesFrom(seed, CANDIDATE_BATCH)
     const rows = await getDb()

@@ -30,6 +30,12 @@ export class InMemoryProjectRepository implements ProjectRepository {
     return this.rows.get(id.value) ?? null
   }
 
+  async listLiveByOwner(ownerId: EntityId): Promise<Project[]> {
+    return [...this.rows.values()].filter(
+      (project) => project.ownerId.equals(ownerId) && !project.isDeleted(),
+    )
+  }
+
   async save(project: Project): Promise<void> {
     this.rows.set(project.id.value, project)
   }

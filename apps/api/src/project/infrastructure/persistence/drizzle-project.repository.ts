@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, asc, eq, isNull } from 'drizzle-orm'
 import { getDb } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
 import type { DomainError, Result } from '../../../shared/result'
@@ -41,6 +41,16 @@ export class DrizzleProjectRepository implements ProjectRepository {
     const row = rows[0]
 
     return row === undefined ? null : toProject(row)
+  }
+
+  async listLiveByOwner(ownerId: EntityId): Promise<Project[]> {
+    const rows = await getDb()
+      .select()
+      .from(projects)
+      .where(and(eq(projects.ownerId, ownerId.value), isNull(projects.deletedAt)))
+      .orderBy(asc(projects.id))
+
+    return rows.map(toProject)
   }
 
   /**

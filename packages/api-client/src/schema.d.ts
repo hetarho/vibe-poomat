@@ -131,7 +131,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete your account, irreversibly and immediately */
+        delete: operations["AccountController_deleteMe"];
         options?: never;
         head?: never;
         /** Edit your own profile */
@@ -510,6 +511,9 @@ export interface components {
             auto_accepted?: boolean;
             mission_ended?: boolean;
         };
+        DeleteAccountDto: {
+            confirm: string;
+        };
         CreateUploadUrlDto: {
             /** @enum {string} */
             purpose: "avatar" | "project-cover";
@@ -644,6 +648,27 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AccountController_deleteMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountDto"];
+            };
+        };
         responses: {
             200: {
                 headers: {

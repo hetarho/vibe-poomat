@@ -3,6 +3,7 @@ import { APP_GUARD, Reflector } from '@nestjs/core'
 import { CreditModule } from '../credit/credit.module'
 import { ClaimStoreModule } from '../feedback/claim-store.module'
 import {
+  ACCOUNT_ERASURE,
   CREDIT_SUMMARY_READER,
   type CreditSummaryReader,
   FILE_STORAGE,
@@ -31,6 +32,7 @@ import { IDENTITY_REPOSITORY, type IdentityRepository } from './domain/identity.
 import { SESSION_REPOSITORY, type SessionRepository } from './domain/session.repository'
 import { SESSION_ID_GENERATOR, type SessionIdGenerator } from './domain/session-id-generator'
 import { USER_REPOSITORY, type UserRepository } from './domain/user.repository'
+import { AccountErasureAdapter } from './infrastructure/account-erasure-adapter'
 import { NotificationRecipientAdapter } from './infrastructure/notification-recipient-adapter'
 import { ArcticOAuthRegistry } from './infrastructure/oauth/arctic-oauth-registry'
 import { DrizzleIdentityRepository } from './infrastructure/persistence/drizzle-identity.repository'
@@ -165,6 +167,9 @@ import { UsersController } from './presentation/users.controller'
     // the address, which AUTH-4 keeps for notifications and nothing else, so it
     // travels under its own token rather than on the summary everyone holds
     { provide: NOTIFICATION_RECIPIENT_READER, useExisting: NotificationRecipientAdapter },
+    AccountErasureAdapter,
+    // AUTH-9's last step, reachable only by the sequence that owns the order
+    { provide: ACCOUNT_ERASURE, useExisting: AccountErasureAdapter },
     // Global, and registered from here because the guard belongs to this context.
     // AppModule imports ThrottlingModule first, so an anonymous flood is refused
     // before any of this reaches the database.
@@ -183,6 +188,7 @@ import { UsersController } from './presentation/users.controller'
     OAUTH_PROVIDERS,
     USER_SUMMARY_READER,
     NOTIFICATION_RECIPIENT_READER,
+    ACCOUNT_ERASURE,
     AuthenticateSessionUseCase,
   ],
 })

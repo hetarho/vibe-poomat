@@ -132,6 +132,16 @@ export class DrizzleClaimRepository implements ClaimRepository {
     return occupancy
   }
 
+  /** Held only: a submitted slot is spoken for and a settled one is spent. */
+  async listHeldBy(userId: EntityId): Promise<FeedbackClaim[]> {
+    const rows = await getDb()
+      .select()
+      .from(feedbackClaims)
+      .where(and(eq(feedbackClaims.userId, userId.value), eq(feedbackClaims.state, 'held')))
+
+    return rows.map(toClaim)
+  }
+
   async save(claim: FeedbackClaim): Promise<void> {
     const row = {
       id: claim.id.value,

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { eq, lte } from 'drizzle-orm'
 import { getDb } from '../../../shared/db'
+import type { EntityId } from '../../../shared/kernel'
 import type { Session } from '../../domain/session'
 import type { SessionRepository } from '../../domain/session.repository'
 import type { SessionId } from '../../domain/session-id'
@@ -41,6 +42,11 @@ export class DrizzleSessionRepository implements SessionRepository {
    * A lapsed row is already refused by the guard, so this only reclaims space —
    * which is why it can be an hourly sweep rather than part of any request.
    */
+  /** AUTH-9: signed out everywhere, in the same transaction the account goes. */
+  async deleteAllFor(userId: EntityId): Promise<void> {
+    await getDb().delete(sessions).where(eq(sessions.userId, userId.value))
+  }
+
   async deleteExpired(now: Date): Promise<number> {
     const removed = await getDb()
       .delete(sessions)

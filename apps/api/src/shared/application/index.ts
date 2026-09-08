@@ -1,3 +1,5 @@
+export type { AccountErasure, FeedbackPurge, ProjectPurge } from './account-purge'
+export { ACCOUNT_ERASURE, FEEDBACK_PURGE, PROJECT_PURGE } from './account-purge'
 export type { CreditOperations } from './credit-operations'
 export { CREDIT_OPERATIONS } from './credit-operations'
 export type { CreditSummary, CreditSummaryReader } from './credit-summary'

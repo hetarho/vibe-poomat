@@ -1,3 +1,4 @@
+import type { EntityId } from '../../shared/kernel'
 import type { Session } from './session'
 import type { SessionId } from './session-id'
 
@@ -9,4 +10,6 @@ export type SessionRepository = {
   delete(id: SessionId): Promise<void>
   /** The hourly sweep. Returns how many rows went, so the job can say so. */
   deleteExpired(now: Date): Promise<number>
+  /** AUTH-9: every session the account holds, on every device it holds one from. */
+  deleteAllFor(userId: EntityId): Promise<void>
 }

@@ -17,4 +17,6 @@ export type UserRepository = {
   save(user: User): Promise<Result<void, HandleTakenError>>
   /** AUTH-6: the seed, then the seed with a numeric suffix, until one is free. */
   generateAvailableHandle(seed: string): Promise<Handle>
+  /** AUTH-9: irreversible, with no grace period and no tombstone. */
+  delete(id: EntityId): Promise<void>
 }

@@ -17,4 +17,6 @@ export type IdentityRepository = {
   /** Every provider attached to one account, oldest first (AUTH-5). */
   listByUserId(userId: EntityId): Promise<ProviderIdentity[]>
   save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>>
+  /** AUTH-9: the provider links go, so signing in again creates a new account. */
+  deleteAllFor(userId: EntityId): Promise<void>
 }

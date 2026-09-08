@@ -15,5 +15,7 @@ export type ClaimRepository = {
   lockOccupancy(missionId: EntityId): Promise<SlotOccupancy>
   occupancyFor(missionId: string): Promise<SlotOccupancy>
   occupancyForMany(missionIds: readonly string[]): Promise<Map<string, SlotOccupancy>>
+  /** AUTH-9: every slot this account is still sitting on, so it can hand them back. */
+  listHeldBy(userId: EntityId): Promise<FeedbackClaim[]>
   save(claim: FeedbackClaim): Promise<void>
 }

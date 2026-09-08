@@ -13,6 +13,11 @@ export {
 } from './http-status'
 export { PresentationModule } from './presentation.module'
 export { IS_PUBLIC, Public } from './public.decorator'
+export {
+  clearedSessionCookieOptions,
+  SESSION_COOKIE,
+  SESSION_COOKIE_ATTRIBUTES,
+} from './session-cookie'
 export { unwrap } from './unwrap'
 export {
   VALIDATION_FAILED_CODE,

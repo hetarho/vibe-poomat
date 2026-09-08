@@ -71,6 +71,12 @@ class InMemoryClaims implements ClaimRepository {
     return all
   }
 
+  async listHeldBy(userId: EntityId): Promise<FeedbackClaim[]> {
+    return [...this.rows.values()].filter(
+      (claim) => claim.userId.equals(userId) && claim.state === 'held',
+    )
+  }
+
   async save(claim: FeedbackClaim): Promise<void> {
     this.rows.set(claim.id.value, claim)
     this.pulled.push(...claim.pullEvents())

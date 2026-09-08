@@ -20,5 +20,7 @@ export type ReplyRepository = {
     feedbackId: EntityId,
     options: { limit: number; after?: ThreadCursorKeys },
   ): Promise<FeedbackReply[]>
+  /** FDBK-9: the reply stays in the thread, the name on it does not. */
+  anonymiseAuthor(userId: EntityId): Promise<void>
   save(reply: FeedbackReply): Promise<void>
 }

@@ -5,6 +5,7 @@ import { ProjectModule } from '../project/project.module'
 import {
   CREDIT_OPERATIONS,
   type CreditOperations,
+  FEEDBACK_PURGE,
   JOB_SCHEDULER,
   type JobScheduler,
   MISSION_READER,
@@ -24,6 +25,7 @@ import { ClaimStoreModule } from './claim-store.module'
 import { CLAIM_REPOSITORY, type ClaimRepository } from './domain/claim.repository'
 import { FEEDBACK_REPOSITORY, type FeedbackRepository } from './domain/feedback.repository'
 import { REPLY_REPOSITORY, type ReplyRepository } from './domain/reply.repository'
+import { FeedbackAccountPurge } from './infrastructure/account-purge-adapter'
 import { DrizzleReplyRepository } from './infrastructure/persistence/drizzle-reply.repository'
 import { ReleaseSlotJob } from './infrastructure/release-slot.job'
 import { AutoAcceptFeedbackJob, WarnMakerJob } from './infrastructure/settlement-timers.job'
@@ -118,6 +120,9 @@ import { FeedbacksController } from './presentation/feedbacks.controller'
     ReleaseSlotJob,
     WarnMakerJob,
     AutoAcceptFeedbackJob,
+    FeedbackAccountPurge,
+    // AUTH-9 asks this context for three things and nothing else
+    { provide: FEEDBACK_PURGE, useExisting: FeedbackAccountPurge },
   ],
   exports: [
     ClaimStoreModule,
@@ -126,6 +131,7 @@ import { FeedbacksController } from './presentation/feedbacks.controller'
     ReadFeedbackUseCase,
     SettleFeedbackUseCase,
     ThreadUseCase,
+    FEEDBACK_PURGE,
   ],
 })
 export class FeedbackModule {}

@@ -120,3 +120,14 @@ export const SIGN_IN_ERROR_CODES = [
 ] as const
 
 export type SignInErrorCode = (typeof SIGN_IN_ERROR_CODES)[number]
+
+/**
+ * AUTH-9's typed confirmation. The handle rather than a fixed word like DELETE,
+ * because a person who cannot name the account they are deleting is not sure
+ * enough to be deleting it — and there is no grace period to fall back on.
+ */
+export const deleteAccountRequestSchema = z.object({
+  confirm: handleSchema,
+})
+
+export type DeleteAccountRequest = z.infer<typeof deleteAccountRequestSchema>

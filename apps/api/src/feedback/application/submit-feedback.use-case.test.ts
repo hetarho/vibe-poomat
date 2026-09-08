@@ -67,6 +67,12 @@ class InMemoryClaims implements ClaimRepository {
     return new Map()
   }
 
+  async listHeldBy(userId: EntityId): Promise<FeedbackClaim[]> {
+    return [...this.rows.values()].filter(
+      (claim) => claim.userId.equals(userId) && claim.state === 'held',
+    )
+  }
+
   async save(claim: FeedbackClaim): Promise<void> {
     this.rows.set(claim.id.value, claim)
   }
@@ -90,6 +96,18 @@ class InMemoryFeedbacks implements FeedbackRepository {
 
   async listForMission(missionId: EntityId): Promise<Feedback[]> {
     return [...this.rows.values()].filter((feedback) => feedback.missionId.equals(missionId))
+  }
+
+  readonly anonymised = new Set<string>()
+
+  async listPendingForMaker(makerId: EntityId): Promise<Feedback[]> {
+    return [...this.rows.values()].filter(
+      (feedback) => feedback.makerId.equals(makerId) && feedback.state === 'pending',
+    )
+  }
+
+  async anonymiseAuthor(userId: EntityId): Promise<void> {
+    this.anonymised.add(userId.value)
   }
 
   async save(feedback: Feedback): Promise<void> {

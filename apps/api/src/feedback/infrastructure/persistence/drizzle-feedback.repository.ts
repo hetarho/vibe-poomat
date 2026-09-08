@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { asc, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
@@ -83,6 +83,27 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
       .orderBy(asc(feedbacks.submittedAt))
 
     return rows.map(toFeedback)
+  }
+
+  async listPendingForMaker(makerId: EntityId): Promise<Feedback[]> {
+    const rows = await getDb()
+      .select()
+      .from(feedbacks)
+      .where(and(eq(feedbacks.makerId, makerId.value), eq(feedbacks.state, 'pending')))
+      .orderBy(asc(feedbacks.submittedAt))
+
+    return rows.map(toFeedback)
+  }
+
+  /**
+   * A single statement, not a load-and-save: FDBK-4 makes the report immutable,
+   * so there is no aggregate method that could do this and nothing to announce.
+   */
+  async anonymiseAuthor(userId: EntityId): Promise<void> {
+    await getDb()
+      .update(feedbacks)
+      .set({ authorId: null, updatedAt: new Date() })
+      .where(eq(feedbacks.authorId, userId.value))
   }
 
   /**

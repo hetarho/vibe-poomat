@@ -66,6 +66,10 @@ export class InMemoryUserRepository implements UserRepository {
     return ok(undefined)
   }
 
+  async delete(id: EntityId): Promise<void> {
+    this.rows.delete(id.value)
+  }
+
   async generateAvailableHandle(seed: string): Promise<Handle> {
     const taken = new Set([...this.rows.values()].map((user) => user.handle.value))
     const free = handleCandidatesFrom(seed, 32).find((candidate) => !taken.has(candidate.value))
@@ -98,6 +102,12 @@ export class InMemoryIdentityRepository implements IdentityRepository {
     return this.rows.filter((row) => row.userId.equals(userId))
   }
 
+  async deleteAllFor(userId: EntityId): Promise<void> {
+    for (let index = this.rows.length - 1; index >= 0; index -= 1) {
+      if (this.rows[index]?.userId.equals(userId) === true) this.rows.splice(index, 1)
+    }
+  }
+
   async save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>> {
     const clash = await this.findByProviderId(identity.provider, identity.providerUserId)
     if (clash !== null && !clash.id.equals(identity.id)) {
@@ -123,6 +133,12 @@ export class InMemorySessionRepository implements SessionRepository {
 
   async delete(id: SessionId): Promise<void> {
     this.rows.delete(id.value)
+  }
+
+  async deleteAllFor(userId: EntityId): Promise<void> {
+    for (const [id, session] of this.rows) {
+      if (session.userId.equals(userId)) this.rows.delete(id)
+    }
   }
 
   async deleteExpired(now: Date): Promise<number> {

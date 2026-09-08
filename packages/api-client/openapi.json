@@ -162,6 +162,29 @@
         "tags": [
           "Users"
         ]
+      },
+      "delete": {
+        "operationId": "AccountController_deleteMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete your account, irreversibly and immediately",
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/api/v1/users/me/handle": {
@@ -1108,6 +1131,20 @@
             "type": "boolean"
           }
         }
+      },
+      "DeleteAccountDto": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 20,
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "required": [
+          "confirm"
+        ]
       },
       "CreateUploadUrlDto": {
         "type": "object",
