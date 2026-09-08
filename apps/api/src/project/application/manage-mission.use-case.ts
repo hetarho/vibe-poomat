@@ -1,4 +1,5 @@
 import type { CreditOperations, JobScheduler, TransactionManager } from '../../shared/application'
+import { type SlotOccupancyReader } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
 import { type DomainError, err, ForbiddenError, ok, type Result } from '../../shared/result'
 import { Mission } from '../domain/mission'
@@ -10,11 +11,7 @@ import {
   SlotsNotAllowedError,
   TaskTextNotAllowedError,
 } from '../domain/mission-errors'
-import {
-  type MissionRepository,
-  refundableSlots,
-  type SlotOccupancyReader,
-} from '../domain/mission-store.repository'
+import { type MissionRepository, refundableSlots } from '../domain/mission-store.repository'
 import { MissionQuestions, Slots, TaskText } from '../domain/mission-values'
 import type { ProjectRepository } from '../domain/project.repository'
 import { ProjectNotFoundError } from '../domain/project-errors'

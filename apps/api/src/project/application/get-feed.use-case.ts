@@ -1,4 +1,5 @@
 import type { FileStorage, UserSummary, UserSummaryReader } from '../../shared/application'
+import { type SlotOccupancyReader } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import {
@@ -7,7 +8,7 @@ import {
   type FeedSort,
   POPULAR_WINDOW_DAYS,
 } from '../domain/feed.query'
-import { claimableSlots, type SlotOccupancyReader } from '../domain/mission-store.repository'
+import { claimableSlots } from '../domain/mission-store.repository'
 import { PROJECT_TAGS, type ProjectTag } from '../domain/project-values'
 import type { UpvoteRepository } from '../domain/upvote.repository'
 import { decodeFeedCursor, encodeFeedCursor, type FeedCursorNotAllowedError } from './feed-cursor'

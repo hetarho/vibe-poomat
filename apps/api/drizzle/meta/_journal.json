@@ -43,6 +43,13 @@
       "when": 1788839837707,
       "tag": "0005_boring_ser_duncan",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788840710678,
+      "tag": "0006_fair_miracleman",
+      "breakpoints": true
     }
   ]
 }

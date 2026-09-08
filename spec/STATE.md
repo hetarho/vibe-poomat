@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T025 | feedback slots: claim & release | FDBK PROJ ARCH | T023 T012 | todo |
 | T026 | feedback report submit | FDBK ARCH | T025 | todo |
 | T027 | feedback settle: accept, reject, auto-accept | FDBK CRED PROJ ARCH | T026 T021 T012 | todo |
 | T028 | feedback thread | FDBK AUTH ARCH | T026 | todo |
@@ -43,11 +42,13 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T025 — feedback slot claim and release, which fills in the SLOT_OCCUPANCY_READER stub
-- order: T025-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T026 — the feedback report submit, on top of a held claim
+- order: T026-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 note: PROJ-9 ranks on "has an open mission" not "has a takeable slot" — coarse once slots can be held (T024/T025 results); candidate for create-task
+- 260908 T025 done: 24h slot holds with FDBK-2 as a partial unique index, advisory-lock race on the last slot, release job + manual release; both project stubs replaced by the real claim store
 - 260908 T024 done: single-statement feed with a computed rank and keyset cursor, 7-day popular window, transactional upvote toggle; fixed ORDER BY 0 being an ordinal and a fractional-epoch keyset returning a row twice
 - 260908 T023 done: missions with escrow-on-open in one transaction, PROJ-5 as a partial unique index, close/expire refunding only unheld slots, expiry job + slot-settled completion handler; CREDIT_OPERATIONS published as the ledger write port
 - 260908 T022 done: project context with probe-verified live url, PROJ-7/8 mission locks behind an ACTIVE_MISSION_READER port stubbed until T023, soft delete owner-only; SessionGuard now identifies the caller on @Public() routes too
@@ -66,5 +67,3 @@
 - 260907 T010 done: distroless images for api+web, compose stack with a one-shot migrate service, docker-smoke.sh green end to end
 - 260907 T009 done: PR workflow (affected verify + coverage gate + contract check + playwright), actionlint in turbo lint
 - 260907 T008 done: per-request QueryClient with SSR hydration, api client + error copy, zustand convention in shared/model; @repo/config gained a ./web entry
-- 260907 T007 claimed (op5)
-- 260907 T007 done: TanStack Start SSR shell, FSD+Steiger, tailwind v4+shadcn seed, vitest jsdom; vitest catalog 3.2.7->4.1.11 (vite 8); e2e written but unrun (no browser libs)

@@ -11,6 +11,10 @@ export const CROSS_CONTEXT_EVENTS = {
   accountCreated: 'auth.account-created',
   /** A mission stopped taking feedback (PROJ-6). The aggregate id is the mission. */
   missionEnded: 'project.mission-ended',
+  /** Somebody took a slot (FDBK-1). The aggregate id is the claim. */
+  claimHeld: 'feedback.claim-held',
+  /** A slot went back, by hand or because the day ran out (FDBK-1). */
+  claimReleased: 'feedback.claim-released',
   /** One slot's credit moved (CRED-4). The aggregate id is the feedback. */
   slotSettled: 'feedback.slot-settled',
 } as const

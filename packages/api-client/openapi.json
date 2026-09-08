@@ -433,6 +433,54 @@
         ]
       }
     },
+    "/api/v1/missions/{missionId}/claims": {
+      "post": {
+        "operationId": "ClaimsController_claim",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Hold a slot on this mission for 24 hours",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/claims/{id}": {
+      "delete": {
+        "operationId": "ClaimsController_release",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Give your slot back before submitting",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "operationId": "UploadsController_create",

@@ -7,17 +7,17 @@ import type {
   UserSummary,
   UserSummaryReader,
 } from '../../shared/application'
-import { UrlUnreachableError } from '../../shared/application'
+import {
+  NO_OCCUPANCY,
+  type SlotOccupancy,
+  type SlotOccupancyReader,
+  UrlUnreachableError,
+} from '../../shared/application'
 import type { DomainEvent, EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import type { Mission } from '../domain/mission'
 import type { ActiveMissionReader, ActiveMissionSummary } from '../domain/mission.repository'
-import {
-  type MissionRepository,
-  NO_OCCUPANCY,
-  type SlotOccupancy,
-  type SlotOccupancyReader,
-} from '../domain/mission-store.repository'
+import { type MissionRepository } from '../domain/mission-store.repository'
 import type { Project } from '../domain/project'
 import type { ProjectRepository } from '../domain/project.repository'
 

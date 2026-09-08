@@ -10,6 +10,9 @@ import {
   type HttpProbe,
   JOB_SCHEDULER,
   type JobScheduler,
+  MISSION_READER,
+  SLOT_OCCUPANCY_READER,
+  type SlotOccupancyReader,
   TRANSACTION_MANAGER,
   type TransactionManager,
   USER_SUMMARY_READER,
@@ -25,17 +28,12 @@ import { ManageProjectUseCase } from './application/manage-project.use-case'
 import { ToggleUpvoteUseCase } from './application/toggle-upvote.use-case'
 import { FEED_QUERY, type FeedQuery } from './domain/feed.query'
 import { ACTIVE_MISSION_READER, type ActiveMissionReader } from './domain/mission.repository'
-import {
-  MISSION_REPOSITORY,
-  type MissionRepository,
-  SLOT_OCCUPANCY_READER,
-  type SlotOccupancyReader,
-} from './domain/mission-store.repository'
+import { MISSION_REPOSITORY, type MissionRepository } from './domain/mission-store.repository'
 import { PROJECT_REPOSITORY, type ProjectRepository } from './domain/project.repository'
 import { UPVOTE_REPOSITORY, type UpvoteRepository } from './domain/upvote.repository'
 import { CompleteMissionOnSlotSettled } from './infrastructure/complete-mission-on-slot-settled'
 import { ExpireMissionJob } from './infrastructure/expire-mission.job'
-import { NoSlotOccupancy } from './infrastructure/no-slot-occupancy'
+import { MissionAccessAdapter } from './infrastructure/mission-access-adapter'
 import { DrizzleActiveMissions } from './infrastructure/persistence/drizzle-active-missions'
 import { DrizzleFeedQuery } from './infrastructure/persistence/drizzle-feed.query'
 import { DrizzleMissionRepository } from './infrastructure/persistence/drizzle-mission.repository'
@@ -90,7 +88,6 @@ import { ProjectsController } from './presentation/projects.controller'
       ) => new ToggleUpvoteUseCase(repository, upvotes, transactions),
     },
     { provide: ACTIVE_MISSION_READER, useClass: DrizzleActiveMissions },
-    { provide: SLOT_OCCUPANCY_READER, useClass: NoSlotOccupancy },
     {
       provide: ManageMissionUseCase,
       inject: [
@@ -111,6 +108,9 @@ import { ProjectsController } from './presentation/projects.controller'
       ) => new ManageMissionUseCase(missions, repository, occupancy, credits, jobs, transactions),
     },
     ExpireMissionJob,
+    MissionAccessAdapter,
+    // what the feedback context may know about a mission (FDBK-1, FDBK-2)
+    { provide: MISSION_READER, useExisting: MissionAccessAdapter },
     CompleteMissionOnSlotSettled,
     {
       provide: ManageProjectUseCase,
@@ -142,6 +142,12 @@ import { ProjectsController } from './presentation/projects.controller'
       ) => new GetProjectUseCase(repository, missions, users, storage),
     },
   ],
-  exports: [PROJECT_REPOSITORY, MISSION_REPOSITORY, ACTIVE_MISSION_READER, ManageMissionUseCase],
+  exports: [
+    PROJECT_REPOSITORY,
+    MISSION_REPOSITORY,
+    ACTIVE_MISSION_READER,
+    MISSION_READER,
+    ManageMissionUseCase,
+  ],
 })
 export class ProjectModule {}

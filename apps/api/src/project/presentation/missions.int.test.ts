@@ -14,6 +14,7 @@ import { OAUTH_STATE_COOKIE, SESSION_COOKIE } from '../../auth/presentation/auth
 import { registerPlugins } from '../../bootstrap'
 import { CreditLedgerService } from '../../credit/application/credit-ledger.service'
 import { CreditModule } from '../../credit/credit.module'
+import { ClaimStoreModule } from '../../feedback/feedback.module'
 import { HTTP_PROBE } from '../../shared/application'
 import { ConfigModule } from '../../shared/config/config.module'
 import { DbModule } from '../../shared/db/db.module'
@@ -25,9 +26,8 @@ import { StorageModule } from '../../shared/infrastructure/storage/storage.modul
 import { PresentationModule } from '../../shared/presentation/presentation.module'
 import { ok } from '../../shared/result'
 import { ManageMissionUseCase } from '../application/manage-mission.use-case'
-import { SLOT_OCCUPANCY_READER } from '../domain/mission-store.repository'
 import { ProjectModule } from '../project.module'
-import { StubHttpProbe, StubSlotOccupancy } from '../test-support/project-doubles'
+import { StubHttpProbe } from '../test-support/project-doubles'
 
 const STATE = 'the-state'
 const SEED_CREDITS = 2
@@ -50,13 +50,11 @@ describe('missions, against a real PostgreSQL', () => {
   let app: NestFastifyApplication
   let db: Db
   let probe: StubHttpProbe
-  let occupancy: StubSlotOccupancy
   let credits: CreditLedgerService
   let missions: ManageMissionUseCase
 
   beforeAll(async () => {
     probe = new StubHttpProbe()
-    occupancy = new StubSlotOccupancy()
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -68,6 +66,7 @@ describe('missions, against a real PostgreSQL', () => {
         JobsModule,
         StorageModule,
         CreditModule,
+        ClaimStoreModule,
         AuthModule,
         ProjectModule,
       ],
@@ -76,8 +75,6 @@ describe('missions, against a real PostgreSQL', () => {
       .useValue(registry)
       .overrideProvider(HTTP_PROBE)
       .useValue(probe)
-      .overrideProvider(SLOT_OCCUPANCY_READER)
-      .useValue(occupancy)
       .compile()
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter())
@@ -278,7 +275,17 @@ describe('missions, against a real PostgreSQL', () => {
       const mission = contract.missionSchema.parse(
         (await openMission(session, projectId, { slots: SEED_CREDITS })).json(),
       )
-      occupancy.set(mission.id, { held: 1, submitted: 0, settled: 0 })
+      // a real claim row, which is what the mission counts against its slots
+      await db.execute(sql`
+        insert into feedback_claims (id, mission_id, user_id, state, held_until)
+        values (
+          ${'01920000-0000-7000-8000-0000000000d1'},
+          ${mission.id},
+          ${'01920000-0000-7000-8000-0000000000d2'},
+          'held',
+          now() + interval '1 day'
+        )
+      `)
 
       await app.inject({
         method: 'POST',

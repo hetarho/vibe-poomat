@@ -13,6 +13,7 @@ import { AuthModule } from '../../auth/auth.module'
 import { OAUTH_STATE_COOKIE, SESSION_COOKIE } from '../../auth/presentation/auth-cookies'
 import { registerPlugins } from '../../bootstrap'
 import { CreditModule } from '../../credit/credit.module'
+import { ClaimStoreModule } from '../../feedback/feedback.module'
 import { HTTP_PROBE } from '../../shared/application'
 import { ConfigModule } from '../../shared/config/config.module'
 import { DbModule } from '../../shared/db/db.module'
@@ -57,6 +58,7 @@ describe('the feed, against a real PostgreSQL', () => {
         JobsModule,
         StorageModule,
         CreditModule,
+        ClaimStoreModule,
         AuthModule,
         ProjectModule,
       ],
