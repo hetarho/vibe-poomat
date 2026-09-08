@@ -16,6 +16,7 @@ import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as PopularRouteImport } from './routes/popular'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as FeedbacksIdRouteImport } from './routes/feedbacks.$id'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as ProjectsNewRouteImport } from './routes/projects.new'
@@ -57,6 +58,11 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FeedbacksIdRoute = FeedbacksIdRouteImport.update({
   id: '/feedbacks/$id',
   path: '/feedbacks/$id',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/unsubscribe'
     | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/unsubscribe'
     | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/unsubscribe'
     | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   PopularRoute: typeof PopularRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   FeedbacksIdRoute: typeof FeedbacksIdRoute
   ProjectsIdRoute: typeof ProjectsIdRouteWithChildren
   ProjectsNewRoute: typeof ProjectsNewRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feedbacks/$id': {
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   PopularRoute: PopularRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   FeedbacksIdRoute: FeedbacksIdRoute,
   ProjectsIdRoute: ProjectsIdRouteWithChildren,
   ProjectsNewRoute: ProjectsNewRoute,

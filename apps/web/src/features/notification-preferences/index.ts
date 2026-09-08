@@ -1,7 +1,2 @@
-export {
-  NOTIFICATION_PREFERENCES_KEY,
-  notificationPreferencesQueryOptions,
-  useNotificationPreferences,
-  useSetNotificationPreference,
-} from './model/use-notification-preferences'
-export { ALWAYS_ON_NOTE, NotificationToggles } from './ui/notification-toggles'
+export { useSetNotificationPreference } from './model/use-set-preference'
+export { NotificationToggles } from './ui/notification-toggles'

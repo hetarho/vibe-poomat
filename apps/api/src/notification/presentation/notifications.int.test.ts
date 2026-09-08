@@ -462,9 +462,7 @@ describe('notifications, against a real PostgreSQL', () => {
       })
 
       expect(response.statusCode).toBe(303)
-      expect(response.headers.location).toContain(
-        '/settings/notifications?unsubscribed=thread_reply',
-      )
+      expect(response.headers.location).toContain('/unsubscribe?type=thread_reply')
 
       const after = await app.inject({
         method: 'GET',
@@ -477,7 +475,11 @@ describe('notifications, against a real PostgreSQL', () => {
       ])
     })
 
-    it('refuses a tampered token', async () => {
+    /**
+     * A person clicked a link in a mail client, so a refusal is a page too — and
+     * one that says what went wrong without saying whose account it was about.
+     */
+    it('refuses a tampered token, as a page rather than an error body', async () => {
       const session = await signIn('unsub-2', 'unsubtwo')
       const userId = await accountBehind(session)
       const token = tokens.sign({ userId, type: 'thread_reply' })
@@ -487,8 +489,11 @@ describe('notifications, against a real PostgreSQL', () => {
         url: `/notifications/unsubscribe?token=${encodeURIComponent(`${token}x`)}`,
       })
 
-      expect(response.statusCode).toBe(422)
-      expect(response.json()).toMatchObject({ code: 'UNSUBSCRIBE_TOKEN_NOT_ALLOWED' })
+      expect(response.statusCode).toBe(303)
+      expect(response.headers.location).toContain(
+        '/unsubscribe?error=UNSUBSCRIBE_TOKEN_NOT_ALLOWED',
+      )
+      expect(response.headers.location).not.toContain(userId)
       const after = await app.inject({
         method: 'GET',
         url: '/notifications/preferences',
@@ -512,7 +517,9 @@ describe('notifications, against a real PostgreSQL', () => {
         )}`,
       })
 
-      expect(response.statusCode).toBe(403)
+      expect(response.statusCode).toBe(303)
+      expect(response.headers.location).toContain('/unsubscribe?error=NOTIFICATION_ALWAYS_ON')
+      expect(response.headers.location).not.toContain(userId)
     })
 
     it('is the very link the emails carry', async () => {
@@ -528,7 +535,7 @@ describe('notifications, against a real PostgreSQL', () => {
       })
 
       expect(response.statusCode).toBe(303)
-      expect(response.headers.location).toContain('unsubscribed=feedback_received')
+      expect(response.headers.location).toContain('type=feedback_received')
     })
   })
 })

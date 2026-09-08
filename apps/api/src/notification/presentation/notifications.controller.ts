@@ -18,6 +18,9 @@ function render(views: PreferenceView[]): contract.NotificationPreferences {
   return { items: views }
 }
 
+/** Where a click from a mail client lands, whichever way it went. */
+export const UNSUBSCRIBE_LANDING_PATH = '/unsubscribe'
+
 /**
  * NOTI-3's toggles and NOTI-4's unsubscribe link. The two live together because
  * they change the same rows, but they are reached very differently: the toggles
@@ -50,9 +53,11 @@ export class NotificationsController {
    * NOTI-4. Public by necessity — the click comes from an inbox — and safe
    * because the token is the whole authority and can only turn one type off.
    *
-   * It answers with a redirect rather than JSON: whoever clicked is a person
-   * looking at a mail client, not a client library, and they should land on the
-   * page that shows them what just changed.
+   * It answers with a redirect rather than JSON, either way: whoever clicked is
+   * a person looking at a mail client, not a client library, and a refused
+   * token has to become a page they can read rather than an error body. The
+   * redirect carries the code and never the account it referred to, so a link
+   * forwarded to somebody else tells them nothing about whose it was.
    */
   @Get('unsubscribe')
   @Public()
@@ -60,9 +65,14 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Turn one notification type off from an email link' })
   @ApiQuery({ name: 'token', required: true })
   async unsubscribe(@Query('token') token: string, @Res() reply: FastifyReply): Promise<void> {
-    const done = unwrap(await this.preferences.unsubscribe(token ?? ''))
-    const target = new URL('/settings/notifications', this.config.WEB_URL)
-    target.searchParams.set('unsubscribed', done.type)
+    const done = await this.preferences.unsubscribe(token ?? '')
+    const target = new URL(UNSUBSCRIBE_LANDING_PATH, this.config.WEB_URL)
+
+    if (done.isErr()) {
+      target.searchParams.set('error', done.error.code)
+    } else {
+      target.searchParams.set('type', done.value.type)
+    }
 
     await reply.redirect(target.toString(), 303)
   }

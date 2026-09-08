@@ -3,8 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NOTIFICATION_PREFERENCES_KEY } from '../model/use-notification-preferences'
-import { ALWAYS_ON_NOTE, NotificationToggles } from './notification-toggles'
+import {
+  ALWAYS_ON_NOTE,
+  NOTIFICATION_PREFERENCES_KEY,
+} from '../../../entities/notification-preference'
+import { NotificationToggles } from './notification-toggles'
 
 const patch = vi.fn()
 const get = vi.fn()
@@ -64,7 +67,7 @@ describe('NotificationToggles (NOTI-3)', () => {
     it('is shown on and disabled rather than left out', () => {
       renderToggles()
 
-      const warning = screen.getByLabelText(/auto-accepts in 24 hours/)
+      const warning = screen.getByLabelText(/decides itself in 24 hours/)
       expect(warning).toBeChecked()
       expect(warning).toBeDisabled()
     })
@@ -125,7 +128,23 @@ describe('NotificationToggles (NOTI-3)', () => {
       })
     })
 
-    it('says so when the server refuses, without changing the switch', async () => {
+    /** A checkbox that settles only after a round trip reads as one that stuck. */
+    it('moves the switch on the press, before the server has answered', async () => {
+      let settle: (value: unknown) => void = () => undefined
+      patch.mockReturnValue(
+        new Promise((resolve) => {
+          settle = resolve
+        }),
+      )
+      renderToggles()
+
+      await userEvent.click(screen.getByLabelText(/left feedback on my project/))
+
+      expect(screen.getByLabelText(/left feedback on my project/)).not.toBeChecked()
+      settle({ data: PREFERENCES })
+    })
+
+    it('rolls the switch back and says so when the server refuses', async () => {
       patch.mockRejectedValue(new Error('nope'))
       renderToggles()
 
@@ -133,6 +152,15 @@ describe('NotificationToggles (NOTI-3)', () => {
 
       expect(await screen.findByRole('alert')).toBeInTheDocument()
       expect(screen.getByLabelText(/left feedback on my project/)).toBeChecked()
+    })
+
+    it('leaves the other switches alone while one is in flight', async () => {
+      patch.mockReturnValue(new Promise(() => undefined))
+      renderToggles()
+
+      await userEvent.click(screen.getByLabelText(/left feedback on my project/))
+
+      expect(screen.getByLabelText(/replied in a thread/)).toBeEnabled()
     })
   })
 })

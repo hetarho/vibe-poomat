@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getRequestHeaders } from '@tanstack/react-start/server'
+import { notificationPreferencesQueryOptions } from '../../src/entities/notification-preference'
 import { requireSession } from '../../src/features/auth'
-import { notificationPreferencesQueryOptions } from '../../src/features/notification-preferences'
 import { SettingsPage } from '../../src/pages/settings'
 import { forwardedHeaders } from '../../src/shared/api'
 
