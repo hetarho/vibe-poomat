@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { entityId, isoDate } from './common'
+import { cursorPageSchema, entityId, isoDate } from './common'
 
 /** PROJ-3: a fixed list, so the feed filter can never fragment. */
 export const PROJECT_TAGS = [
@@ -134,3 +134,36 @@ export const openMissionRequestSchema = z.object({
 })
 
 export type OpenMissionRequest = z.infer<typeof openMissionRequestSchema>
+
+export const FEED_SORTS = ['default', 'popular'] as const
+
+export const feedSortSchema = z.enum(FEED_SORTS)
+
+export type FeedSort = z.infer<typeof feedSortSchema>
+
+/** What a feed card renders, and nothing more (PROJ-9, PROJ-10, PROJ-11). */
+export const feedCardSchema = z.object({
+  id: entityId,
+  owner: projectOwnerSchema,
+  title: z.string().min(1).max(TITLE_MAX_LENGTH),
+  pitch: z.string().min(1).max(PITCH_MAX_LENGTH),
+  tags: projectTagsSchema,
+  coverUrl: z.url().nullable(),
+  upvoteCount: z.int().nonnegative(),
+  upvotedByViewer: z.boolean(),
+  claimableSlots: z.int().nonnegative(),
+  createdAt: isoDate,
+})
+
+export type FeedCard = z.infer<typeof feedCardSchema>
+
+export const feedPageSchema = cursorPageSchema(feedCardSchema)
+
+export type FeedPage = z.infer<typeof feedPageSchema>
+
+export const upvoteResultSchema = z.object({
+  upvoted: z.boolean(),
+  upvoteCount: z.int().nonnegative(),
+})
+
+export type UpvoteResult = z.infer<typeof upvoteResultSchema>

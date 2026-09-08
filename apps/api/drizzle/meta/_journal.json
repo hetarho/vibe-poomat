@@ -36,6 +36,13 @@
       "when": 1788839159744,
       "tag": "0004_omniscient_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788839837707,
+      "tag": "0005_boring_ser_duncan",
+      "breakpoints": true
     }
   ]
 }

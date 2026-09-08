@@ -4,6 +4,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -79,5 +80,26 @@ export const missions = pgTable(
     uniqueIndex('missions_one_open_per_project_unq')
       .on(table.projectId)
       .where(sql`${table.state} = 'open'`),
+  ],
+)
+
+/**
+ * One upvote per account per project (PROJ-11), which the composite primary key
+ * is what actually guarantees: two concurrent taps end as one row, not two.
+ *
+ * There is no `updated_at`, because an upvote is not edited — it exists or it
+ * does not, and un-upvoting deletes it.
+ */
+export const upvotes = pgTable(
+  'upvotes',
+  {
+    projectId: uuid('project_id').notNull(),
+    userId: uuid('user_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.userId] }),
+    // the popular tab's window: an index-only scan over the last seven days
+    index('upvotes_project_created_idx').on(table.projectId, sql`${table.createdAt} desc`),
   ],
 )

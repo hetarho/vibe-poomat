@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T024 | feed, popular & upvote | PROJ ARCH | T022 | todo |
 | T025 | feedback slots: claim & release | FDBK PROJ ARCH | T023 T012 | todo |
 | T026 | feedback report submit | FDBK ARCH | T025 | todo |
 | T027 | feedback settle: accept, reject, auto-accept | FDBK CRED PROJ ARCH | T026 T021 T012 | todo |
@@ -44,11 +43,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T024 — feed, popular and upvote, the last of the project context
-- order: T024-T031 project/feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T025 — feedback slot claim and release, which fills in the SLOT_OCCUPANCY_READER stub
+- order: T025-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T024 done: single-statement feed with a computed rank and keyset cursor, 7-day popular window, transactional upvote toggle; fixed ORDER BY 0 being an ordinal and a fractional-epoch keyset returning a row twice
 - 260908 T023 done: missions with escrow-on-open in one transaction, PROJ-5 as a partial unique index, close/expire refunding only unheld slots, expiry job + slot-settled completion handler; CREDIT_OPERATIONS published as the ledger write port
 - 260908 T022 done: project context with probe-verified live url, PROJ-7/8 mission locks behind an ACTIVE_MISSION_READER port stubbed until T023, soft delete owner-only; SessionGuard now identifies the caller on @Public() routes too
 - 260908 T021 done: append-only ledger with cached balances, five named operations idempotent on their (type,account,ref) key, seed on AccountCreated, /credits/me; randomised invariant + concurrent-escrow int tests
@@ -68,4 +68,3 @@
 - 260907 T008 done: per-request QueryClient with SSR hydration, api client + error copy, zustand convention in shared/model; @repo/config gained a ./web entry
 - 260907 T007 claimed (op5)
 - 260907 T007 done: TanStack Start SSR shell, FSD+Steiger, tailwind v4+shadcn seed, vitest jsdom; vitest catalog 3.2.7->4.1.11 (vite 8); e2e written but unrun (no browser libs)
-- 260907 T006 done: @repo/contracts zod schemas, OpenAPI 3.1 generator, @repo/api-client with ApiError middleware, contract staleness check

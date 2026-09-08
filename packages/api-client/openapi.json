@@ -204,6 +204,99 @@
         ]
       }
     },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "FeedController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "default",
+                "popular"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The feed: open missions first, or the popular tab",
+        "tags": [
+          "Feed"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Post a project, once its live url answers",
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{id}/upvote": {
+      "post": {
+        "operationId": "FeedController_toggle",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Upvote a project, or take your upvote back",
+        "tags": [
+          "Feed"
+        ]
+      }
+    },
     "/api/v1/projects/{id}": {
       "get": {
         "operationId": "ProjectsController_byId",
@@ -277,31 +370,6 @@
           }
         },
         "summary": "Hide your own project, once no mission is open",
-        "tags": [
-          "Projects"
-        ]
-      }
-    },
-    "/api/v1/projects": {
-      "post": {
-        "operationId": "ProjectsController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateProjectDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "Post a project, once its live url answers",
         "tags": [
           "Projects"
         ]
