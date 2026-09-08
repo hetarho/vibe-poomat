@@ -1,5 +1,4 @@
-export type { DeleteObjectPayload } from './delete-object.job'
-export { DELETE_OBJECT_JOB, DeleteObjectJob } from './delete-object.job'
+export { DeleteObjectJob } from './delete-object.job'
 export type { S3StorageConfig } from './s3-file-storage'
 export { PRESIGN_EXPIRY_SECONDS, S3FileStorage } from './s3-file-storage'
 export { StorageModule } from './storage.module'

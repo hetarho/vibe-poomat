@@ -1,4 +1,4 @@
-import { ConflictError, ValidationError } from '../../shared/result'
+import { ConflictError, NotFoundError, ValidationError } from '../../shared/result'
 
 /**
  * Every expected failure this context can produce. The `code` is public API
@@ -7,6 +7,10 @@ import { ConflictError, ValidationError } from '../../shared/result'
  */
 export class HandleNotAllowedError extends ValidationError {
   override readonly code = 'AUTH_HANDLE_NOT_ALLOWED'
+}
+
+export class UserNotFoundError extends NotFoundError {
+  override readonly code = 'AUTH_USER_NOT_FOUND'
 }
 
 export class HandleTakenError extends ConflictError {

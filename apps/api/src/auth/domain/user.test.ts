@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { Avatar } from './avatar'
 import { Bio } from './bio'
 import { ExternalLink } from './external-link'
 import { Handle } from './handle'
@@ -21,7 +22,7 @@ describe('User.create', () => {
 
     expect(created.handle.value).toBe('ada')
     expect(created.displayName).toBe('Ada Lovelace')
-    expect(created.avatarUrl).toBeNull()
+    expect(created.avatar).toBeNull()
     expect(created.bio).toBeNull()
     expect(created.link).toBeNull()
     expect(created.createdAt).toEqual(START)
@@ -31,10 +32,10 @@ describe('User.create', () => {
     const created = User.create({
       handle: handle('ada'),
       displayName: 'Ada',
-      avatarUrl: 'https://cdn.example.com/a.png',
+      avatar: Avatar.fromUrl('https://cdn.example.com/a.png')._unsafeUnwrap(),
     })._unsafeUnwrap()
 
-    expect(created.avatarUrl).toBe('https://cdn.example.com/a.png')
+    expect(created.avatar?.value).toBe('https://cdn.example.com/a.png')
   })
 
   it.each(['', '   ', 'a'.repeat(DISPLAY_NAME_MAX_LENGTH + 1)])(
@@ -45,22 +46,6 @@ describe('User.create', () => {
       )
     },
   )
-
-  it.each(['not a url', 'ftp://example.com/a.png'])('rejects %j as an avatar', (avatarUrl) => {
-    expect(
-      User.create({ handle: handle('ada'), displayName: 'Ada', avatarUrl })._unsafeUnwrapErr().code,
-    ).toBe('AUTH_AVATAR_NOT_ALLOWED')
-  })
-
-  it('allows an http avatar, because object storage is plain http locally', () => {
-    expect(
-      User.create({
-        handle: handle('ada'),
-        displayName: 'Ada',
-        avatarUrl: 'http://localhost:9000/vibe-poomat/a.png',
-      }).isOk(),
-    ).toBe(true)
-  })
 })
 
 describe('User.rename', () => {
@@ -129,9 +114,9 @@ describe('User.updateProfile', () => {
   it('applies nothing when one field is rejected', () => {
     const target = user()
 
-    const result = target.updateProfile({ displayName: 'Ada L', avatarUrl: 'nope' }, LATER)
+    const result = target.updateProfile({ displayName: '  ', bio: null }, LATER)
 
-    expect(result._unsafeUnwrapErr().code).toBe('AUTH_AVATAR_NOT_ALLOWED')
+    expect(result._unsafeUnwrapErr().code).toBe('AUTH_DISPLAY_NAME_NOT_ALLOWED')
     expect(target.displayName).toBe('Ada Lovelace')
     expect(target.updatedAt).toEqual(START)
   })

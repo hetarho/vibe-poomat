@@ -1,5 +1,14 @@
 export const FILE_STORAGE = Symbol('FILE_STORAGE')
 
+/**
+ * The job that removes an object nothing points at any more. The name lives
+ * beside the port rather than with its handler, so a use case can enqueue it
+ * without importing infrastructure (ARCH-11).
+ */
+export const DELETE_OBJECT_JOB = 'storage.delete-object'
+
+export type DeleteObjectPayload = { key: string }
+
 export type UploadTicket = {
   /** Where the browser PUTs the bytes; the api never sees them (ARCH-37). */
   url: string

@@ -1,16 +1,10 @@
+import type { FileStorage } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
-import { err, NotFoundError, ok, type Result } from '../../shared/result'
-import type { AuthProvider } from '../domain/auth-provider'
+import { err, ok, type Result } from '../../shared/result'
+import { UserNotFoundError } from '../domain/auth-errors'
 import type { IdentityRepository } from '../domain/identity.repository'
-import type { User } from '../domain/user'
 import type { UserRepository } from '../domain/user.repository'
-
-export type MyProfile = {
-  user: User
-  /** AUTH-4: the owner's own address, which no public endpoint ever returns. */
-  email: string
-  providers: AuthProvider[]
-}
+import { type MyProfileView, toPublicProfile } from './profile-view'
 
 /**
  * The signed-in account's own view of itself. The email comes from the identity
@@ -21,14 +15,15 @@ export class GetMyProfileUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly identities: IdentityRepository,
+    private readonly storage: FileStorage,
   ) {}
 
-  async execute(userId: string): Promise<Result<MyProfile, NotFoundError>> {
+  async execute(userId: string): Promise<Result<MyProfileView, UserNotFoundError>> {
     const id = EntityId.parse(userId)
-    if (id.isErr()) return err(new NotFoundError('no such account'))
+    if (id.isErr()) return err(new UserNotFoundError('no such account'))
 
     const user = await this.users.findById(id.value)
-    if (user === null) return err(new NotFoundError('no such account'))
+    if (user === null) return err(new UserNotFoundError('no such account'))
 
     const identities = await this.identities.listByUserId(id.value)
     // a verified address is the one notifications may use, so it wins; failing
@@ -36,7 +31,7 @@ export class GetMyProfileUseCase {
     const preferred = identities.find((identity) => identity.emailVerified) ?? identities[0]
 
     return ok({
-      user,
+      ...toPublicProfile(user, this.storage),
       email: preferred?.email ?? '',
       providers: identities.map((identity) => identity.provider),
     })

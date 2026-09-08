@@ -9,6 +9,7 @@ import { EventsModule } from '../../../shared/events/events.module'
 import { HealthModule } from '../../../shared/health/health.module'
 import { EntityId } from '../../../shared/kernel'
 import { AuthModule } from '../../auth.module'
+import { Avatar } from '../../domain/avatar'
 import { Bio } from '../../domain/bio'
 import { ExternalLink } from '../../domain/external-link'
 import { Handle } from '../../domain/handle'
@@ -73,7 +74,7 @@ describe('the auth repositories, against a real PostgreSQL', () => {
     it('round-trips a whole profile through the value objects', async () => {
       const ada = newUser('ada', 'Ada Lovelace')
       ada.updateProfile({
-        avatarUrl: 'https://cdn.example.com/a.png',
+        avatar: Avatar.fromUrl('https://cdn.example.com/a.png')._unsafeUnwrap(),
         bio: Bio.create('builds things')._unsafeUnwrap(),
         link: ExternalLink.create('https://ada.test')._unsafeUnwrap(),
       })
@@ -83,7 +84,7 @@ describe('the auth repositories, against a real PostgreSQL', () => {
 
       expect(loaded?.handle.value).toBe('ada')
       expect(loaded?.displayName).toBe('Ada Lovelace')
-      expect(loaded?.avatarUrl).toBe('https://cdn.example.com/a.png')
+      expect(loaded?.avatar?.value).toBe('https://cdn.example.com/a.png')
       expect(loaded?.bio?.value).toBe('builds things')
       expect(loaded?.link?.value).toBe('https://ada.test/')
     })

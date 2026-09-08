@@ -6,18 +6,43 @@ export const authProviderSchema = z.enum(['github', 'google'])
 
 export type AuthProvider = z.infer<typeof authProviderSchema>
 
+export const HANDLE_MIN_LENGTH = 3
+export const HANDLE_MAX_LENGTH = 20
+export const BIO_MAX_LENGTH = 160
+
+export const handleSchema = z
+  .string()
+  .min(HANDLE_MIN_LENGTH)
+  .max(HANDLE_MAX_LENGTH)
+  .regex(/^[a-z0-9_]+$/, 'may only contain a-z, 0-9 and underscore')
+
+/**
+ * What CRED-7 puts on a public profile. Present from the start and zero until
+ * the credit context fills it in (T021), so the shape never changes under a
+ * client that has already shipped.
+ */
+export const creditSummarySchema = z.object({
+  balance: z.int().nonnegative(),
+  received: z.int().nonnegative(),
+  given: z.int().nonnegative(),
+})
+
+export type CreditSummary = z.infer<typeof creditSummarySchema>
+
 /**
  * What anyone may see of an account (AUTH-3). The provider email is deliberately
  * absent: AUTH-4 keeps it for notifications, never for display.
  */
 export const publicProfileSchema = z.object({
   id: entityId,
-  handle: z.string().min(3).max(20),
+  handle: handleSchema,
   displayName: z.string().min(1),
+  /** Already resolved to something a browser can load, key or provider URL alike. */
   avatarUrl: z.url().nullable(),
-  bio: z.string().max(160).nullable(),
+  bio: z.string().max(BIO_MAX_LENGTH).nullable(),
   link: z.url().nullable(),
   createdAt: isoDate,
+  credits: creditSummarySchema,
 })
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>
@@ -33,6 +58,28 @@ export const meSchema = publicProfileSchema.extend({
 })
 
 export type Me = z.infer<typeof meSchema>
+
+/**
+ * A partial profile edit: an absent field is left alone, an explicit null clears
+ * one. `avatarKey` is what T014's presign handed back, never a URL the caller
+ * chose — the api resolves it on read.
+ */
+export const updateProfileRequestSchema = z
+  .object({
+    displayName: z.string().min(1).max(50),
+    bio: z.string().max(BIO_MAX_LENGTH).nullable(),
+    link: z.url().nullable(),
+    avatarKey: z.string().min(1).nullable(),
+  })
+  .partial()
+
+export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>
+
+export const changeHandleRequestSchema = z.object({
+  handle: handleSchema,
+})
+
+export type ChangeHandleRequest = z.infer<typeof changeHandleRequestSchema>
 
 /** Codes `GET /auth/:provider/callback` can redirect to the sign-in page with. */
 export const SIGN_IN_ERROR_CODES = [

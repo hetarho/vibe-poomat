@@ -149,7 +149,7 @@ describe('SignInWithProviderUseCase', () => {
 
       expect(created).toBe(true)
       expect(user.displayName).toBe('Ada Lovelace')
-      expect(user.avatarUrl).toBe('https://cdn.example.com/ada.png')
+      expect(user.avatar?.value).toBe('https://cdn.example.com/ada.png')
       expect(user.handle.value).toBe('ada')
       expect(identities.rows).toHaveLength(1)
       expect(identities.rows[0]?.email).toBe('ada@example.com')
@@ -177,10 +177,12 @@ describe('SignInWithProviderUseCase', () => {
       const outcome = await useCase.execute({
         profile: profile({ displayName: '   ', avatarUrl: 'not a url' }),
       })
+      // the unusable avatar is dropped rather than refused: a picture is never
+      // worth turning a signup away over
       const { user } = outcome._unsafeUnwrap()
 
       expect(user.displayName).toBe('ada')
-      expect(user.avatarUrl).toBeNull()
+      expect(user.avatar).toBeNull()
       expect(accountCreatedEvents()).toHaveLength(1)
     })
   })

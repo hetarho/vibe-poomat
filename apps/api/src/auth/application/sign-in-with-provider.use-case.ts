@@ -1,6 +1,7 @@
 import type { TransactionManager } from '../../shared/application'
 import { err, NotFoundError, ok, type Result } from '../../shared/result'
 import type { HandleTakenError, IdentityAlreadyLinkedError } from '../domain/auth-errors'
+import { Avatar } from '../domain/avatar'
 import type { IdentityRepository } from '../domain/identity.repository'
 import { ProviderIdentity } from '../domain/provider-identity'
 import { Session } from '../domain/session'
@@ -110,21 +111,26 @@ export class SignInWithProviderUseCase {
     const { profile } = command
     const handle = await this.users.generateAvailableHandle(profile.username)
 
+    // an avatar URL the provider sent that we cannot parse is simply dropped:
+    // a picture is never worth refusing a signup over
+    const avatar = profile.avatarUrl === null ? null : Avatar.fromUrl(profile.avatarUrl)
+    const prefilled = avatar !== null && avatar.isOk() ? avatar.value : null
+
     const signedUp = User.signUp({
       handle,
       displayName: profile.displayName,
-      avatarUrl: profile.avatarUrl,
+      avatar: prefilled,
       now: command.now,
     })
     if (signedUp.isOk()) return this.persistNewAccount(signedUp.value, command)
 
-    // the provider handed us a name or avatar the profile rules refuse. The
-    // handle is ours to choose and always legal, so it stands in rather than
-    // turning someone away at the door over a display name they can edit later
+    // the provider handed us a name the profile rules refuse. The handle is ours
+    // to choose and always legal, so it stands in rather than turning someone
+    // away at the door over a display name they can edit later
     const fallback = User.signUp({
       handle,
       displayName: handle.value,
-      avatarUrl: null,
+      avatar: null,
       now: command.now,
     })
     if (fallback.isErr()) {

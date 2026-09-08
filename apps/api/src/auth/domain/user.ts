@@ -1,7 +1,8 @@
 import { AggregateRoot, EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import { AccountCreated } from './account-created.event'
-import { AvatarNotAllowedError, DisplayNameNotAllowedError } from './auth-errors'
+import { DisplayNameNotAllowedError } from './auth-errors'
+import type { Avatar } from './avatar'
 import type { Bio } from './bio'
 import type { ExternalLink } from './external-link'
 import type { Handle } from './handle'
@@ -12,7 +13,7 @@ export const AVATAR_URL_MAX_LENGTH = 2048
 type UserProps = {
   handle: Handle
   displayName: string
-  avatarUrl: string | null
+  avatar: Avatar | null
   bio: Bio | null
   link: ExternalLink | null
   createdAt: Date
@@ -22,12 +23,12 @@ type UserProps = {
 /** Absent means "leave it alone"; null means "clear it". */
 export type ProfilePatch = {
   displayName?: string
-  avatarUrl?: string | null
+  avatar?: Avatar | null
   bio?: Bio | null
   link?: ExternalLink | null
 }
 
-export type ProfileError = DisplayNameNotAllowedError | AvatarNotAllowedError
+export type ProfileError = DisplayNameNotAllowedError
 
 function checkDisplayName(raw: string): Result<string, DisplayNameNotAllowedError> {
   const value = raw.trim()
@@ -48,43 +49,6 @@ function checkDisplayName(raw: string): Result<string, DisplayNameNotAllowedErro
 }
 
 /**
- * The avatar is either something a provider handed us or a key we signed an
- * upload for (ARCH-37), so it is checked as an absolute http(s) URL rather than
- * with the stricter https-only rule the public profile link carries: object
- * storage is plain http in local development.
- */
-function checkAvatarUrl(raw: string): Result<string, AvatarNotAllowedError> {
-  const value = raw.trim()
-
-  if (value.length === 0) {
-    return err(new AvatarNotAllowedError('avatar url is empty; clear it with null instead'))
-  }
-
-  if (value.length > AVATAR_URL_MAX_LENGTH) {
-    return err(
-      new AvatarNotAllowedError('avatar url is longer than the limit', {
-        maxLength: AVATAR_URL_MAX_LENGTH,
-      }),
-    )
-  }
-
-  let url: URL
-  try {
-    url = new URL(value)
-  } catch {
-    return err(new AvatarNotAllowedError('avatar url is not a URL', { value }))
-  }
-
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-    return err(
-      new AvatarNotAllowedError('avatar url must be http or https', { protocol: url.protocol }),
-    )
-  }
-
-  return ok(url.toString())
-}
-
-/**
  * An account and the public profile it is (AUTH-3). One role, always both maker
  * and feedbacker (AUTH-7), so there is nothing here to distinguish them.
  *
@@ -100,18 +64,11 @@ export class User extends AggregateRoot<UserProps> {
     id?: EntityId
     handle: Handle
     displayName: string
-    avatarUrl?: string | null
+    avatar?: Avatar | null
     now?: Date
   }): Result<User, ProfileError> {
     const displayName = checkDisplayName(input.displayName)
     if (displayName.isErr()) return err(displayName.error)
-
-    let avatarUrl: string | null = null
-    if (input.avatarUrl !== undefined && input.avatarUrl !== null) {
-      const checked = checkAvatarUrl(input.avatarUrl)
-      if (checked.isErr()) return err(checked.error)
-      avatarUrl = checked.value
-    }
 
     const now = input.now ?? new Date()
 
@@ -119,7 +76,7 @@ export class User extends AggregateRoot<UserProps> {
       new User(input.id ?? EntityId.generate(), {
         handle: input.handle,
         displayName: displayName.value,
-        avatarUrl,
+        avatar: input.avatar ?? null,
         bio: null,
         link: null,
         createdAt: now,
@@ -138,7 +95,7 @@ export class User extends AggregateRoot<UserProps> {
     id?: EntityId
     handle: Handle
     displayName: string
-    avatarUrl?: string | null
+    avatar?: Avatar | null
     now?: Date
   }): Result<User, ProfileError> {
     const created = User.create(input)
@@ -162,8 +119,8 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.displayName
   }
 
-  get avatarUrl(): string | null {
-    return this.props.avatarUrl
+  get avatar(): Avatar | null {
+    return this.props.avatar
   }
 
   get bio(): Bio | null {
@@ -206,16 +163,7 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   updateProfile(patch: ProfilePatch, now: Date = new Date()): Result<void, ProfileError> {
-    let avatarUrl = this.props.avatarUrl
-    if (patch.avatarUrl !== undefined) {
-      if (patch.avatarUrl === null) {
-        avatarUrl = null
-      } else {
-        const checked = checkAvatarUrl(patch.avatarUrl)
-        if (checked.isErr()) return err(checked.error)
-        avatarUrl = checked.value
-      }
-    }
+    const avatar = patch.avatar === undefined ? this.props.avatar : patch.avatar
 
     let displayName = this.props.displayName
     if (patch.displayName !== undefined) {
@@ -231,13 +179,13 @@ export class User extends AggregateRoot<UserProps> {
 
     const unchanged =
       displayName === this.props.displayName &&
-      avatarUrl === this.props.avatarUrl &&
+      avatar === this.props.avatar &&
       bio === this.props.bio &&
       link === this.props.link
     if (unchanged) return ok(undefined)
 
     this.props.displayName = displayName
-    this.props.avatarUrl = avatarUrl
+    this.props.avatar = avatar
     this.props.bio = bio
     this.props.link = link
     this.props.updatedAt = now

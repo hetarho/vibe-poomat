@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common'
-import { FILE_STORAGE, type FileStorage, type JobHandler } from '../../application'
+import {
+  DELETE_OBJECT_JOB,
+  type DeleteObjectPayload,
+  FILE_STORAGE,
+  type FileStorage,
+  type JobHandler,
+} from '../../application'
 import { JobRegistry } from '../jobs/job-registry'
-
-export const DELETE_OBJECT_JOB = 'storage.delete-object'
-
-export type DeleteObjectPayload = {
-  key: string
-}
 
 /**
  * Deleting the object an entity owned is best effort: the entity is already

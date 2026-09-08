@@ -16,6 +16,7 @@ import {
 import { SignInWithProviderUseCase } from '../application/sign-in-with-provider.use-case'
 import { SignOutUseCase } from '../application/sign-out.use-case'
 import { SessionId } from '../domain/session-id'
+import { FakeFileStorage } from '../test-support/fake-file-storage'
 import {
   InMemoryIdentityRepository,
   InMemorySessionRepository,
@@ -88,7 +89,10 @@ describe('the OAuth endpoints', () => {
             passthroughTransactions,
           ),
         },
-        { provide: GetMyProfileUseCase, useValue: new GetMyProfileUseCase(users, identities) },
+        {
+          provide: GetMyProfileUseCase,
+          useValue: new GetMyProfileUseCase(users, identities, new FakeFileStorage()),
+        },
         { provide: SignOutUseCase, useValue: new SignOutUseCase(sessions) },
       ],
     }).compile()

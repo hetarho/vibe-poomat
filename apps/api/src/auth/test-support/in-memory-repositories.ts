@@ -9,7 +9,7 @@ import type { Session } from '../domain/session'
 import type { SessionRepository } from '../domain/session.repository'
 import type { SessionId } from '../domain/session-id'
 import type { SessionIdGenerator } from '../domain/session-id-generator'
-import type { User } from '../domain/user'
+import { User } from '../domain/user'
 import type { UserRepository } from '../domain/user.repository'
 
 /**
@@ -21,13 +21,32 @@ export class InMemoryUserRepository implements UserRepository {
   readonly rows = new Map<string, User>()
   readonly events: DomainEvent[] = []
 
+  /**
+   * A real store keeps a row, not the object the caller mutated, so a read gives
+   * back an independent aggregate. Without this the fake would report writes
+   * that a rejected `save` never made.
+   */
+  private static snapshot(user: User): User {
+    return User.restore(user.id, {
+      handle: user.handle,
+      displayName: user.displayName,
+      avatar: user.avatar,
+      bio: user.bio,
+      link: user.link,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    })
+  }
+
   async findById(id: EntityId): Promise<User | null> {
-    return this.rows.get(id.value) ?? null
+    const stored = this.rows.get(id.value)
+
+    return stored === undefined ? null : InMemoryUserRepository.snapshot(stored)
   }
 
   async findByHandle(handle: Handle): Promise<User | null> {
     for (const user of this.rows.values()) {
-      if (user.handle.equals(handle)) return user
+      if (user.handle.equals(handle)) return InMemoryUserRepository.snapshot(user)
     }
 
     return null
@@ -40,7 +59,7 @@ export class InMemoryUserRepository implements UserRepository {
       }
     }
 
-    this.rows.set(user.id.value, user)
+    this.rows.set(user.id.value, InMemoryUserRepository.snapshot(user))
     // the Drizzle adapter drains here too, so the events land the same way
     this.events.push(...user.pullEvents())
 

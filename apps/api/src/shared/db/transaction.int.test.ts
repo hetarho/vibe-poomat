@@ -14,6 +14,7 @@ import { DomainEventRegistry } from '../events/domain-event-registry'
 import { EventsModule } from '../events/events.module'
 import { HealthModule } from '../health/health.module'
 import { DomainEvent, EntityId } from '../kernel'
+import { err, ok, ValidationError } from '../result'
 import { DbModule } from './db.module'
 import { DB, type Db } from './db.token'
 import { getDb } from './db-context'
@@ -88,6 +89,44 @@ describe('one transaction per use case, against a real PostgreSQL', () => {
     ).rejects.toThrow('the use case failed after writing')
 
     await expect(probeLabels(db)).resolves.toEqual([])
+  })
+
+  it('rolls back when the use case returns an errored Result rather than throwing', async () => {
+    // ARCH-12 says an expected failure is a Result, not a throw, so "the work
+    // returned" cannot be read as "the work succeeded" (ARCH-38)
+    const outcome = await manager.run(async () => {
+      await insertProbe('written-before-the-failure')
+
+      return err(new ValidationError('the use case decided against it'))
+    })
+
+    expect(outcome.isErr()).toBe(true)
+    await expect(probeLabels(db)).resolves.toEqual([])
+  })
+
+  it('publishes nothing when an errored Result rolled the transaction back', async () => {
+    const handle = vi.fn(async () => undefined)
+    registry.register({ eventName: 'probe.saved', handle })
+
+    await manager.run(async () => {
+      await insertProbe('never-committed')
+      collector.collect([new ProbeSaved(EntityId.generate())])
+
+      return err(new ValidationError('no'))
+    })
+
+    expect(handle).not.toHaveBeenCalled()
+  })
+
+  it('still commits an ok Result', async () => {
+    const outcome = await manager.run(async () => {
+      await insertProbe('committed')
+
+      return ok('done')
+    })
+
+    expect(outcome._unsafeUnwrap()).toBe('done')
+    await expect(probeLabels(db)).resolves.toEqual(['committed'])
   })
 
   it('shares one transaction across a nested run', async () => {

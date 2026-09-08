@@ -1,6 +1,7 @@
 import { EntityId } from '../../../shared/kernel'
 import type { DomainError, Result } from '../../../shared/result'
 import { parseAuthProvider } from '../../domain/auth-provider'
+import { Avatar } from '../../domain/avatar'
 import { Bio } from '../../domain/bio'
 import { ExternalLink } from '../../domain/external-link'
 import { Handle } from '../../domain/handle'
@@ -31,7 +32,7 @@ export function toUser(row: UserRow): User {
   return User.restore(must(EntityId.parse(row.id), 'user id'), {
     handle: must(Handle.create(row.handle), 'handle'),
     displayName: row.displayName,
-    avatarUrl: row.avatarUrl,
+    avatar: row.avatarUrl === null ? null : must(Avatar.restore(row.avatarUrl), 'avatar'),
     bio: row.bio === null ? null : must(Bio.create(row.bio), 'bio'),
     link: row.link === null ? null : must(ExternalLink.create(row.link), 'link'),
     createdAt: row.createdAt,
@@ -44,7 +45,7 @@ export function fromUser(user: User): typeof users.$inferInsert {
     id: user.id.value,
     handle: user.handle.value,
     displayName: user.displayName,
-    avatarUrl: user.avatarUrl,
+    avatarUrl: user.avatar?.value ?? null,
     bio: user.bio?.value ?? null,
     link: user.link?.value ?? null,
     createdAt: user.createdAt,

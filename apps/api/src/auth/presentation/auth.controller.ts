@@ -85,20 +85,9 @@ export class AuthController {
   @Get('me')
   @ApiOperation({ summary: "The signed-in account's own profile" })
   async me(@CurrentUser() userId: string): Promise<auth.Me> {
-    const profile = unwrap(await this.myProfile.execute(userId))
-    const { user } = profile
+    const view = unwrap(await this.myProfile.execute(userId))
 
-    return {
-      id: user.id.value,
-      handle: user.handle.value,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl,
-      bio: user.bio?.value ?? null,
-      link: user.link?.value ?? null,
-      createdAt: user.createdAt.toISOString(),
-      email: profile.email,
-      providers: profile.providers,
-    }
+    return { ...view, createdAt: view.createdAt.toISOString() }
   }
 
   /**
