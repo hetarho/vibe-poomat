@@ -19,4 +19,16 @@ export default defineConfig({
     }),
     viteReact(),
   ],
+  /**
+   * The workspace packages compile to CommonJS, because the Nest api that also
+   * consumes them is CommonJS. Vite's dev module runner evaluates whatever it
+   * inlines as ESM, so a CJS `exports` assignment throws; leaving them external
+   * hands them to node's own resolver, which knows what to do with CJS.
+   *
+   * The production build does not need this — nitro's bundler handles the
+   * interop — but the two should not disagree about what is external.
+   */
+  ssr: {
+    external: ['@repo/api-client', '@repo/config', '@repo/contracts'],
+  },
 })

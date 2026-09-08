@@ -15,6 +15,7 @@
     "db:generate": "pnpm --filter api run db:generate",
     "db:migrate": "pnpm --filter api run db:migrate",
     "db:up": "docker compose up -d pg",
+    "dev": "turbo run dev",
     "format": "biome format --write .",
     "lint": "biome check . && node scripts/lint-workflows.mjs",
     "lint:workflows": "node scripts/lint-workflows.mjs",

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite dev --port 3000",
+    "dev": "node --env-file=../../.env node_modules/vite/bin/vite.js dev --port 3000",
     "lint": "steiger ./src",
     "preview": "vite preview",
     "start": "node .output/server/index.mjs",
