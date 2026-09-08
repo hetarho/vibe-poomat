@@ -7,4 +7,5 @@
 export * as auth from './auth'
 export * from './common'
 export * as credits from './credits'
+export * as projects from './projects'
 export * as uploads from './uploads'

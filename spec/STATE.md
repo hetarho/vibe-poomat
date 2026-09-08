@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T022 | project context: create, update, delete | PROJ ARCH | T019 T015 | todo |
 | T023 | mission lifecycle & escrow | PROJ CRED ARCH | T022 T021 T012 | todo |
 | T024 | feed, popular & upvote | PROJ ARCH | T022 | todo |
 | T025 | feedback slots: claim & release | FDBK PROJ ARCH | T023 T012 | todo |
@@ -46,11 +45,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T022 — the project context, the first non-auth product surface
-- order: T022-T031 project/feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T023 — mission lifecycle and escrow, which replaces T022's NoActiveMissions stand-in
+- order: T023-T031 project/feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T022 done: project context with probe-verified live url, PROJ-7/8 mission locks behind an ACTIVE_MISSION_READER port stubbed until T023, soft delete owner-only; SessionGuard now identifies the caller on @Public() routes too
 - 260908 T021 done: append-only ledger with cached balances, five named operations idempotent on their (type,account,ref) key, seed on AccountCreated, /credits/me; randomised invariant + concurrent-escrow int tests
 - 260908 T020 done: Avatar VO (provider URL or upload key), public profile by handle, PATCH me + me/handle, credits reserved at zero; fixed DrizzleTransactionManager committing partial writes behind an errored Result (ARCH-38)
 - 260908 T019 done: global SessionGuard with @Public in shared/presentation, /auth/me + /auth/logout, hourly session.cleanup via a new JobHandler.cron; uploads is now authenticated, smoke asserts the 401
@@ -70,4 +70,3 @@
 - 260907 T007 done: TanStack Start SSR shell, FSD+Steiger, tailwind v4+shadcn seed, vitest jsdom; vitest catalog 3.2.7->4.1.11 (vite 8); e2e written but unrun (no browser libs)
 - 260907 T006 done: @repo/contracts zod schemas, OpenAPI 3.1 generator, @repo/api-client with ApiError middleware, contract staleness check
 - 260907 T005 done: drizzle+pg DbModule, compose pg, Testcontainers int harness; fixed pool error crash and flaky hook timeout
-- 260907 T004 done: kernel(VO/Entity/AggregateRoot/EntityId), neverthrow Result, DomainError->HTTP map, dependency-cruiser layering

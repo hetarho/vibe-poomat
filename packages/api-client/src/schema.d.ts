@@ -172,6 +172,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A project, with its owner and any open mission */
+        get: operations["ProjectsController_byId"];
+        put?: never;
+        post?: never;
+        /** Hide your own project, once no mission is open */
+        delete: operations["ProjectsController_remove"];
+        options?: never;
+        head?: never;
+        /** Edit your own project */
+        patch: operations["ProjectsController_update"];
+        trace?: never;
+    };
+    "/api/v1/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post a project, once its live url answers */
+        post: operations["ProjectsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -200,6 +236,24 @@ export interface components {
         };
         ChangeHandleDto: {
             handle: string;
+        };
+        CreateProjectDto: {
+            title: string;
+            /** Format: uri */
+            liveUrl: string;
+            pitch: string;
+            description?: string | null;
+            tags: ("SaaS" | "Tool" | "Game" | "AI" | "Social" | "Productivity" | "Other")[];
+            coverKey?: string | null;
+        };
+        UpdateProjectDto: {
+            title?: string;
+            /** Format: uri */
+            liveUrl?: string;
+            pitch?: string;
+            description?: string | null;
+            tags?: ("SaaS" | "Tool" | "Game" | "AI" | "Social" | "Productivity" | "Other")[];
+            coverKey?: string | null;
         };
         CreateUploadUrlDto: {
             /** @enum {string} */
@@ -396,6 +450,88 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectsController_byId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProjectDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProjectDto"];
+            };
+        };
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

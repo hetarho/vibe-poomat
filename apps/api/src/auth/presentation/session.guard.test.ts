@@ -1,11 +1,11 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, Req } from '@nestjs/common'
 import { APP_GUARD, Reflector } from '@nestjs/core'
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Test } from '@nestjs/testing'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { registerPlugins } from '../../bootstrap'
 import { EntityId } from '../../shared/kernel'
-import { CurrentUser } from '../../shared/presentation/current-user.decorator'
+import { CurrentUser, type RequestWithUser } from '../../shared/presentation/current-user.decorator'
 import { PresentationModule } from '../../shared/presentation/presentation.module'
 import { Public } from '../../shared/presentation/public.decorator'
 import { AuthenticateSessionUseCase } from '../application/authenticate-session.use-case'
@@ -28,8 +28,8 @@ class ProbeController {
 
   @Get('open')
   @Public()
-  open(): { ok: true } {
-    return { ok: true }
+  open(@Req() request: RequestWithUser): { ok: true; userId: string | null } {
+    return { ok: true, userId: request.user?.id ?? null }
   }
 }
 
@@ -101,6 +101,19 @@ describe('SessionGuard', () => {
     const response = await get('/probe/open')
 
     expect(response.statusCode).toBe(200)
-    expect(response.json()).toEqual({ ok: true })
+    expect(response.json()).toEqual({ ok: true, userId: null })
+  })
+
+  it('still tells a @Public() route who is asking, when a live session says so', async () => {
+    const response = await get('/probe/open', { [SESSION_COOKIE]: LIVE.value })
+
+    expect(response.json()).toEqual({ ok: true, userId: userId.value })
+  })
+
+  it('leaves a @Public() route anonymous rather than refusing a dead cookie', async () => {
+    const response = await get('/probe/open', { [SESSION_COOKIE]: LAPSED.value })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toEqual({ ok: true, userId: null })
   })
 })

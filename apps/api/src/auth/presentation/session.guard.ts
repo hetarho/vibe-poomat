@@ -29,19 +29,31 @@ export class SessionGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ])
+    const request = context.switchToHttp().getRequest<RequestWithUser>()
+    const identified = await this.identify(request)
+
+    // a public route still learns who is asking when a live session says so: an
+    // owner reading their own hidden project (PROJ-8) needs exactly that, and a
+    // route that refused to look would have to re-implement this guard itself
     if (isPublic === true) return true
 
-    const request = context.switchToHttp().getRequest<RequestWithUser>()
-    const cookie = request.cookies?.[SESSION_COOKIE]
-    if (cookie === undefined) this.refuse('no session cookie')
+    if (!identified) this.refuse('no live session')
 
-    const sessionId = SessionId.parse(cookie)
+    return true
+  }
+
+  /** Attaches the account behind the cookie, or reports that there is none. */
+  private async identify(request: RequestWithUser): Promise<boolean> {
+    const cookie = request.cookies?.[SESSION_COOKIE]
+    if (cookie === undefined) return false
+
     // a malformed cookie is refused without a query: it cannot name a row we
     // issued, and answering it identically keeps the endpoint uninformative
-    if (sessionId.isErr()) this.refuse('malformed session cookie')
+    const sessionId = SessionId.parse(cookie)
+    if (sessionId.isErr()) return false
 
     const caller = await this.authenticate.execute({ sessionId: sessionId.value })
-    if (caller.isErr()) this.refuse(caller.error.message)
+    if (caller.isErr()) return false
 
     request.user = { id: caller.value.userId }
 

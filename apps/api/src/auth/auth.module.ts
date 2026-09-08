@@ -10,6 +10,7 @@ import {
   type JobScheduler,
   TRANSACTION_MANAGER,
   type TransactionManager,
+  USER_SUMMARY_READER,
 } from '../shared/application'
 import { ConfigModule } from '../shared/config/config.module'
 import { ENV, type Env } from '../shared/config/env.token'
@@ -32,6 +33,7 @@ import { DrizzleSessionRepository } from './infrastructure/persistence/drizzle-s
 import { DrizzleUserRepository } from './infrastructure/persistence/drizzle-user.repository'
 import { RandomSessionIdGenerator } from './infrastructure/random-session-id-generator'
 import { SessionCleanupJob } from './infrastructure/session-cleanup.job'
+import { UserSummaryAdapter } from './infrastructure/user-summary-adapter'
 import { AuthController } from './presentation/auth.controller'
 import { SessionGuard } from './presentation/session.guard'
 import { UsersController } from './presentation/users.controller'
@@ -129,6 +131,9 @@ import { UsersController } from './presentation/users.controller'
       ) => new ChangeHandleUseCase(users, storage, credits, transactions),
     },
     SessionCleanupJob,
+    UserSummaryAdapter,
+    // the narrow view of an account other contexts may hold (AUTH-4)
+    { provide: USER_SUMMARY_READER, useExisting: UserSummaryAdapter },
     // Global, and registered from here because the guard belongs to this context.
     // AppModule imports ThrottlingModule first, so an anonymous flood is refused
     // before any of this reaches the database.
@@ -145,6 +150,7 @@ import { UsersController } from './presentation/users.controller'
     SESSION_REPOSITORY,
     SESSION_ID_GENERATOR,
     OAUTH_PROVIDERS,
+    USER_SUMMARY_READER,
     AuthenticateSessionUseCase,
   ],
 })
