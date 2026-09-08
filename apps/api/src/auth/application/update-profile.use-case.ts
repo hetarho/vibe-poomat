@@ -1,4 +1,5 @@
 import {
+  type CreditSummaryReader,
   DELETE_OBJECT_JOB,
   type FileStorage,
   type JobScheduler,
@@ -55,6 +56,7 @@ export class UpdateProfileUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly storage: FileStorage,
+    private readonly credits: CreditSummaryReader,
     private readonly jobs: JobScheduler,
     private readonly transactions: TransactionManager,
   ) {}
@@ -84,7 +86,7 @@ export class UpdateProfileUseCase {
         await this.jobs.enqueue(DELETE_OBJECT_JOB, { key: replaced })
       }
 
-      return ok(toPublicProfile(user, this.storage))
+      return ok(toPublicProfile(user, this.storage, await this.credits.summaryFor(user.id.value)))
     })
   }
 
@@ -136,6 +138,7 @@ export class ChangeHandleUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly storage: FileStorage,
+    private readonly credits: CreditSummaryReader,
     private readonly transactions: TransactionManager,
   ) {}
 
@@ -158,7 +161,7 @@ export class ChangeHandleUseCase {
       const saved = await this.users.save(user)
       if (saved.isErr()) return err(saved.error)
 
-      return ok(toPublicProfile(user, this.storage))
+      return ok(toPublicProfile(user, this.storage, await this.credits.summaryFor(user.id.value)))
     })
   }
 }

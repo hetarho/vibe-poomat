@@ -5,10 +5,10 @@ import { auth } from '@repo/contracts'
 import { createZodDto } from 'nestjs-zod'
 import { WRITE_THROTTLER } from '../../shared/infrastructure/throttling/throttler-policy'
 import { Public, unwrap } from '../../shared/presentation'
+import { CurrentUser } from '../../shared/presentation/current-user.decorator'
 import { GetPublicProfileUseCase } from '../application/get-public-profile.use-case'
 import type { PublicProfileView } from '../application/profile-view'
 import { ChangeHandleUseCase, UpdateProfileUseCase } from '../application/update-profile.use-case'
-import { CurrentUser } from './current-user.decorator'
 
 class UpdateProfileDto extends createZodDto(auth.updateProfileRequestSchema) {}
 class ChangeHandleDto extends createZodDto(auth.changeHandleRequestSchema) {}

@@ -11,6 +11,4 @@ export {
   SESSION_COOKIE_MAX_AGE_SECONDS,
   sessionCookieOptions,
 } from './auth-cookies'
-export type { RequestUser, RequestWithUser } from './current-user.decorator'
-export { CurrentUser } from './current-user.decorator'
 export { SessionGuard } from './session.guard'

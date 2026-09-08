@@ -1,3 +1,5 @@
+export type { CreditSummary, CreditSummaryReader } from './credit-summary'
+export { CREDIT_SUMMARY_READER, EMPTY_CREDIT_SUMMARY } from './credit-summary'
 export type { DomainEventCollector } from './domain-event-collector'
 export { DOMAIN_EVENT_COLLECTOR } from './domain-event-collector'
 export type { DomainEventHandler, EventBus } from './event-bus'

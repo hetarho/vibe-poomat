@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD, Reflector } from '@nestjs/core'
+import { CreditModule } from '../credit/credit.module'
 import {
+  CREDIT_SUMMARY_READER,
+  type CreditSummaryReader,
   FILE_STORAGE,
   type FileStorage,
   JOB_SCHEDULER,
@@ -42,7 +45,7 @@ import { UsersController } from './presentation/users.controller'
   // Both are global, but naming them keeps the module self-sufficient: the
   // cleanup job registers itself with the JobRegistry, and the profile use cases
   // resolve an avatar key through the storage port
-  imports: [ConfigModule, JobsModule, StorageModule],
+  imports: [ConfigModule, JobsModule, StorageModule, CreditModule],
   controllers: [AuthController, UsersController],
   providers: [
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
@@ -84,31 +87,46 @@ import { UsersController } from './presentation/users.controller'
     },
     {
       provide: GetMyProfileUseCase,
-      inject: [USER_REPOSITORY, IDENTITY_REPOSITORY, FILE_STORAGE],
-      useFactory: (users: UserRepository, identities: IdentityRepository, storage: FileStorage) =>
-        new GetMyProfileUseCase(users, identities, storage),
+      inject: [USER_REPOSITORY, IDENTITY_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER],
+      useFactory: (
+        users: UserRepository,
+        identities: IdentityRepository,
+        storage: FileStorage,
+        credits: CreditSummaryReader,
+      ) => new GetMyProfileUseCase(users, identities, storage, credits),
     },
     {
       provide: GetPublicProfileUseCase,
-      inject: [USER_REPOSITORY, FILE_STORAGE],
-      useFactory: (users: UserRepository, storage: FileStorage) =>
-        new GetPublicProfileUseCase(users, storage),
+      inject: [USER_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER],
+      useFactory: (users: UserRepository, storage: FileStorage, credits: CreditSummaryReader) =>
+        new GetPublicProfileUseCase(users, storage, credits),
     },
     {
       provide: UpdateProfileUseCase,
-      inject: [USER_REPOSITORY, FILE_STORAGE, JOB_SCHEDULER, TRANSACTION_MANAGER],
+      inject: [
+        USER_REPOSITORY,
+        FILE_STORAGE,
+        CREDIT_SUMMARY_READER,
+        JOB_SCHEDULER,
+        TRANSACTION_MANAGER,
+      ],
       useFactory: (
         users: UserRepository,
         storage: FileStorage,
+        credits: CreditSummaryReader,
         jobs: JobScheduler,
         transactions: TransactionManager,
-      ) => new UpdateProfileUseCase(users, storage, jobs, transactions),
+      ) => new UpdateProfileUseCase(users, storage, credits, jobs, transactions),
     },
     {
       provide: ChangeHandleUseCase,
-      inject: [USER_REPOSITORY, FILE_STORAGE, TRANSACTION_MANAGER],
-      useFactory: (users: UserRepository, storage: FileStorage, transactions: TransactionManager) =>
-        new ChangeHandleUseCase(users, storage, transactions),
+      inject: [USER_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER, TRANSACTION_MANAGER],
+      useFactory: (
+        users: UserRepository,
+        storage: FileStorage,
+        credits: CreditSummaryReader,
+        transactions: TransactionManager,
+      ) => new ChangeHandleUseCase(users, storage, credits, transactions),
     },
     SessionCleanupJob,
     // Global, and registered from here because the guard belongs to this context.

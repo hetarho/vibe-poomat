@@ -17,6 +17,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import { ENV, type Env } from '../../shared/config/env.token'
 import { WRITE_THROTTLER } from '../../shared/infrastructure/throttling/throttler-policy'
 import { Public, unwrap } from '../../shared/presentation'
+import { CurrentUser } from '../../shared/presentation/current-user.decorator'
 import { GetMyProfileUseCase } from '../application/get-my-profile.use-case'
 import {
   OAUTH_PROVIDERS,
@@ -40,7 +41,6 @@ import {
   SESSION_COOKIE,
   sessionCookieOptions,
 } from './auth-cookies'
-import { CurrentUser } from './current-user.decorator'
 
 const FOUND = 302
 

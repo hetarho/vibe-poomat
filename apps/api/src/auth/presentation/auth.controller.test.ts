@@ -16,6 +16,7 @@ import {
 import { SignInWithProviderUseCase } from '../application/sign-in-with-provider.use-case'
 import { SignOutUseCase } from '../application/sign-out.use-case'
 import { SessionId } from '../domain/session-id'
+import { FakeCreditSummaryReader } from '../test-support/fake-credit-summary'
 import { FakeFileStorage } from '../test-support/fake-file-storage'
 import {
   InMemoryIdentityRepository,
@@ -91,7 +92,12 @@ describe('the OAuth endpoints', () => {
         },
         {
           provide: GetMyProfileUseCase,
-          useValue: new GetMyProfileUseCase(users, identities, new FakeFileStorage()),
+          useValue: new GetMyProfileUseCase(
+            users,
+            identities,
+            new FakeFileStorage(),
+            new FakeCreditSummaryReader(),
+          ),
         },
         { provide: SignOutUseCase, useValue: new SignOutUseCase(sessions) },
       ],

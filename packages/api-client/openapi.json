@@ -189,6 +189,21 @@
         ]
       }
     },
+    "/api/v1/credits/me": {
+      "get": {
+        "operationId": "CreditsController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Your balance, escrow and ledger entries, newest first",
+        "tags": [
+          "Credits"
+        ]
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "operationId": "UploadsController_create",

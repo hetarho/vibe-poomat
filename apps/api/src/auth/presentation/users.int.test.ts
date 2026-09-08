@@ -4,6 +4,7 @@ import { auth } from '@repo/contracts'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { registerPlugins } from '../../bootstrap'
+import { CreditModule } from '../../credit/credit.module'
 import { DELETE_OBJECT_JOB, JOB_SCHEDULER, type JobScheduler } from '../../shared/application'
 import { ConfigModule } from '../../shared/config/config.module'
 import { DbModule } from '../../shared/db/db.module'
@@ -65,6 +66,7 @@ describe('the profile endpoints, against a real PostgreSQL', () => {
         DbModule,
         JobsModule,
         StorageModule,
+        CreditModule,
         AuthModule,
       ],
     })
@@ -132,7 +134,9 @@ describe('the profile endpoints, against a real PostgreSQL', () => {
       const body = auth.publicProfileSchema.parse(response.json())
       expect(body.handle).toBe('ada')
       expect(body.avatarUrl).toBe(PROVIDER_AVATAR)
-      expect(body.credits).toEqual({ balance: 0, received: 0, given: 0 })
+      // the seed grant landed through AccountCreated, after the sign-in
+      // transaction committed (CRED-2, ARCH-39)
+      expect(body.credits).toEqual({ balance: 2, received: 0, given: 0 })
       expect(JSON.stringify(response.json())).not.toContain('ada@example.com')
     })
 

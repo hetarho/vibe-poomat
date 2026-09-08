@@ -1,19 +1,7 @@
-import type { FileStorage } from '../../shared/application'
+import type { CreditSummary, FileStorage } from '../../shared/application'
+import { EMPTY_CREDIT_SUMMARY } from '../../shared/application'
 import type { AuthProvider } from '../domain/auth-provider'
 import type { User } from '../domain/user'
-
-/**
- * CRED-7 puts these on the public profile. They are zero here and filled in by
- * the credit context (T021); shipping the shape now means the client that reads
- * it never has to change when they become real.
- */
-export type CreditSummary = {
-  balance: number
-  received: number
-  given: number
-}
-
-export const NO_CREDITS_YET: CreditSummary = { balance: 0, received: 0, given: 0 }
 
 export type PublicProfileView = {
   id: string
@@ -42,7 +30,7 @@ export type MyProfileView = PublicProfileView & {
 export function toPublicProfile(
   user: User,
   storage: FileStorage,
-  credits: CreditSummary = NO_CREDITS_YET,
+  credits: CreditSummary = EMPTY_CREDIT_SUMMARY,
 ): PublicProfileView {
   const avatar = user.avatar
 

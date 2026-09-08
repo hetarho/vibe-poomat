@@ -11,6 +11,10 @@ export type RequestUser = { id: string }
 export type RequestWithUser = FastifyRequest & { user?: RequestUser }
 
 /**
+ * Beside `@Public()` in shared for the same reason: every context has endpoints
+ * that need the signed-in account, and none of them may import another context
+ * to ask for it (ARCH-10). The guard that fills this in lives in `auth`.
+ *
  * The account id of whoever is signed in. Only reachable on a guarded route, so
  * it is a plain string rather than a possibly-absent one: an anonymous request
  * never gets as far as the handler.

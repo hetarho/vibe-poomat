@@ -1,4 +1,4 @@
-import { DomainEvent, type EntityId } from '../../shared/kernel'
+import { CROSS_CONTEXT_EVENTS, DomainEvent, type EntityId } from '../../shared/kernel'
 
 /**
  * Signup happened (AUTH-2). Dispatched after the transaction commits (ARCH-39);
@@ -6,7 +6,7 @@ import { DomainEvent, type EntityId } from '../../shared/kernel'
  * that credits exist.
  */
 export class AccountCreated extends DomainEvent {
-  readonly name = 'auth.account-created'
+  readonly name = CROSS_CONTEXT_EVENTS.accountCreated
 
   constructor(
     userId: EntityId,

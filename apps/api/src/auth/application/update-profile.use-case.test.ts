@@ -3,6 +3,7 @@ import { DELETE_OBJECT_JOB, type JobScheduler } from '../../shared/application'
 import { Avatar } from '../domain/avatar'
 import { Handle } from '../domain/handle'
 import { User } from '../domain/user'
+import { FakeCreditSummaryReader } from '../test-support/fake-credit-summary'
 import { FAKE_PUBLIC_BASE, FakeFileStorage } from '../test-support/fake-file-storage'
 import {
   InMemoryUserRepository,
@@ -35,7 +36,13 @@ describe('UpdateProfileUseCase', () => {
       schedule: async () => undefined,
       cancel: async () => undefined,
     }
-    useCase = new UpdateProfileUseCase(users, storage, jobs, passthroughTransactions)
+    useCase = new UpdateProfileUseCase(
+      users,
+      storage,
+      new FakeCreditSummaryReader(),
+      jobs,
+      passthroughTransactions,
+    )
 
     ada = User.create({
       handle: handle('ada'),
@@ -64,10 +71,14 @@ describe('UpdateProfileUseCase', () => {
     expect(view.bio).toBeNull()
   })
 
-  it('reserves the credit fields CRED-7 needs, at zero until T021', async () => {
+  it('carries the credit counters the ledger reports (CRED-7)', async () => {
+    const credits = new FakeCreditSummaryReader()
+    credits.set(ada.id.value, { balance: 2, received: 3, given: 1 })
+    useCase = new UpdateProfileUseCase(users, storage, credits, jobs, passthroughTransactions)
+
     const view = (await useCase.execute({ userId: ada.id.value }))._unsafeUnwrap()
 
-    expect(view.credits).toEqual({ balance: 0, received: 0, given: 0 })
+    expect(view.credits).toEqual({ balance: 2, received: 3, given: 1 })
   })
 
   it.each([
@@ -149,7 +160,12 @@ describe('ChangeHandleUseCase', () => {
 
   beforeEach(async () => {
     users = new InMemoryUserRepository()
-    useCase = new ChangeHandleUseCase(users, new FakeFileStorage(), passthroughTransactions)
+    useCase = new ChangeHandleUseCase(
+      users,
+      new FakeFileStorage(),
+      new FakeCreditSummaryReader(),
+      passthroughTransactions,
+    )
     ada = User.create({ handle: handle('ada'), displayName: 'Ada' })._unsafeUnwrap()
     await users.save(ada)
   })

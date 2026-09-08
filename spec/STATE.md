@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T021 | credit ledger context | CRED AUTH ARCH | T018 T012 | todo |
 | T022 | project context: create, update, delete | PROJ ARCH | T019 T015 | todo |
 | T023 | mission lifecycle & escrow | PROJ CRED ARCH | T022 T021 T012 | todo |
 | T024 | feed, popular & upvote | PROJ ARCH | T022 | todo |
@@ -47,11 +46,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T021 — the credit ledger, which fills in the zeros T020 reserved on the profile
-- order: T021 credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T022 — the project context, the first non-auth product surface
+- order: T022-T031 project/feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T021 done: append-only ledger with cached balances, five named operations idempotent on their (type,account,ref) key, seed on AccountCreated, /credits/me; randomised invariant + concurrent-escrow int tests
 - 260908 T020 done: Avatar VO (provider URL or upload key), public profile by handle, PATCH me + me/handle, credits reserved at zero; fixed DrizzleTransactionManager committing partial writes behind an errored Result (ARCH-38)
 - 260908 T019 done: global SessionGuard with @Public in shared/presentation, /auth/me + /auth/logout, hourly session.cleanup via a new JobHandler.cron; uploads is now authenticated, smoke asserts the 401
 - 260908 T018 done: arctic OAuth start+callback behind redirect-only endpoints, sign-in use case with all four AUTH-5 branches, session cookie + rotation, AccountCreated after commit; arctic is ESM so it loads via import() in the module factory
@@ -71,4 +71,3 @@
 - 260907 T006 done: @repo/contracts zod schemas, OpenAPI 3.1 generator, @repo/api-client with ApiError middleware, contract staleness check
 - 260907 T005 done: drizzle+pg DbModule, compose pg, Testcontainers int harness; fixed pool error crash and flaky hook timeout
 - 260907 T004 done: kernel(VO/Entity/AggregateRoot/EntityId), neverthrow Result, DomainError->HTTP map, dependency-cruiser layering
-- 260907 T003 done: NestJS+Fastify skeleton, pino reqId, readiness registry; biome useImportType off for apps/api (NestJS DI)

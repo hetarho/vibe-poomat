@@ -1,3 +1,5 @@
+export type { RequestUser, RequestWithUser } from './current-user.decorator'
+export { CurrentUser } from './current-user.decorator'
 export { DomainExceptionFilter } from './domain-exception.filter'
 export type { ErrorBody } from './domain-http-exception'
 export { DomainHttpException } from './domain-http-exception'

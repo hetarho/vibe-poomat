@@ -1,13 +1,13 @@
 import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { DomainHttpException, IS_PUBLIC, statusForDomainError } from '../../shared/presentation'
+import type { RequestWithUser } from '../../shared/presentation/current-user.decorator'
 import {
   AuthenticateSessionUseCase,
   UnauthenticatedError,
 } from '../application/authenticate-session.use-case'
 import { SessionId } from '../domain/session-id'
 import { SESSION_COOKIE } from './auth-cookies'
-import type { RequestWithUser } from './current-user.decorator'
 
 /**
  * Every route is authenticated unless it says otherwise (`@Public()`). Registered

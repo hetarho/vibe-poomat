@@ -15,6 +15,13 @@
       "when": 1788829703036,
       "tag": "0001_outstanding_natasha_romanoff",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788837438856,
+      "tag": "0002_glorious_chimera",
+      "breakpoints": true
     }
   ]
 }
