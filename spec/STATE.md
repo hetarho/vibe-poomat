@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T030 | notification context: events, emails & preferences | NOTI AUTH ARCH | T013 T027 | todo |
 | T031 | account deletion | AUTH CRED PROJ FDBK ARCH | T027 T023 T021 | todo |
 | T032 | web: auth shell & sign-in | AUTH ARCH | T008 T019 | todo |
 | T033 | web: profile & settings | AUTH CRED FDBK ARCH | T032 T020 T021 | todo |
@@ -38,11 +37,13 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T030 — the notification context, or T031 account deletion; both are unblocked
-- order: T030-T031 notification/deletion → T032-T040 web+e2e
-- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
+- implement-task T031 — account deletion, the last backend task before the web ones
+- order: T031 deletion → T032-T040 web+e2e
+- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code once T031 lands and the backend is complete
 
 ## log
+- 260908 T030 done: notification context subscribing to five published events for NOTI-2's seven email types, lazy per-type opt-out with the credit-moving warning always on, HMAC unsubscribe links, seven React Email templates; each event's published payload is now declared in the kernel and implemented by the emitting class
+- 260908 note: web must build /feedbacks/:id, /projects/:id and /settings/notifications — every notification email deep-links to them (T032-T039)
 - 260908 T029 done: FDBK-8 rejection rate and reason distribution on every profile, one grouped aggregate over a denormalised feedbacks.maker_id rather than a cross-context join to projects; ClaimStoreModule moved to its own file so AuthModule can name it instead of relying on @Global()
 - 260908 note: four auth/credit use cases each take storage+credits+makerStats to build one profile view — a ProfileComposer would collapse that; candidate for review-code
 - 260908 T028 done: flat two-party thread on each report, participants resolved per request rather than stored, public keyset read oldest-first, ThreadReplied for T030; the page now walks (created_at, id) so the mandated index is the one it uses
@@ -61,5 +62,3 @@
 - 260908 T017 done: auth schema (citext handle, partial verified-email index), User/Session/ProviderIdentity domain, three Drizzle repositories; isUniqueViolation now walks Drizzle's cause chain
 - 260908 T016 done: GHCR buildx push, ssh+compose roll behind Caddy with migrate-first and a tag roll back; docker-smoke.sh gained SMOKE_REMOTE; actionlint wrapper now ignores its stale vars context
 - 260907 T014 done: S3/MinIO FileStorage with signed content-type+length, uploads endpoint, delete job; openapi generator now uses Nest preview mode
-- 260907 T015 done: SSRF-guarded undici probe, PG-backed throttler with trustProxy=1, first real migration; fixed migrate running a stale image
-- 260907 T013 done: @repo/email templates, console+Resend adapters, email.send job with PermanentJobFailure dead-lettering; Dockerfiles now copy every workspace manifest

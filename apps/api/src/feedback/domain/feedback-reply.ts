@@ -1,4 +1,10 @@
-import { AggregateRoot, CROSS_CONTEXT_EVENTS, DomainEvent, EntityId } from '../../shared/kernel'
+import {
+  AggregateRoot,
+  CROSS_CONTEXT_EVENTS,
+  DomainEvent,
+  EntityId,
+  type ThreadReplyAnnouncement,
+} from '../../shared/kernel'
 import { err, ok, type Result, ValidationError } from '../../shared/result'
 
 export const REPLY_MIN_LENGTH = 1
@@ -9,7 +15,7 @@ export class ReplyBodyNotAllowedError extends ValidationError {
 }
 
 /** FDBK-5: only the two of them may speak, so only the two of them are told. */
-export class ThreadReplied extends DomainEvent {
+export class ThreadReplied extends DomainEvent implements ThreadReplyAnnouncement {
   readonly name = CROSS_CONTEXT_EVENTS.threadReplied
 
   constructor(

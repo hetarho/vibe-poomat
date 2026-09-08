@@ -1,4 +1,10 @@
-import { AggregateRoot, CROSS_CONTEXT_EVENTS, DomainEvent, EntityId } from '../../shared/kernel'
+import {
+  AggregateRoot,
+  CROSS_CONTEXT_EVENTS,
+  DomainEvent,
+  EntityId,
+  type MissionEndAnnouncement,
+} from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import { MissionNotOpenError } from './mission-errors'
 import {
@@ -17,7 +23,7 @@ export type MissionState = (typeof MISSION_STATES)[number]
  * A mission stopped taking feedback. Carries how many slots were handed back, so
  * the notification (T030) can say something true without asking again.
  */
-export class MissionEnded extends DomainEvent {
+export class MissionEnded extends DomainEvent implements MissionEndAnnouncement {
   readonly name = CROSS_CONTEXT_EVENTS.missionEnded
 
   constructor(

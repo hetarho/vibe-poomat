@@ -397,6 +397,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your notification toggles */
+        get: operations["NotificationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Turn a notification type on or off */
+        patch: operations["NotificationsController_update"];
+        trace?: never;
+    };
+    "/api/v1/notifications/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Turn one notification type off from an email link */
+        get: operations["NotificationsController_unsubscribe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -465,6 +500,15 @@ export interface components {
         };
         PostReplyDto: {
             body: string;
+        };
+        UpdatePreferencesDto: {
+            feedback_received?: boolean;
+            thread_reply?: boolean;
+            feedback_accepted?: boolean;
+            feedback_rejected?: boolean;
+            auto_accept_warning?: boolean;
+            auto_accepted?: boolean;
+            mission_ended?: boolean;
         };
         CreateUploadUrlDto: {
             /** @enum {string} */
@@ -1007,6 +1051,63 @@ export interface operations {
             path: {
                 missionId: string;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreferencesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    NotificationsController_unsubscribe: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

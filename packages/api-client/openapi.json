@@ -689,6 +689,68 @@
         ]
       }
     },
+    "/api/v1/notifications/preferences": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Your notification toggles",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "patch": {
+        "operationId": "NotificationsController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Turn a notification type on or off",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/unsubscribe": {
+      "get": {
+        "operationId": "NotificationsController_unsubscribe",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Turn one notification type off from an email link",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "operationId": "UploadsController_create",
@@ -1020,6 +1082,32 @@
         "required": [
           "body"
         ]
+      },
+      "UpdatePreferencesDto": {
+        "type": "object",
+        "properties": {
+          "feedback_received": {
+            "type": "boolean"
+          },
+          "thread_reply": {
+            "type": "boolean"
+          },
+          "feedback_accepted": {
+            "type": "boolean"
+          },
+          "feedback_rejected": {
+            "type": "boolean"
+          },
+          "auto_accept_warning": {
+            "type": "boolean"
+          },
+          "auto_accepted": {
+            "type": "boolean"
+          },
+          "mission_ended": {
+            "type": "boolean"
+          }
+        }
       },
       "CreateUploadUrlDto": {
         "type": "object",

@@ -23,6 +23,12 @@ export const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.email().default('no-reply@vibe-poomat.local'),
   MAIL_FROM_NAME: z.string().min(1).default('vibe poomat'),
+  /**
+   * Signs the per-type unsubscribe links (NOTI-4). Rotating it invalidates
+   * every link already in somebody's inbox, which is acceptable: the worst
+   * outcome is one more click through the settings page.
+   */
+  NOTIFICATION_SECRET: z.string().min(32).default('development-notification-secret-not-for-prod'),
   S3_ENDPOINT: z.url().default('http://localhost:9000'),
   S3_BUCKET: z.string().min(1).default('vibe-poomat'),
   S3_ACCESS_KEY_ID: z.string().min(1).default('minioadmin'),

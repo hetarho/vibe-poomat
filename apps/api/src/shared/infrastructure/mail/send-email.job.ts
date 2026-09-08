@@ -1,8 +1,12 @@
 import { Inject, Injectable, type OnModuleInit } from '@nestjs/common'
-import { type JobHandler, MAILER, type Mailer, type MailRequest } from '../../application'
+import {
+  type JobHandler,
+  MAILER,
+  type Mailer,
+  type MailRequest,
+  SEND_EMAIL_JOB,
+} from '../../application'
 import { JobRegistry } from '../jobs/job-registry'
-
-export const SEND_EMAIL_JOB = 'email.send'
 
 /**
  * Every send goes through this job (ARCH-36): a mail outage must never fail the

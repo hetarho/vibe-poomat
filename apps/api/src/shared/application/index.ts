@@ -18,11 +18,16 @@ export { HTTP_PROBE, UrlUnreachableError } from './http-probe'
 export type { JobHandler, JobOptions, JobRetryPolicy, JobScheduler } from './job-scheduler'
 export { JOB_SCHEDULER, PermanentJobFailure } from './job-scheduler'
 export type { Mailer, MailRequest } from './mailer'
-export { MAILER } from './mailer'
+export { MAILER, SEND_EMAIL_JOB } from './mailer'
 export type { MakerStats, MakerStatsReader } from './maker-stats'
 export { EMPTY_MAKER_STATS, MAKER_STATS_READER } from './maker-stats'
 export type { MissionForClaim, MissionReader } from './mission-access'
 export { MISSION_READER } from './mission-access'
+export type {
+  NotificationRecipient,
+  NotificationRecipientReader,
+} from './notification-recipient'
+export { NOTIFICATION_RECIPIENT_READER } from './notification-recipient'
 export type { SlotOccupancy, SlotOccupancyReader } from './slot-occupancy'
 export { NO_OCCUPANCY, SLOT_OCCUPANCY_READER } from './slot-occupancy'
 export type { TransactionManager } from './transaction-manager'

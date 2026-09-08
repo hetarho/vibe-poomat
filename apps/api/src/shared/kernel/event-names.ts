@@ -1,3 +1,5 @@
+import type { RejectionReason } from './rejection-reasons'
+
 /**
  * Names of the domain events that cross a context boundary. They live in the
  * kernel because both ends need them and neither may import the other: a
@@ -26,15 +28,100 @@ export const CROSS_CONTEXT_EVENTS = {
 } as const
 
 /**
- * What a subscriber to `slotSettled` may rely on, whatever else the emitting
- * aggregate carries. Declared here for the same reason the names are: the
- * mission that has to notice its last slot settling lives in another context
- * from the feedback that settled it.
+ * What a subscriber may rely on, whatever else the emitting aggregate carries.
+ * Declared here for the same reason the names are: every consumer of these lives
+ * in another context from the aggregate that raised them, and the notification
+ * context (NOTI-2) consumes all of them.
+ *
+ * The emitting classes `implements` these, so an aggregate that stops carrying a
+ * published field stops compiling rather than quietly sending nobody an email.
  */
 export type SlotSettledPayload = { readonly missionId: string }
+
+/** FDBK-3: a report landed. The aggregate id is the feedback. */
+export type SubmissionAnnouncement = {
+  readonly missionId: string
+  readonly projectId: string
+  readonly makerId: string
+  readonly feedbackerId: string
+}
+
+/** CRED-4: one slot's credit moved. The aggregate id is the feedback. */
+export type SettlementAnnouncement = SubmissionAnnouncement & {
+  readonly outcome: 'accepted' | 'rejected'
+  /** FDBK-7: true when the 72-hour clock decided rather than the maker. */
+  readonly automatic: boolean
+  readonly rejectionReason: RejectionReason | null
+}
+
+/** FDBK-5: one side of a thread spoke. The aggregate id is the reply. */
+export type ThreadReplyAnnouncement = {
+  readonly feedbackId: string
+  readonly authorId: string
+  readonly recipientId: string
+}
+
+/** FDBK-7: 24 hours left. The aggregate id is the feedback. */
+export type WarningAnnouncement = {
+  readonly missionId: string
+  readonly makerId: string
+}
+
+/** PROJ-6: a mission stopped taking feedback. The aggregate id is the mission. */
+export type MissionEndAnnouncement = {
+  readonly projectId: string
+  readonly state: string
+  readonly refundedSlots: number
+}
+
+function fieldsOf(event: object): Record<string, unknown> {
+  return event as Record<string, unknown>
+}
+
+function hasStrings(event: object, keys: readonly string[]): boolean {
+  const record = fieldsOf(event)
+
+  return keys.every((key) => typeof record[key] === 'string')
+}
 
 export function carriesMissionId<TEvent extends object>(
   event: TEvent,
 ): event is TEvent & SlotSettledPayload {
   return 'missionId' in event && typeof (event as { missionId: unknown }).missionId === 'string'
+}
+
+export function announcesSubmission<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & SubmissionAnnouncement {
+  return hasStrings(event, ['missionId', 'projectId', 'makerId', 'feedbackerId'])
+}
+
+export function announcesSettlement<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & SettlementAnnouncement {
+  return (
+    announcesSubmission(event) &&
+    hasStrings(event, ['outcome']) &&
+    typeof fieldsOf(event).automatic === 'boolean'
+  )
+}
+
+export function announcesThreadReply<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & ThreadReplyAnnouncement {
+  return hasStrings(event, ['feedbackId', 'authorId', 'recipientId'])
+}
+
+export function announcesWarning<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & WarningAnnouncement {
+  return hasStrings(event, ['missionId', 'makerId'])
+}
+
+export function announcesMissionEnd<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & MissionEndAnnouncement {
+  return (
+    hasStrings(event, ['projectId', 'state']) && typeof fieldsOf(event).refundedSlots === 'number'
+  )
 }

@@ -1,4 +1,6 @@
 export { EmailLayout, NO_REPLY_NOTICE } from './layout'
+export type { NotificationFooterProps } from './notification-footer'
+export { NotificationFooter } from './notification-footer'
 export type {
   EmailTemplateName,
   EmailTemplateProps,
@@ -7,3 +9,19 @@ export type {
 export { render, templateNames } from './render'
 export type { AccountWelcomeProps } from './templates/account-welcome'
 export { ACCOUNT_WELCOME_SUBJECT, AccountWelcome } from './templates/account-welcome'
+export type { AutoAcceptWarningProps } from './templates/auto-accept-warning'
+export { AUTO_ACCEPT_WARNING_SUBJECT, AutoAcceptWarning } from './templates/auto-accept-warning'
+export type { AutoAcceptedProps } from './templates/auto-accepted'
+export { AUTO_ACCEPTED_SUBJECT, AutoAccepted } from './templates/auto-accepted'
+export type { FeedbackAcceptedProps } from './templates/feedback-accepted'
+export { FEEDBACK_ACCEPTED_SUBJECT, FeedbackAccepted } from './templates/feedback-accepted'
+export type { FeedbackReceivedProps } from './templates/feedback-received'
+export { FEEDBACK_RECEIVED_SUBJECT, FeedbackReceived } from './templates/feedback-received'
+export type { FeedbackRejectedProps, RejectionReasonKey } from './templates/feedback-rejected'
+export { FEEDBACK_REJECTED_SUBJECT, FeedbackRejected } from './templates/feedback-rejected'
+export type { MissionEndedProps, MissionEndingKey } from './templates/mission-ended'
+export { MISSION_ENDED_SUBJECT, MissionEnded } from './templates/mission-ended'
+export type { NotificationProps } from './templates/notification-shell'
+export { NotificationShell } from './templates/notification-shell'
+export type { ThreadReplyProps } from './templates/thread-reply'
+export { THREAD_REPLY_SUBJECT, ThreadReply } from './templates/thread-reply'

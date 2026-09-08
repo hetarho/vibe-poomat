@@ -9,6 +9,7 @@ import {
   type Mailer,
   type MailRequest,
   PermanentJobFailure,
+  SEND_EMAIL_JOB,
   TRANSACTION_MANAGER,
   type TransactionManager,
 } from '../../application'
@@ -20,7 +21,6 @@ import { HealthModule } from '../../health/health.module'
 import { deadLetterQueueFor } from '../jobs/job-policy'
 import { JobsModule } from '../jobs/jobs.module'
 import { MailModule } from './mail.module'
-import { SEND_EMAIL_JOB } from './send-email.job'
 
 const REQUEST: MailRequest = {
   to: 'someone@example.test',

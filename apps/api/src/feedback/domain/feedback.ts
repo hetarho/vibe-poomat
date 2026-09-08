@@ -5,6 +5,9 @@ import {
   EntityId,
   REJECTION_REASONS,
   type RejectionReason,
+  type SettlementAnnouncement,
+  type SubmissionAnnouncement,
+  type WarningAnnouncement,
 } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import { FeedbackNotPendingError } from './claim-errors'
@@ -27,7 +30,7 @@ export { REJECTION_REASONS, type RejectionReason }
  * its last slot settling (PROJ-6), which is why `missionId` is on it: a
  * subscriber in another context cannot reach in for it.
  */
-export class SlotSettled extends DomainEvent {
+export class SlotSettled extends DomainEvent implements SettlementAnnouncement {
   readonly name = CROSS_CONTEXT_EVENTS.slotSettled
 
   constructor(
@@ -39,6 +42,8 @@ export class SlotSettled extends DomainEvent {
     readonly outcome: 'accepted' | 'rejected',
     /** True when the 72-hour clock decided rather than the maker (FDBK-7). */
     readonly automatic: boolean,
+    /** NOTI-2 says the rejection email names the reason, so the event carries it. */
+    readonly rejectionReason: RejectionReason | null = null,
     occurredAt?: Date,
   ) {
     super(feedbackId, occurredAt)
@@ -46,7 +51,7 @@ export class SlotSettled extends DomainEvent {
 }
 
 /** FDBK-7: 24 hours left before the decision is made for the maker. */
-export class AutoAcceptWarning extends DomainEvent {
+export class AutoAcceptWarning extends DomainEvent implements WarningAnnouncement {
   readonly name = CROSS_CONTEXT_EVENTS.autoAcceptWarning
 
   constructor(
@@ -59,7 +64,7 @@ export class AutoAcceptWarning extends DomainEvent {
   }
 }
 
-export class FeedbackSubmitted extends DomainEvent {
+export class FeedbackSubmitted extends DomainEvent implements SubmissionAnnouncement {
   readonly name = CROSS_CONTEXT_EVENTS.feedbackSubmitted
 
   constructor(
@@ -262,6 +267,7 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
         this.props.authorId?.value ?? '',
         state,
         by.automatic,
+        reason,
         now,
       ),
     )

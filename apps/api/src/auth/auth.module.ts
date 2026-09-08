@@ -11,6 +11,7 @@ import {
   type JobScheduler,
   MAKER_STATS_READER,
   type MakerStatsReader,
+  NOTIFICATION_RECIPIENT_READER,
   TRANSACTION_MANAGER,
   type TransactionManager,
   USER_SUMMARY_READER,
@@ -30,6 +31,7 @@ import { IDENTITY_REPOSITORY, type IdentityRepository } from './domain/identity.
 import { SESSION_REPOSITORY, type SessionRepository } from './domain/session.repository'
 import { SESSION_ID_GENERATOR, type SessionIdGenerator } from './domain/session-id-generator'
 import { USER_REPOSITORY, type UserRepository } from './domain/user.repository'
+import { NotificationRecipientAdapter } from './infrastructure/notification-recipient-adapter'
 import { ArcticOAuthRegistry } from './infrastructure/oauth/arctic-oauth-registry'
 import { DrizzleIdentityRepository } from './infrastructure/persistence/drizzle-identity.repository'
 import { DrizzleSessionRepository } from './infrastructure/persistence/drizzle-session.repository'
@@ -159,6 +161,10 @@ import { UsersController } from './presentation/users.controller'
     UserSummaryAdapter,
     // the narrow view of an account other contexts may hold (AUTH-4)
     { provide: USER_SUMMARY_READER, useExisting: UserSummaryAdapter },
+    NotificationRecipientAdapter,
+    // the address, which AUTH-4 keeps for notifications and nothing else, so it
+    // travels under its own token rather than on the summary everyone holds
+    { provide: NOTIFICATION_RECIPIENT_READER, useExisting: NotificationRecipientAdapter },
     // Global, and registered from here because the guard belongs to this context.
     // AppModule imports ThrottlingModule first, so an anonymous flood is refused
     // before any of this reaches the database.
@@ -176,6 +182,7 @@ import { UsersController } from './presentation/users.controller'
     SESSION_ID_GENERATOR,
     OAUTH_PROVIDERS,
     USER_SUMMARY_READER,
+    NOTIFICATION_RECIPIENT_READER,
     AuthenticateSessionUseCase,
   ],
 })

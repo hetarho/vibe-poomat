@@ -39,6 +39,15 @@ describe('render', () => {
   })
 
   it('knows exactly which templates exist', () => {
-    expect(templateNames()).toEqual(['account-welcome'])
+    expect(templateNames()).toEqual([
+      'account-welcome',
+      'feedback_received',
+      'thread_reply',
+      'feedback_accepted',
+      'feedback_rejected',
+      'auto_accept_warning',
+      'auto_accepted',
+      'mission_ended',
+    ])
   })
 })
