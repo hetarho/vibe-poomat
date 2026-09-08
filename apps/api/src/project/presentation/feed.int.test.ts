@@ -272,6 +272,79 @@ describe('the feed, against a real PostgreSQL', () => {
     })
   })
 
+  /** AUTH-3's profile list, which narrows the same query rather than a second one. */
+  describe('?owner= (AUTH-3)', () => {
+    async function accountBehind(session: string): Promise<string> {
+      const me = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        cookies: { [SESSION_COOKIE]: session },
+      })
+
+      return (me.json() as { id: string }).id
+    }
+
+    it('answers with that account’s projects and nobody else’s', async () => {
+      const ada = await signIn('ada-1', 'ada')
+      const adaId = await accountBehind(ada)
+      await createProject(ada, 'Ada one')
+      await createProject(ada, 'Ada two')
+      await createProject(await signIn('bob-1', 'bob'), 'Bob one')
+
+      const page = await feed(`?owner=${adaId}`)
+
+      expect(titles(page).toSorted()).toEqual(['Ada one', 'Ada two'])
+    })
+
+    it('is empty for an account with nothing, rather than the whole feed', async () => {
+      await createProject(await signIn('ada-1', 'ada'), 'Ada one')
+      const bobId = await accountBehind(await signIn('bob-1', 'bob'))
+
+      expect((await feed(`?owner=${bobId}`)).items).toEqual([])
+    })
+
+    /** Narrowing to nothing is honest; widening back to everybody would not be. */
+    it('is empty for an owner that is not an account id at all', async () => {
+      await createProject(await signIn('ada-1', 'ada'), 'Ada one')
+
+      expect((await feed('?owner=not-an-id')).items).toEqual([])
+    })
+
+    it('leaves a hidden project out, the same as the open feed does (PROJ-8)', async () => {
+      const ada = await signIn('ada-1', 'ada')
+      const adaId = await accountBehind(ada)
+      const hidden = await createProject(ada, 'Ada hidden')
+      await createProject(ada, 'Ada visible')
+      await app.inject({
+        method: 'DELETE',
+        url: `/projects/${hidden}`,
+        cookies: { [SESSION_COOKIE]: ada },
+      })
+
+      expect(titles(await feed(`?owner=${adaId}`))).toEqual(['Ada visible'])
+    })
+
+    it('still pages, so a prolific account is not one enormous answer', async () => {
+      const ada = await signIn('ada-1', 'ada')
+      const adaId = await accountBehind(ada)
+      for (const title of ['one', 'two', 'three']) {
+        await createProject(ada, `Ada ${title}`)
+      }
+
+      const first = await feed(`?owner=${adaId}&limit=2`)
+      expect(first.items).toHaveLength(2)
+      expect(first.nextCursor).not.toBeNull()
+
+      const rest = await feed(`?owner=${adaId}&limit=2&cursor=${first.nextCursor}`)
+      expect(rest.items).toHaveLength(1)
+      expect(titles(first).concat(titles(rest)).toSorted()).toEqual([
+        'Ada one',
+        'Ada three',
+        'Ada two',
+      ])
+    })
+  })
+
   describe('POST /projects/:id/upvote (PROJ-11)', () => {
     async function toggle(session: string, projectId: string) {
       return app.inject({

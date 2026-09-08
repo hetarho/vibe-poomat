@@ -12,6 +12,15 @@ export type FeedbackRepository = {
    * on missions that ended long ago — closing a mission never settled them.
    */
   listPendingForMaker(makerId: EntityId): Promise<Feedback[]>
+  /**
+   * AUTH-3: what one account has written, newest first, keyed on the id rather
+   * than an offset. A UUIDv7 sorts by the instant it was minted, so walking
+   * `id < cursor` is walking backwards through time (ARCH-17).
+   */
+  listForAuthor(
+    authorId: EntityId,
+    options: { limit: number; before?: string },
+  ): Promise<Feedback[]>
   /** FDBK-9: the report stays public, the name on it does not. */
   anonymiseAuthor(userId: EntityId): Promise<void>
   save(feedback: Feedback): Promise<void>

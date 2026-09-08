@@ -41,6 +41,8 @@ export type FeedQuery = {
   page(input: {
     sort: FeedSort
     tag?: ProjectTag
+    /** One account's own projects, which is what a profile page shows (AUTH-3). */
+    ownerId?: string
     limit: number
     after?: FeedCursorKeys
     now?: Date

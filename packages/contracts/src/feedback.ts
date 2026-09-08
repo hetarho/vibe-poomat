@@ -118,6 +118,11 @@ export const feedbackReplySchema = z.object({
 
 export type FeedbackReply = z.infer<typeof feedbackReplySchema>
 
+/** AUTH-3's profile list of what an account has given (ARCH-17). */
+export const feedbackPageSchema = cursorPageSchema(feedbackSchema)
+
+export type FeedbackPage = z.infer<typeof feedbackPageSchema>
+
 export const threadPageSchema = cursorPageSchema(feedbackReplySchema)
 
 export type ThreadPage = z.infer<typeof threadPageSchema>

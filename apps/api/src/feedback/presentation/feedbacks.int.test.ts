@@ -303,6 +303,120 @@ describe('feedback reports, against a real PostgreSQL', () => {
     })
   })
 
+  /** AUTH-3's profile list: what one account has given, newest first. */
+  describe('GET /users/:authorId/feedbacks', () => {
+    async function accountBehind(session: string): Promise<string> {
+      const me = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        cookies: { [SESSION_COOKIE]: session },
+      })
+
+      return (me.json() as { id: string }).id
+    }
+
+    function given(authorId: string, query = '') {
+      return app.inject({ method: 'GET', url: `/users/${authorId}/feedbacks${query}` })
+    }
+
+    /**
+     * Two reports by the same person. They need two missions (FDBK-2) and two
+     * makers, because one maker's seed only pays for so many slots (CRED-1).
+     */
+    async function twoReports(): Promise<{ authorId: string; ids: string[] }> {
+      const feedbacker = await signIn('bob-1', 'bob')
+      const authorId = await accountBehind(feedbacker)
+      const ids: string[] = []
+
+      for (const tag of ['ada-1', 'cara-1']) {
+        const maker = await signIn(tag, tag.replace('-1', ''))
+        const created = await app.inject({
+          method: 'POST',
+          url: '/projects',
+          payload: {
+            title: `Poomat ${tag}`,
+            liveUrl: `https://${tag}.test`,
+            pitch: 'Trade real feedback',
+            tags: ['SaaS'],
+          },
+          cookies: { [SESSION_COOKIE]: maker },
+        })
+        const mission = await app.inject({
+          method: 'POST',
+          url: `/projects/${(created.json() as { id: string }).id}/missions`,
+          payload: { taskText: 'Try signing up', slots: 1 },
+          cookies: { [SESSION_COOKIE]: maker },
+        })
+        const claim = await app.inject({
+          method: 'POST',
+          url: `/missions/${(mission.json() as { id: string }).id}/claims`,
+          cookies: { [SESSION_COOKIE]: feedbacker },
+        })
+        const written = contract.feedbackSchema.parse(
+          (await submit(feedbacker, (claim.json() as { id: string }).id, report())).json(),
+        )
+        ids.push(written.id)
+      }
+
+      return { authorId, ids }
+    }
+
+    it('is public, with no session at all', async () => {
+      const { feedbacker, claimId } = await heldSlot()
+      const written = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+      const authorId = await accountBehind(feedbacker)
+
+      const response = await given(authorId)
+
+      expect(response.statusCode).toBe(200)
+      const page = contract.feedbackPageSchema.parse(response.json())
+      expect(page.items.map((item) => item.id)).toContain(written.id)
+      expect(page.items[0]?.author?.handle).toBe('bob')
+    })
+
+    it('reads newest first', async () => {
+      const { authorId, ids } = await twoReports()
+
+      const page = contract.feedbackPageSchema.parse((await given(authorId)).json())
+
+      expect(page.items.map((item) => item.id)).toEqual([...ids].reverse())
+    })
+
+    it('walks the whole list through the cursor, once each', async () => {
+      const { authorId, ids } = await twoReports()
+
+      const first = contract.feedbackPageSchema.parse((await given(authorId, '?limit=1')).json())
+      expect(first.nextCursor).not.toBeNull()
+      const rest = contract.feedbackPageSchema.parse(
+        (await given(authorId, `?limit=1&cursor=${first.nextCursor}`)).json(),
+      )
+
+      expect([...first.items, ...rest.items].map((item) => item.id)).toEqual([...ids].reverse())
+      expect(rest.nextCursor).toBeNull()
+    })
+
+    it('answers with nothing for an account that has given none', async () => {
+      const authorId = await accountBehind(await signIn('cara-1', 'cara'))
+
+      expect(contract.feedbackPageSchema.parse((await given(authorId)).json())).toEqual({
+        items: [],
+        nextCursor: null,
+      })
+    })
+
+    it('answers with nothing for something that is not an account id', async () => {
+      expect(contract.feedbackPageSchema.parse((await given('not-an-id')).json()).items).toEqual([])
+    })
+
+    it('refuses a cursor a caller made up', async () => {
+      const authorId = await accountBehind(await signIn('cara-1', 'cara'))
+
+      expect((await given(authorId, '?cursor=nonsense')).statusCode).toBe(404)
+    })
+  })
+
   describe('reading a report (FDBK-9)', () => {
     it('is public, with no session at all', async () => {
       const { feedbacker, claimId } = await heldSlot()

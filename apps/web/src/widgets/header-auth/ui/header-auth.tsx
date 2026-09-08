@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { UserAvatar, useCurrentUser } from '../../../entities/session'
 import { SignInDialog, useSignOut } from '../../../features/auth'
 import { Button } from '../../../shared/ui'
@@ -22,17 +23,15 @@ export function HeaderAuth() {
     )
   }
 
-  // plain anchors until T033 builds `/users/$handle` and `/settings`; the typed
-  // Link would not compile against routes that do not exist yet
   return (
     <nav aria-label="Account" className="flex items-center gap-3">
-      <a href={`/users/${user.handle}`} className="flex items-center gap-2">
+      <Link to="/@{$handle}" params={{ handle: user.handle }} className="flex items-center gap-2">
         <UserAvatar user={user} />
         <span className="hidden font-medium text-sm sm:inline">{user.displayName}</span>
-      </a>
-      <a href="/settings" className="text-muted-foreground text-sm hover:text-foreground">
+      </Link>
+      <Link to="/settings" className="text-muted-foreground text-sm hover:text-foreground">
         Settings
-      </a>
+      </Link>
       <Button
         size="sm"
         variant="ghost"

@@ -6,6 +6,31 @@ import type { Feedback } from '../domain/feedback'
 import type { FeedbackRepository } from '../domain/feedback.repository'
 import { type FeedbackView, toFeedbackView } from './feedback-view'
 
+export const GIVEN_PAGE_SIZE = 10
+const MAX_GIVEN_PAGE_SIZE = 50
+
+export type FeedbackPage = {
+  items: FeedbackView[]
+  nextCursor: string | null
+}
+
+/** Opaque, so nothing outside comes to depend on the ordering being by id. */
+function encodeGivenCursor(feedback: Feedback): string {
+  return Buffer.from(feedback.id.value, 'utf8').toString('base64url')
+}
+
+function decodeGivenCursor(
+  cursor: string | undefined,
+): Result<string | null, FeedbackNotFoundError> {
+  if (cursor === undefined) return ok(null)
+
+  const decoded = Buffer.from(cursor, 'base64url').toString('utf8')
+  // checked because it reaches a query, and a cursor is caller-supplied
+  if (!EntityId.isValid(decoded)) return err(new FeedbackNotFoundError('this page does not exist'))
+
+  return ok(decoded)
+}
+
 /**
  * FDBK-9: a submitted report is public, rejection reason and all. Nothing here
  * hides a rejected one — the reason is exactly what makes a rejection reviewable
@@ -45,6 +70,37 @@ export class ReadFeedbackUseCase {
         feedback.authorId === null ? null : (authors.get(feedback.authorId.value) ?? null),
       ),
     )
+  }
+
+  /**
+   * AUTH-3: what this account has given, newest first. Public, like every
+   * submitted report (FDBK-9), and paged with an opaque cursor rather than an
+   * offset so a report written mid-read cannot shift the page (ARCH-17).
+   */
+  async forAuthor(input: {
+    authorId: string
+    limit?: number
+    cursor?: string
+  }): Promise<Result<FeedbackPage, FeedbackNotFoundError>> {
+    const id = EntityId.parse(input.authorId)
+    if (id.isErr()) return ok({ items: [], nextCursor: null })
+
+    const limit = Math.min(Math.max(input.limit ?? GIVEN_PAGE_SIZE, 1), MAX_GIVEN_PAGE_SIZE)
+    const before = decodeGivenCursor(input.cursor)
+    if (before.isErr()) return err(new FeedbackNotFoundError('this page does not exist'))
+
+    const rows = await this.feedbacks.listForAuthor(id.value, {
+      limit: limit + 1,
+      ...(before.value === null ? {} : { before: before.value }),
+    })
+    const hasMore = rows.length > limit
+    const page = rows.slice(0, limit)
+    const author = await this.users.summaryFor(id.value.value)
+
+    return ok({
+      items: page.map((feedback) => toFeedbackView(feedback, author)),
+      nextCursor: hasMore ? encodeGivenCursor(page.at(-1) as Feedback) : null,
+    })
   }
 
   private async authorOf(feedback: Feedback): Promise<UserSummary | null> {

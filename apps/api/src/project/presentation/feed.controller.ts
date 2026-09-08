@@ -30,11 +30,13 @@ export class FeedController {
   @ApiOperation({ summary: 'The feed: open missions first, or the popular tab' })
   @ApiQuery({ name: 'sort', required: false, enum: FEED_SORTS })
   @ApiQuery({ name: 'tag', required: false })
+  @ApiQuery({ name: 'owner', required: false })
   @ApiQuery({ name: 'cursor', required: false })
   @ApiQuery({ name: 'limit', required: false })
   async list(
     @Query('sort') sort: string | undefined,
     @Query('tag') tag: string | undefined,
+    @Query('owner') owner: string | undefined,
     @Query('cursor') cursor: string | undefined,
     @Query('limit') limit: string | undefined,
     @Req() request: FastifyRequest,
@@ -43,6 +45,7 @@ export class FeedController {
       await this.feed.execute({
         sort: sort === 'popular' ? 'popular' : 'default',
         tag,
+        owner,
         cursor,
         limit: limit === undefined ? undefined : Number(limit),
         viewerId: (request as RequestWithUser).user?.id ?? null,

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, lt } from 'drizzle-orm'
 import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
@@ -91,6 +91,26 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
       .from(feedbacks)
       .where(and(eq(feedbacks.makerId, makerId.value), eq(feedbacks.state, 'pending')))
       .orderBy(asc(feedbacks.submittedAt))
+
+    return rows.map(toFeedback)
+  }
+
+  async listForAuthor(
+    authorId: EntityId,
+    options: { limit: number; before?: string },
+  ): Promise<Feedback[]> {
+    const before = options.before ?? null
+    const rows = await getDb()
+      .select()
+      .from(feedbacks)
+      .where(
+        and(
+          eq(feedbacks.authorId, authorId.value),
+          before === null ? undefined : lt(feedbacks.id, before),
+        ),
+      )
+      .orderBy(desc(feedbacks.id))
+      .limit(options.limit)
 
     return rows.map(toFeedback)
   }

@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T033 | web: profile & settings | AUTH CRED FDBK ARCH | T032 T020 T021 | todo |
 | T034 | web: project create & edit | PROJ ARCH | T032 T022 T014 | todo |
 | T035 | web: feed, project detail & upvote | PROJ ARCH | T032 T024 | todo |
 | T036 | web: mission management | PROJ CRED ARCH | T035 T023 | todo |
@@ -35,12 +34,14 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T033 — web profile & settings, or T034/T035; all three are unblocked
+- implement-task T034 — web project create & edit, or T035 the feed; both are unblocked
 - order: T033-T039 web → T040 e2e; the api is complete
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
 - update-ssot candidate: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031 result)
 
 ## log
+- 260908 T033 done: /@handle profile with CRED-7 counters and FDBK-8 stats, settings with avatar presign, handle change, notification toggles and AUTH-9 deletion; the feed gained ?owner= and GET /users/:authorId/feedbacks was added, because the profile lists had no endpoint at all
+- 260908 note: create-task candidates — annotate the api's responses with DTOs so the generated client is typed both ways (shared/api/body.ts exists only for that), and the two profile endpoints deserved a task of their own
 - 260908 T032 done: session resolved once in the root beforeLoad with the cookie forwarded during SSR, so the header never flashes the wrong state; sign-in as a dialog carrying returnTo, /sign-in for the callback's ?error=, requireSession as a beforeLoad guard; smoke now asserts the server-rendered header
 - 260908 note: the account menu links to /users/:handle and /settings with plain anchors — T033 turns them into typed Links once those routes exist
 - 260908 T031 done: AUTH-9's sequence across four contexts in one transaction, each asked through its own port, with the step order exported and asserted; pending reports found by maker_id because closing a mission settles nothing; the session cookie's name moved to shared/presentation so deletion can clear it
@@ -59,5 +60,3 @@
 - 260908 T021 done: append-only ledger with cached balances, five named operations idempotent on their (type,account,ref) key, seed on AccountCreated, /credits/me; randomised invariant + concurrent-escrow int tests
 - 260908 T020 done: Avatar VO (provider URL or upload key), public profile by handle, PATCH me + me/handle, credits reserved at zero; fixed DrizzleTransactionManager committing partial writes behind an errored Result (ARCH-38)
 - 260908 T019 done: global SessionGuard with @Public in shared/presentation, /auth/me + /auth/logout, hourly session.cleanup via a new JobHandler.cron; uploads is now authenticated, smoke asserts the 401
-- 260908 T018 done: arctic OAuth start+callback behind redirect-only endpoints, sign-in use case with all four AUTH-5 branches, session cookie + rotation, AccountCreated after commit; arctic is ESM so it loads via import() in the module factory
-- 260908 note: 4 pre-existing biome warnings in shared int tests (unused import/var, non-null assertion) — candidates for review-code

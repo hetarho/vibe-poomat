@@ -1,5 +1,6 @@
 export type { ApiClient } from '@repo/api-client'
 export { ApiError } from '@repo/api-client'
 export { apiBaseUrl } from './base-url'
+export { asBody, expectBody } from './body'
 export { apiClient, forwardedHeaders } from './client'
 export { errorMessage, FALLBACK_ERROR_MESSAGE, isKnownErrorCode } from './error-message'

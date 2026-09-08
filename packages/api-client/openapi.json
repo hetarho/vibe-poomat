@@ -244,6 +244,12 @@
             "schema": {}
           },
           {
+            "name": "owner",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
             "name": "tag",
             "required": false,
             "in": "query",
@@ -683,6 +689,42 @@
           }
         },
         "summary": "The thread on a report, oldest first",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
+    "/api/v1/users/{authorId}/feedbacks": {
+      "get": {
+        "operationId": "FeedbacksController_byAuthor",
+        "parameters": [
+          {
+            "name": "authorId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The reports one account has written, newest first",
         "tags": [
           "Feedbacks"
         ]

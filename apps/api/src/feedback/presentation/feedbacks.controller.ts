@@ -153,6 +153,32 @@ export class FeedbacksController {
     return { items: page.items.map(renderReply), nextCursor: page.nextCursor }
   }
 
+  /**
+   * AUTH-3's profile list: what one account has given. Public like every
+   * submitted report (FDBK-9), and keyed on the report's author rather than on
+   * a handle, so the profile page passes the id it already has.
+   */
+  @Get('users/:authorId/feedbacks')
+  @Public()
+  @ApiOperation({ summary: 'The reports one account has written, newest first' })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async byAuthor(
+    @Param('authorId') authorId: string,
+    @Query('cursor') cursor: string | undefined,
+    @Query('limit') limit: string | undefined,
+  ): Promise<contract.FeedbackPage> {
+    const page = unwrap(
+      await this.read.forAuthor({
+        authorId,
+        cursor,
+        limit: limit === undefined ? undefined : Number(limit),
+      }),
+    )
+
+    return { items: page.items.map(render), nextCursor: page.nextCursor }
+  }
+
   @Get('missions/:missionId/feedbacks')
   @Public()
   @ApiOperation({ summary: 'Every report turned in against a mission' })

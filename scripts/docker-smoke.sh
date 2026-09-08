@@ -93,5 +93,10 @@ expect_body "$WEB_URL/" 'Trade real feedback'
 # proves the whole SSR round trip and not just that a page came back
 expect_body "$WEB_URL/" 'Sign in'
 expect_body "$WEB_URL/sign-in?error=AUTH_PROVIDER_DENIED" 'provider refused'
+# a handle nobody holds renders its own page rather than an error boundary
+expect_status "$WEB_URL/@nobody" 200
+expect_body "$WEB_URL/@nobody" 'No such account'
+# owner-only, and the guard runs on the server rather than after a paint
+expect_status "$WEB_URL/settings" 307
 
 log 'docker smoke passed'

@@ -60,6 +60,8 @@ export class GetFeedUseCase {
   async execute(input: {
     sort?: FeedSort
     tag?: string
+    /** One account's own projects (AUTH-3); anything unusable narrows to nothing. */
+    owner?: string
     limit?: number
     cursor?: string
     viewerId?: string | null
@@ -76,9 +78,15 @@ export class GetFeedUseCase {
       return ok({ items: [], nextCursor: null })
     }
 
+    // an owner nobody could be owns nothing, which is the honest answer rather
+    // than quietly widening the query back to everybody's projects
+    const owner = input.owner === undefined ? undefined : EntityId.parse(input.owner)
+    if (owner?.isErr() === true) return ok({ items: [], nextCursor: null })
+
     const rows = await this.feed.page({
       sort: input.sort ?? 'default',
       tag,
+      ...(owner?.isOk() === true ? { ownerId: owner.value.value } : {}),
       limit: limit + 1,
       after: after?.isOk() === true ? after.value : undefined,
     })

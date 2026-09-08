@@ -47,6 +47,7 @@ export class DrizzleFeedQuery implements FeedQuery {
   async page(input: {
     sort: FeedSort
     tag?: ProjectTag
+    ownerId?: string
     limit: number
     after?: FeedCursorKeys
     now?: Date
@@ -70,6 +71,11 @@ export class DrizzleFeedQuery implements FeedQuery {
 
     const tagFilter =
       input.tag === undefined ? sql`true` : sql`p.tags && ARRAY[${input.tag}]::text[]`
+
+    // narrows the same query rather than adding a second one, so a profile's
+    // list and the feed can never disagree about what a project looks like
+    const ownerFilter =
+      input.ownerId === undefined ? sql`true` : sql`p.owner_id = ${input.ownerId}::uuid`
 
     const after = input.after
     const keyset =
@@ -102,7 +108,7 @@ export class DrizzleFeedQuery implements FeedQuery {
       from projects p
       left join missions m on m.project_id = p.id and m.state = 'open'
       left join recent on recent.project_id = p.id
-      where p.deleted_at is null and ${tagFilter} and ${keyset}
+      where p.deleted_at is null and ${tagFilter} and ${ownerFilter} and ${keyset}
       order by ${rank} asc, ${primary} desc, ${secondary} desc, p.id desc
       limit ${input.limit}
     `)

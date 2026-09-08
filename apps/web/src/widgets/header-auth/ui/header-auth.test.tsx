@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CurrentUser } from '../../../entities/session'
 import { SESSION_QUERY_KEY } from '../../../entities/session'
@@ -19,9 +19,29 @@ vi.mock('../../../shared/api', async () => {
   }
 })
 
+type StubLinkProps = {
+  to: string
+  params?: Record<string, string>
+  children: ReactNode
+  className?: string
+}
+
 vi.mock('@tanstack/react-router', () => ({
   useRouterState: (options: { select: (state: unknown) => unknown }) =>
     options.select({ location: { pathname: '/projects/abc', searchStr: '?tab=feedback' } }),
+  // the router is not mounted here, so a Link is the anchor it would render
+  Link: ({ to, params, children, className }: StubLinkProps) => (
+    <a
+      className={className}
+      href={Object.entries(params ?? {}).reduce(
+        // `@{$handle}` is a prefixed path param, so the braces go with the name
+        (path, [name, value]) => path.replace(`{$${name}}`, value).replace(`$${name}`, value),
+        to,
+      )}
+    >
+      {children}
+    </a>
+  ),
 }))
 
 const ADA: CurrentUser = {
@@ -110,10 +130,7 @@ describe('HeaderAuth', () => {
     it('links to the profile and the settings page', () => {
       renderWith(ADA)
 
-      expect(screen.getByRole('link', { name: /Ada Lovelace/ })).toHaveAttribute(
-        'href',
-        '/users/ada',
-      )
+      expect(screen.getByRole('link', { name: /Ada Lovelace/ })).toHaveAttribute('href', '/@ada')
       expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
     })
 

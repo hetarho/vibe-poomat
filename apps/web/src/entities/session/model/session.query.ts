@@ -1,6 +1,6 @@
 import type { auth } from '@repo/contracts'
 import { queryOptions } from '@tanstack/react-query'
-import { ApiError, apiClient } from '../../../shared/api'
+import { ApiError, apiClient, asBody } from '../../../shared/api'
 
 export type CurrentUser = auth.Me
 
@@ -19,7 +19,7 @@ export async function fetchCurrentUser(
   try {
     const { data } = await client.GET('/api/v1/auth/me')
 
-    return (data as CurrentUser | undefined) ?? null
+    return asBody<CurrentUser | null>(data, null)
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null
 
