@@ -15,11 +15,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
    * first render — which is what stops the header flashing the signed-out state
    * at somebody who is signed in. During SSR the incoming cookie has to be
    * forwarded by hand, because the server has no browser to attach it.
+   *
+   * Prefetched rather than ensured, because this runs on the root route: an
+   * `ensureQueryData` rethrows, and an api that is briefly unreachable would
+   * then blank every page on the site — including the public ones, which need
+   * no session at all. A failure here leaves the header signed-out and the page
+   * intact, and the query retries on its own.
    */
   beforeLoad: async ({ context }) => {
     const headers = import.meta.env.SSR ? forwardedHeaders(getRequestHeaders()) : undefined
 
-    await context.queryClient.ensureQueryData(sessionQueryOptions(headers))
+    await context.queryClient.prefetchQuery(sessionQueryOptions(headers))
   },
   head: () => ({
     meta: [
