@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common'
+import { AuthModule } from '../auth/auth.module'
 import { ProjectModule } from '../project/project.module'
 import {
   JOB_SCHEDULER,
@@ -8,13 +9,21 @@ import {
   SLOT_OCCUPANCY_READER,
   TRANSACTION_MANAGER,
   type TransactionManager,
+  USER_SUMMARY_READER,
+  type UserSummaryReader,
 } from '../shared/application'
 import { JobsModule } from '../shared/infrastructure/jobs/jobs.module'
 import { ClaimSlotUseCase } from './application/claim-slot.use-case'
+import { ReadFeedbackUseCase } from './application/read-feedback.use-case'
+import { SubmitFeedbackUseCase } from './application/submit-feedback.use-case'
 import { CLAIM_REPOSITORY, type ClaimRepository } from './domain/claim.repository'
+import { FEEDBACK_REPOSITORY, type FeedbackRepository } from './domain/feedback.repository'
 import { DrizzleClaimRepository } from './infrastructure/persistence/drizzle-claim.repository'
+import { DrizzleFeedbackRepository } from './infrastructure/persistence/drizzle-feedback.repository'
 import { ReleaseSlotJob } from './infrastructure/release-slot.job'
+import { AutoAcceptFeedbackJob, WarnMakerJob } from './infrastructure/settlement-timers.job'
 import { ClaimsController } from './presentation/claims.controller'
+import { FeedbacksController } from './presentation/feedbacks.controller'
 
 /**
  * The claim rows, and the one question another context asks of them. Global,
@@ -26,9 +35,10 @@ import { ClaimsController } from './presentation/claims.controller'
 @Module({
   providers: [
     { provide: CLAIM_REPOSITORY, useClass: DrizzleClaimRepository },
+    { provide: FEEDBACK_REPOSITORY, useClass: DrizzleFeedbackRepository },
     { provide: SLOT_OCCUPANCY_READER, useExisting: CLAIM_REPOSITORY },
   ],
-  exports: [CLAIM_REPOSITORY, SLOT_OCCUPANCY_READER],
+  exports: [CLAIM_REPOSITORY, FEEDBACK_REPOSITORY, SLOT_OCCUPANCY_READER],
 })
 export class ClaimStoreModule {}
 
@@ -39,8 +49,8 @@ export class ClaimStoreModule {}
  * question crosses a boundary and so goes through a port, never a join (ARCH-14).
  */
 @Module({
-  imports: [ClaimStoreModule, JobsModule, ProjectModule],
-  controllers: [ClaimsController],
+  imports: [AuthModule, ClaimStoreModule, JobsModule, ProjectModule],
+  controllers: [ClaimsController, FeedbacksController],
   providers: [
     {
       provide: ClaimSlotUseCase,
@@ -52,8 +62,35 @@ export class ClaimStoreModule {}
         transactions: TransactionManager,
       ) => new ClaimSlotUseCase(claims, missions, jobs, transactions),
     },
+    {
+      provide: SubmitFeedbackUseCase,
+      inject: [
+        CLAIM_REPOSITORY,
+        FEEDBACK_REPOSITORY,
+        MISSION_READER,
+        USER_SUMMARY_READER,
+        JOB_SCHEDULER,
+        TRANSACTION_MANAGER,
+      ],
+      useFactory: (
+        claims: ClaimRepository,
+        feedbacks: FeedbackRepository,
+        missions: MissionReader,
+        users: UserSummaryReader,
+        jobs: JobScheduler,
+        transactions: TransactionManager,
+      ) => new SubmitFeedbackUseCase(claims, feedbacks, missions, users, jobs, transactions),
+    },
+    {
+      provide: ReadFeedbackUseCase,
+      inject: [FEEDBACK_REPOSITORY, USER_SUMMARY_READER],
+      useFactory: (feedbacks: FeedbackRepository, users: UserSummaryReader) =>
+        new ReadFeedbackUseCase(feedbacks, users),
+    },
     ReleaseSlotJob,
+    WarnMakerJob,
+    AutoAcceptFeedbackJob,
   ],
-  exports: [ClaimStoreModule, ClaimSlotUseCase],
+  exports: [ClaimStoreModule, ClaimSlotUseCase, SubmitFeedbackUseCase, ReadFeedbackUseCase],
 })
 export class FeedbackModule {}

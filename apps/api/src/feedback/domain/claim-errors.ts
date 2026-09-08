@@ -28,3 +28,17 @@ export class NoSlotsAvailableError extends ConflictError {
 export class ClaimNotHeldError extends ConflictError {
   override readonly code = 'CLAIM_NOT_HELD'
 }
+
+export class FeedbackNotFoundError extends NotFoundError {
+  override readonly code = 'FEEDBACK_NOT_FOUND'
+}
+
+/** FDBK-4: a settled report is finished; there is nothing left to decide. */
+export class FeedbackNotPendingError extends ConflictError {
+  override readonly code = 'FEEDBACK_NOT_PENDING'
+}
+
+/** FDBK-1: the hold ran out before anything was submitted. */
+export class ClaimExpiredError extends ConflictError {
+  override readonly code = 'CLAIM_EXPIRED'
+}

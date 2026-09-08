@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm'
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core'
 import { entityId, timestamps } from '../../../shared/db'
 
 /**
@@ -28,5 +37,45 @@ export const feedbackClaims = pgTable(
     uniqueIndex('feedback_claims_one_live_per_user_unq')
       .on(table.missionId, table.userId)
       .where(sql`${table.state} in ('held', 'submitted', 'settled')`),
+  ],
+)
+
+/**
+ * A submitted report (FDBK-3). One per claim, which the unique column is what
+ * guarantees — a retried submit finds the row already there rather than writing
+ * a second one.
+ *
+ * `author_id` is nullable precisely so AUTH-9 can anonymise a deleted account
+ * without deleting the report: FDBK-9 keeps it public, shown as a deleted user.
+ *
+ * `project_id` is denormalised so the maker's own list and the profile stats
+ * (T029) never need a mission join to answer.
+ */
+export const feedbacks = pgTable(
+  'feedbacks',
+  {
+    id: entityId(),
+    claimId: uuid('claim_id').notNull().unique(),
+    missionId: uuid('mission_id').notNull(),
+    projectId: uuid('project_id').notNull(),
+    authorId: uuid('author_id'),
+    firstImpression: text('first_impression').notNull(),
+    stuckAt: text('stuck_at').notNull(),
+    wouldPay: boolean('would_pay').notNull(),
+    wouldPayReason: text('would_pay_reason').notNull(),
+    suggestion: text('suggestion').notNull(),
+    /** Positional against the mission's frozen questions (PROJ-7). */
+    answers: jsonb('answers').$type<string[]>().notNull(),
+    state: text('state').notNull(),
+    rejectionReason: text('rejection_reason'),
+    rejectionNote: text('rejection_note'),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
+    settledAt: timestamp('settled_at', { withTimezone: true }),
+    ...timestamps(),
+  },
+  (table) => [
+    index('feedbacks_mission_idx').on(table.missionId),
+    index('feedbacks_author_idx').on(table.authorId),
+    index('feedbacks_project_idx').on(table.projectId),
   ],
 )

@@ -50,6 +50,13 @@
       "when": 1788840710678,
       "tag": "0006_fair_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788841502988,
+      "tag": "0007_perpetual_mentor",
+      "breakpoints": true
     }
   ]
 }

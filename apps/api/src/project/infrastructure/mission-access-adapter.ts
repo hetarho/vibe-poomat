@@ -31,6 +31,7 @@ export class MissionAccessAdapter implements MissionReader {
       projectId: mission.projectId.value,
       ownerId: project.ownerId.value,
       slots: mission.slots.count,
+      questions: mission.questions.values,
       // a hidden project is not taking feedback either, whatever the mission says
       isOpen: mission.isOpen() && !project.isDeleted(),
     }

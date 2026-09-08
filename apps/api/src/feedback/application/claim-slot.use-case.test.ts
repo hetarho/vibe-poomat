@@ -93,6 +93,7 @@ describe('ClaimSlotUseCase', () => {
       projectId: EntityId.generate().value,
       ownerId: OWNER,
       slots: 2,
+      questions: [],
       isOpen: true,
     }
     missions = { forClaim: async () => mission }

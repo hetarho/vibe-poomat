@@ -481,6 +481,88 @@
         ]
       }
     },
+    "/api/v1/claims/{claimId}/feedback": {
+      "post": {
+        "operationId": "FeedbacksController_create",
+        "parameters": [
+          {
+            "name": "claimId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitFeedbackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Turn in the report for a slot you hold",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
+    "/api/v1/feedbacks/{id}": {
+      "get": {
+        "operationId": "FeedbacksController_byId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "A submitted report",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
+    "/api/v1/missions/{missionId}/feedbacks": {
+      "get": {
+        "operationId": "FeedbacksController_forMission",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Every report turned in against a mission",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "operationId": "UploadsController_create",
@@ -725,6 +807,51 @@
         "required": [
           "taskText",
           "slots"
+        ]
+      },
+      "SubmitFeedbackDto": {
+        "type": "object",
+        "properties": {
+          "firstImpression": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 4000
+          },
+          "stuckAt": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 4000
+          },
+          "wouldPay": {
+            "type": "boolean"
+          },
+          "wouldPayReason": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 4000
+          },
+          "suggestion": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 4000
+          },
+          "answers": {
+            "default": [],
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 4000
+            }
+          }
+        },
+        "required": [
+          "firstImpression",
+          "stuckAt",
+          "wouldPay",
+          "wouldPayReason",
+          "suggestion"
         ]
       },
       "CreateUploadUrlDto": {

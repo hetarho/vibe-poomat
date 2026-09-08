@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T026 | feedback report submit | FDBK ARCH | T025 | todo |
 | T027 | feedback settle: accept, reject, auto-accept | FDBK CRED PROJ ARCH | T026 T021 T012 | todo |
 | T028 | feedback thread | FDBK AUTH ARCH | T026 | todo |
 | T029 | maker rejection stats | FDBK CRED AUTH | T027 | todo |
@@ -42,11 +41,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T026 — the feedback report submit, on top of a held claim
-- order: T026-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T027 — feedback settle, which gives the two timer jobs T026 registered their bodies
+- order: T027-T031 feedback/notification → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T026 done: fixed-shape report with per-field 20-char rule, immutable by having no update path, slot flipped to submitted and FDBK-7 timers started; the two timer queues registered with logging placeholders for T027
 - 260908 note: PROJ-9 ranks on "has an open mission" not "has a takeable slot" — coarse once slots can be held (T024/T025 results); candidate for create-task
 - 260908 T025 done: 24h slot holds with FDBK-2 as a partial unique index, advisory-lock race on the last slot, release job + manual release; both project stubs replaced by the real claim store
 - 260908 T024 done: single-statement feed with a computed rank and keyset cursor, 7-day popular window, transactional upvote toggle; fixed ORDER BY 0 being an ordinal and a fractional-epoch keyset returning a row twice
@@ -66,4 +66,3 @@
 - 260907 T011 done: ALS transaction manager with getDb(), post-commit in-process event bus with an in-transaction guard
 - 260907 T010 done: distroless images for api+web, compose stack with a one-shot migrate service, docker-smoke.sh green end to end
 - 260907 T009 done: PR workflow (affected verify + coverage gate + contract check + playwright), actionlint in turbo lint
-- 260907 T008 done: per-request QueryClient with SSR hydration, api client + error copy, zustand convention in shared/model; @repo/config gained a ./web entry

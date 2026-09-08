@@ -7,6 +7,8 @@ export type MissionForClaim = {
   /** FDBK-2: the one person who may not claim it. */
   ownerId: string
   slots: number
+  /** Frozen at open time (PROJ-7); a report answers these, positionally. */
+  questions: readonly string[]
   isOpen: boolean
 }
 
