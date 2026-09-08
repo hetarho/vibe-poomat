@@ -110,6 +110,17 @@ export const MAX_QUESTIONS = 3
 export const MIN_SLOTS = 1
 export const MAX_SLOTS = 10
 
+/** How a mission's slots are spoken for (FDBK-1), which is what a maker watches. */
+export const slotOccupancySchema = z.object({
+  /** Still takeable: slots minus everything below. */
+  claimable: z.int().nonnegative(),
+  held: z.int().nonnegative(),
+  submitted: z.int().nonnegative(),
+  settled: z.int().nonnegative(),
+})
+
+export type SlotOccupancy = z.infer<typeof slotOccupancySchema>
+
 export const missionSchema = z.object({
   id: entityId,
   projectId: entityId,
@@ -117,6 +128,7 @@ export const missionSchema = z.object({
   questions: z.array(z.string().min(1).max(QUESTION_MAX_LENGTH)).max(MAX_QUESTIONS),
   slots: z.int().min(MIN_SLOTS).max(MAX_SLOTS),
   openSlots: z.int().nonnegative(),
+  occupancy: slotOccupancySchema,
   state: missionStateSchema,
   openedAt: isoDate,
   expiresAt: isoDate,

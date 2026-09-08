@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing'
 import { projects as contract } from '@repo/contracts'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
   OAUTH_PROVIDERS,
   type OAuthProviderClient,
@@ -242,6 +243,103 @@ describe('missions, against a real PostgreSQL', () => {
       })
       expect(moved.statusCode).toBe(409)
       expect(moved.json()).toMatchObject({ code: 'PROJECT_LOCKED_BY_MISSION' })
+    })
+  })
+
+  describe('GET /projects/:id/missions (PROJ-6, PROJ-7)', () => {
+    function list(projectId: string) {
+      return app.inject({ method: 'GET', url: `/projects/${projectId}/missions` })
+    }
+
+    it('is public: the frozen task and questions are what a feedbacker reads', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+      await openMission(session, projectId, {
+        taskText: 'Try signing up',
+        questions: ['Was the first screen clear?'],
+        slots: 2,
+      })
+
+      const response = await list(projectId)
+
+      expect(response.statusCode).toBe(200)
+      const missions = z.array(contract.missionSchema).parse(response.json())
+      expect(missions).toHaveLength(1)
+      expect(missions[0]).toMatchObject({
+        taskText: 'Try signing up',
+        questions: ['Was the first screen clear?'],
+        slots: 2,
+        state: 'open',
+      })
+    })
+
+    /** The maker's panel needs the breakdown, not just a total (FDBK-1). */
+    it('says where every slot stands, all of it claimable at the start', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+      // two, because that is what CRED-2 seeds and CRED-3 will not lend more
+      await openMission(session, projectId, { slots: 2 })
+
+      const missions = z.array(contract.missionSchema).parse((await list(projectId)).json())
+
+      expect(missions[0]?.occupancy).toEqual({
+        claimable: 2,
+        held: 0,
+        submitted: 0,
+        settled: 0,
+      })
+      expect(missions[0]?.openSlots).toBe(2)
+    })
+
+    /** PROJ-6: a closed mission is exactly what `activeMission` cannot name. */
+    it('still names a mission after it has been closed, with nothing takeable', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+      const opened = contract.missionSchema.parse(
+        (await openMission(session, projectId, { slots: 2 })).json(),
+      )
+      await app.inject({
+        method: 'POST',
+        url: `/missions/${opened.id}/close`,
+        cookies: { [SESSION_COOKIE]: session },
+      })
+
+      const missions = z.array(contract.missionSchema).parse((await list(projectId)).json())
+
+      expect(missions[0]).toMatchObject({ id: opened.id, state: 'closed', openSlots: 0 })
+      // nobody took either slot, so both came back (CRED-5)
+      expect(missions[0]?.occupancy.claimable).toBe(2)
+      expect(missions[0]?.endedAt).not.toBeNull()
+    })
+
+    it('reads newest first, so the panel takes the first one', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+      const first = contract.missionSchema.parse(
+        (await openMission(session, projectId, { slots: 1 })).json(),
+      )
+      await app.inject({
+        method: 'POST',
+        url: `/missions/${first.id}/close`,
+        cookies: { [SESSION_COOKIE]: session },
+      })
+      const second = contract.missionSchema.parse(
+        (await openMission(session, projectId, { slots: 1 })).json(),
+      )
+
+      const missions = z.array(contract.missionSchema).parse((await list(projectId)).json())
+
+      expect(missions.map((mission) => mission.id)).toEqual([second.id, first.id])
+    })
+
+    it('answers with nothing for a project that has never run one', async () => {
+      const projectId = await createProject(await signIn())
+
+      expect(z.array(contract.missionSchema).parse((await list(projectId)).json())).toEqual([])
+    })
+
+    it('answers with nothing for something that is not a project id', async () => {
+      expect(z.array(contract.missionSchema).parse((await list('not-an-id')).json())).toEqual([])
     })
   })
 

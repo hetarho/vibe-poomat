@@ -23,6 +23,7 @@ import { HttpModule } from '../shared/infrastructure/http/http.module'
 import { JobsModule } from '../shared/infrastructure/jobs/jobs.module'
 import { StorageModule } from '../shared/infrastructure/storage/storage.module'
 import { GetFeedUseCase } from './application/get-feed.use-case'
+import { GetMissionsUseCase } from './application/get-missions.use-case'
 import { GetProjectUseCase } from './application/get-project.use-case'
 import { ManageMissionUseCase } from './application/manage-mission.use-case'
 import { ManageProjectUseCase } from './application/manage-project.use-case'
@@ -149,6 +150,12 @@ import { ProjectsController } from './presentation/projects.controller'
         storage: FileStorage,
         upvotes: UpvoteRepository,
       ) => new GetProjectUseCase(repository, missions, users, storage, upvotes),
+    },
+    {
+      provide: GetMissionsUseCase,
+      inject: [MISSION_REPOSITORY, SLOT_OCCUPANCY_READER],
+      useFactory: (repository: MissionRepository, occupancy: SlotOccupancyReader) =>
+        new GetMissionsUseCase(repository, occupancy),
     },
     ProjectAccountPurge,
     // AUTH-9 asks this context for two things and nothing else

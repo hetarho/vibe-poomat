@@ -8,6 +8,12 @@ export type MissionRepository = {
   findById(id: EntityId): Promise<Mission | null>
   /** PROJ-5: at most one, which the partial unique index is what actually guarantees. */
   findOpenFor(projectId: EntityId): Promise<Mission | null>
+  /**
+   * Every mission a project has run, newest first. PROJ-6 lets a project run one
+   * after another, so the maker's panel needs the latest whether it is open or
+   * long over — and there is no other way to name an ended one.
+   */
+  listForProject(projectId: EntityId): Promise<Mission[]>
   save(mission: Mission): Promise<void>
 }
 

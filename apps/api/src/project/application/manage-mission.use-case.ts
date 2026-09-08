@@ -1,5 +1,5 @@
 import type { CreditOperations, JobScheduler, TransactionManager } from '../../shared/application'
-import { type SlotOccupancyReader } from '../../shared/application'
+import { NO_OCCUPANCY, type SlotOccupancyReader } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
 import { type DomainError, err, ForbiddenError, ok, type Result } from '../../shared/result'
 import { Mission } from '../domain/mission'
@@ -117,7 +117,8 @@ export class ManageMissionUseCase {
         { singletonKey: missionJobKey(mission.id.value) },
       )
 
-      return ok(toMissionView(mission, slots.value.count))
+      // a mission that has just opened has no claims against it yet
+      return ok(toMissionView(mission, NO_OCCUPANCY))
     })
   }
 
@@ -211,7 +212,7 @@ export class ManageMissionUseCase {
       // nothing left for the timer to do, whichever way this ended
       await this.jobs.cancel(MISSION_EXPIRE_JOB, missionJobKey(mission.id.value))
 
-      return ok(toMissionView(mission, refundableSlots(mission.slots.count, occupancy)))
+      return ok(toMissionView(mission, occupancy))
     })
   }
 

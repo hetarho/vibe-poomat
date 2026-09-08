@@ -1,10 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
 import { ApiOperation } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import { projects } from '@repo/contracts'
 import { createZodDto } from 'nestjs-zod'
 import { WRITE_THROTTLER } from '../../shared/infrastructure/throttling/throttler-policy'
-import { CurrentUser, unwrap } from '../../shared/presentation'
+import { CurrentUser, Public, unwrap } from '../../shared/presentation'
+import { GetMissionsUseCase } from '../application/get-missions.use-case'
 import { ManageMissionUseCase } from '../application/manage-mission.use-case'
 import type { MissionView } from '../application/mission-view'
 
@@ -14,6 +15,7 @@ function render(view: MissionView): projects.Mission {
   return {
     ...view,
     questions: [...view.questions],
+    occupancy: { ...view.occupancy },
     openedAt: view.openedAt.toISOString(),
     expiresAt: view.expiresAt.toISOString(),
     endedAt: view.endedAt?.toISOString() ?? null,
@@ -27,7 +29,21 @@ function render(view: MissionView): projects.Mission {
  */
 @Controller('projects/:projectId/missions')
 export class ProjectMissionsController {
-  constructor(private readonly missions: ManageMissionUseCase) {}
+  constructor(
+    private readonly missions: ManageMissionUseCase,
+    private readonly read: GetMissionsUseCase,
+  ) {}
+
+  /**
+   * PROJ-6's whole history, newest first. Public: the frozen task text and
+   * questions are what a feedbacker is being asked to work from (PROJ-7).
+   */
+  @Get()
+  @Public()
+  @ApiOperation({ summary: 'Every mission this project has run, newest first' })
+  async list(@Param('projectId') projectId: string): Promise<projects.Mission[]> {
+    return unwrap(await this.read.forProject(projectId)).map(render)
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

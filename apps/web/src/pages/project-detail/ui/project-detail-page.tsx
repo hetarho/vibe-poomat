@@ -1,10 +1,18 @@
 import type { feedback, projects } from '@repo/contracts'
 import { Link } from '@tanstack/react-router'
+import { lazy, Suspense } from 'react'
 import { FeedbackSummary } from '../../../entities/feedback'
+import { MissionPanel } from '../../../entities/mission'
 import { useCurrentUser } from '../../../entities/session'
 import { SignInDialog } from '../../../features/auth'
 import { UpvoteButton, UpvoteControl } from '../../../features/upvote-project'
 import { Button, Markdown, UserAvatar } from '../../../shared/ui'
+
+/**
+ * Only an owner ever renders this, so only an owner's browser fetches it — the
+ * mission form, the close dialog and the credit read are all behind it.
+ */
+const OwnerMissionBlock = lazy(() => import('./owner-mission-block'))
 
 export const NOT_FOUND_HEADING = 'No such project'
 export const ARCHIVED_NOTICE =
@@ -14,6 +22,8 @@ export const NO_FEEDBACK_YET = 'No feedback yet. An open mission is how it start
 type ProjectDetailPageProps = {
   /** Null when there is no such project, or none this reader may see (PROJ-8). */
   project: projects.Project | null
+  /** Every mission this project has run, newest first (PROJ-6). */
+  missions: projects.Mission[]
   reports: feedback.Feedback[]
   hasMoreReports: boolean
   onLoadMoreReports: () => void
@@ -35,6 +45,7 @@ function on(iso: string): string {
  */
 export function ProjectDetailPage({
   project,
+  missions,
   reports,
   hasMoreReports,
   onLoadMoreReports,
@@ -57,7 +68,8 @@ export function ProjectDetailPage({
   }
 
   const isOwn = viewer !== null && viewer.id === project.owner.id
-  const mission = project.activeMission
+  const latest = missions[0] ?? null
+  const openMission = missions.find((mission) => mission.state === 'open') ?? null
 
   return (
     <div className="flex flex-col gap-10">
@@ -136,20 +148,14 @@ export function ProjectDetailPage({
         </section>
       )}
 
-      <section aria-label="Mission">
+      <section aria-label="Mission" className="flex flex-col gap-4">
         <h2 className="font-medium text-sm">Mission</h2>
-        {mission === null ? (
-          <p className="mt-1 text-muted-foreground text-sm">
-            No mission is open, so there are no slots to take right now.
-          </p>
-        ) : (
-          <p className="mt-1 text-sm">
-            <span className="font-medium">
-              {mission.openSlots} of {mission.slots} slots open
-            </span>
-            <span className="text-muted-foreground"> · closes {on(mission.expiresAt)}</span>
-          </p>
-        )}
+        <MissionPanel mission={latest} />
+        {isOwn ? (
+          <Suspense fallback={<p className="text-muted-foreground text-sm">Loading…</p>}>
+            <OwnerMissionBlock projectId={project.id} openMission={openMission} />
+          </Suspense>
+        ) : null}
       </section>
 
       <section aria-label="Feedback">

@@ -234,7 +234,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Every mission this project has run, newest first */
+        get: operations["ProjectMissionsController_list"];
         put?: never;
         /** Open a mission, escrowing one credit per slot */
         post: operations["ProjectMissionsController_open"];
@@ -886,6 +887,25 @@ export interface operations {
                 "application/json": components["schemas"]["UpdateProjectDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectMissionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

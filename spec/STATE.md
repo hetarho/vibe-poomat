@@ -25,19 +25,21 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T036 | web: mission management | PROJ CRED ARCH | T035 T023 | todo |
 | T037 | web: slot claim & report form | FDBK ARCH | T035 T025 T026 | todo |
 | T038 | web: feedback view, settle & thread | FDBK CRED ARCH | T037 T027 T028 | todo |
 | T039 | web: notification settings & unsubscribe | NOTI ARCH | T032 T030 | todo |
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T036 (mission management) or T037 (slot claim & report) — both unblocked, as is T039
-- order: T036/T037 → T038 → T039 → T040 e2e
+- implement-task T037 — slot claim & report form; T039 notification settings is also unblocked
+- order: T037 → T038 → T039 → T040 e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
 - update-ssot candidates: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031). PROJ-7 does not say whether the title is frozen with the URL; T034 froze it and the api does not (T034)
 
 ## log
+- 260908 T036 done: PROJ-13's open-mission form with CRED-3's cost against a live balance, one MissionPanel showing PROJ-6 state and the FDBK-1 slot breakdown plus PROJ-7's frozen task, PROJ-6 close behind a confirmation stating both halves of CRED-5; the api gained GET /projects/:id/missions (no mission was readable at all) and an occupancy breakdown on the response
+- 260908 note: an ended mission's refund summary is derived from the current occupancy because refundedSlots lives only on the MissionEnded event — check whether releasing a held slot after the mission ended refunds it (review-code)
+- 260908 T036 claimed (wb)
 - 260908 T035 done: PROJ-9/PROJ-10 as two tabs over one card and one paging widget, PROJ-3's filter in the URL and honoured by the SSR loader, optimistic PROJ-11 upvoting patched into every cached feed and the project, PROJ-8's archived banner; the api gained GET /projects/:id/feedbacks (its public feedback was unreachable once a mission ended) and upvotedByViewer on the project read
 - 260908 note: web feed loaders prefetch rather than ensure — an ensure rethrows and would blank the public landing page when the api blips; the same applies to any public route added later
 - 260908 T035 claimed (wb)
@@ -55,6 +57,3 @@
 - 260908 T028 done: flat two-party thread on each report, participants resolved per request rather than stored, public keyset read oldest-first, ThreadReplied for T030; the page now walks (created_at, id) so the mandated index is the one it uses
 - 260908 T027 done: accept/reject/auto-accept through one settle path with identical credit movement, 48h warn + 72h auto-accept bodies, SlotSettled completing the mission; fixed three repositories never draining their aggregates' events (T023 MissionEnded had been going nowhere)
 - 260908 T026 done: fixed-shape report with per-field 20-char rule, immutable by having no update path, slot flipped to submitted and FDBK-7 timers started; the two timer queues registered with logging placeholders for T027
-- 260908 note: PROJ-9 ranks on "has an open mission" not "has a takeable slot" — coarse once slots can be held (T024/T025 results); candidate for create-task
-- 260908 T025 done: 24h slot holds with FDBK-2 as a partial unique index, advisory-lock race on the last slot, release job + manual release; both project stubs replaced by the real claim store
-- 260908 T024 done: single-statement feed with a computed rank and keyset cursor, 7-day popular window, transactional upvote toggle; fixed ORDER BY 0 being an ordinal and a fractional-epoch keyset returning a row twice

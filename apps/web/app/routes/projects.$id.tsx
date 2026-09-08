@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { feedbackItemsOf, projectFeedbackQueryOptions } from '../../src/entities/feedback'
+import { projectMissionsQueryOptions } from '../../src/entities/mission'
 import { projectQueryOptions } from '../../src/entities/project'
 import { ProjectDetailPage } from '../../src/pages/project-detail'
 import { forwardedHeaders } from '../../src/shared/api'
@@ -25,9 +26,11 @@ export const Route = createFileRoute('/projects/$id')({
     )
     if (project === null) return
 
-    await context.queryClient.ensureInfiniteQueryData(
-      projectFeedbackQueryOptions(params.id, headers),
-    )
+    await Promise.all([
+      context.queryClient.ensureInfiniteQueryData(projectFeedbackQueryOptions(params.id, headers)),
+      // public: the frozen task and questions are what a feedbacker works from
+      context.queryClient.ensureQueryData(projectMissionsQueryOptions(params.id, headers)),
+    ])
   },
   component: ProjectDetailRoute,
 })
@@ -35,6 +38,10 @@ export const Route = createFileRoute('/projects/$id')({
 function ProjectDetailRoute() {
   const { id } = Route.useParams()
   const project = useQuery(projectQueryOptions(id))
+  const missions = useQuery({
+    ...projectMissionsQueryOptions(id),
+    enabled: project.data != null,
+  })
   const reports = useInfiniteQuery({
     ...projectFeedbackQueryOptions(id),
     enabled: project.data != null,
@@ -43,6 +50,7 @@ function ProjectDetailRoute() {
   return (
     <ProjectDetailPage
       project={project.data ?? null}
+      missions={missions.data ?? []}
       reports={feedbackItemsOf(reports.data)}
       hasMoreReports={reports.hasNextPage}
       loadingMoreReports={reports.isFetchingNextPage}

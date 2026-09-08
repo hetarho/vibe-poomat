@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
@@ -55,6 +55,17 @@ export class DrizzleMissionRepository implements MissionRepository {
     const row = rows[0]
 
     return row === undefined ? null : toMission(row)
+  }
+
+  /** Newest first, so the maker's panel reads the latest one at index zero. */
+  async listForProject(projectId: EntityId): Promise<Mission[]> {
+    const rows = await getDb()
+      .select()
+      .from(missions)
+      .where(eq(missions.projectId, projectId.value))
+      .orderBy(desc(missions.id))
+
+    return rows.map(toMission)
   }
 
   /**

@@ -153,6 +153,12 @@ export class InMemoryMissionRepository implements MissionRepository {
     return null
   }
 
+  async listForProject(projectId: EntityId): Promise<Mission[]> {
+    return [...this.rows.values()]
+      .filter((mission) => mission.projectId.equals(projectId))
+      .sort((left, right) => right.id.value.localeCompare(left.id.value))
+  }
+
   async save(mission: Mission): Promise<void> {
     this.rows.set(mission.id.value, mission)
     this.pulled.push(...mission.pullEvents())

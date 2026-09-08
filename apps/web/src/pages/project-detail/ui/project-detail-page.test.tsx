@@ -65,9 +65,24 @@ const REPORT = {
   automatic: false,
 } as feedback.Feedback
 
+const MISSION = {
+  id: '0192f000-0000-7000-8000-0000000000bb',
+  projectId: PROJECT.id,
+  taskText: 'Try signing up and tell me where it went wrong.',
+  questions: [],
+  slots: 3,
+  openSlots: 2,
+  occupancy: { claimable: 2, held: 1, submitted: 0, settled: 0 },
+  state: 'open',
+  openedAt: '2026-09-01T00:00:00.000Z',
+  expiresAt: '2026-10-01T00:00:00.000Z',
+  endedAt: null,
+} as projects.Mission
+
 function renderPage(
   overrides: {
     project?: projects.Project | null
+    missions?: projects.Mission[]
     reports?: feedback.Feedback[]
     viewer?: { id: string; handle: string } | null
   } = {},
@@ -83,6 +98,7 @@ function renderPage(
     component: () => (
       <ProjectDetailPage
         project={project}
+        missions={overrides.missions ?? []}
         reports={overrides.reports ?? []}
         hasMoreReports={false}
         loadingMoreReports={false}
@@ -139,28 +155,20 @@ describe('ProjectDetailPage (PROJ-1, PROJ-8)', () => {
     })
   })
 
-  describe('the mission summary', () => {
-    it('says there is nothing to take when no mission is open', async () => {
+  describe('the mission panel', () => {
+    it('says there is nothing to take when the project never ran one', async () => {
       renderPage()
 
       expect(await screen.findByText(/no slots to take/i)).toBeInTheDocument()
     })
 
-    it('shows the open slots and the closing date when one is', async () => {
-      renderPage({
-        project: {
-          ...PROJECT,
-          activeMission: {
-            id: '0192f000-0000-7000-8000-0000000000bb',
-            slots: 3,
-            openSlots: 2,
-            expiresAt: '2026-10-01T00:00:00.000Z',
-          },
-        },
-      })
+    it('shows the mission state and the closing date when one is open', async () => {
+      renderPage({ missions: [MISSION] })
 
-      expect(await screen.findByText('2 of 3 slots open')).toBeInTheDocument()
-      expect(screen.getByText(/1 October 2026/)).toBeInTheDocument()
+      expect(await screen.findByTestId('mission-state')).toHaveTextContent('Open')
+      expect(screen.getByText(/closes 1 October 2026/)).toBeInTheDocument()
+      expect(screen.getByTestId('slots-claimable')).toHaveTextContent('2')
+      expect(screen.getByTestId('slots-total')).toHaveTextContent('3')
     })
   })
 
