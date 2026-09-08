@@ -1,3 +1,5 @@
+export type { CreditOperations } from './credit-operations'
+export { CREDIT_OPERATIONS } from './credit-operations'
 export type { CreditSummary, CreditSummaryReader } from './credit-summary'
 export { CREDIT_SUMMARY_READER, EMPTY_CREDIT_SUMMARY } from './credit-summary'
 export type { DomainEventCollector } from './domain-event-collector'

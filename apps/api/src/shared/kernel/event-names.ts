@@ -9,4 +9,22 @@
 export const CROSS_CONTEXT_EVENTS = {
   /** Signup happened (AUTH-2). The aggregate id is the account id. */
   accountCreated: 'auth.account-created',
+  /** A mission stopped taking feedback (PROJ-6). The aggregate id is the mission. */
+  missionEnded: 'project.mission-ended',
+  /** One slot's credit moved (CRED-4). The aggregate id is the feedback. */
+  slotSettled: 'feedback.slot-settled',
 } as const
+
+/**
+ * What a subscriber to `slotSettled` may rely on, whatever else the emitting
+ * aggregate carries. Declared here for the same reason the names are: the
+ * mission that has to notice its last slot settling lives in another context
+ * from the feedback that settled it.
+ */
+export type SlotSettledPayload = { readonly missionId: string }
+
+export function carriesMissionId<TEvent extends object>(
+  event: TEvent,
+): event is TEvent & SlotSettledPayload {
+  return 'missionId' in event && typeof (event as { missionId: unknown }).missionId === 'string'
+}

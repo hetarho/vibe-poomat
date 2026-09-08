@@ -29,6 +29,13 @@
       "when": 1788838324742,
       "tag": "0003_dapper_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788839159744,
+      "tag": "0004_omniscient_crystal",
+      "breakpoints": true
     }
   ]
 }

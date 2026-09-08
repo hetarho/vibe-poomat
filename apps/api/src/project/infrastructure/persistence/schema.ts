@@ -1,6 +1,17 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 import { entityId, timestamps } from '../../../shared/db'
+import { TASK_TEXT_MAX_LENGTH } from '../../domain/mission-values'
 import { PITCH_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../domain/project-values'
 
 /**
@@ -37,5 +48,36 @@ export const projects = pgTable(
       .where(sql`${table.deletedAt} is null`),
     // `tags && array[...]` for the tag filter
     index('projects_tags_idx').using('gin', table.tags),
+  ],
+)
+
+/**
+ * A project's request for feedback (PROJ-4). It lives here rather than in the
+ * feedback context precisely so PROJ-5 — one open mission per project — can be a
+ * partial unique index rather than a check somebody has to remember to run.
+ *
+ * Nothing in it is editable once open (PROJ-7), so there is no update path and
+ * the only column that ever moves is `state`.
+ */
+export const missions = pgTable(
+  'missions',
+  {
+    id: entityId(),
+    projectId: uuid('project_id').notNull(),
+    taskText: varchar('task_text', { length: TASK_TEXT_MAX_LENGTH }).notNull(),
+    /** Frozen at open time and never queried one by one, so an array is enough. */
+    questions: jsonb('questions').$type<string[]>().notNull(),
+    slots: integer('slots').notNull(),
+    state: text('state').notNull(),
+    openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    ...timestamps(),
+  },
+  (table) => [
+    index('missions_project_idx').on(table.projectId),
+    // the real guard behind PROJ-5; the pre-check exists only to answer nicely
+    uniqueIndex('missions_one_open_per_project_unq')
+      .on(table.projectId)
+      .where(sql`${table.state} = 'open'`),
   ],
 )

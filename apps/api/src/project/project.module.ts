@@ -1,23 +1,41 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
+import { CreditModule } from '../credit/credit.module'
 import {
+  CREDIT_OPERATIONS,
+  type CreditOperations,
   FILE_STORAGE,
   type FileStorage,
   HTTP_PROBE,
   type HttpProbe,
+  JOB_SCHEDULER,
+  type JobScheduler,
   TRANSACTION_MANAGER,
   type TransactionManager,
   USER_SUMMARY_READER,
   type UserSummaryReader,
 } from '../shared/application'
 import { HttpModule } from '../shared/infrastructure/http/http.module'
+import { JobsModule } from '../shared/infrastructure/jobs/jobs.module'
 import { StorageModule } from '../shared/infrastructure/storage/storage.module'
 import { GetProjectUseCase } from './application/get-project.use-case'
+import { ManageMissionUseCase } from './application/manage-mission.use-case'
 import { ManageProjectUseCase } from './application/manage-project.use-case'
 import { ACTIVE_MISSION_READER, type ActiveMissionReader } from './domain/mission.repository'
+import {
+  MISSION_REPOSITORY,
+  type MissionRepository,
+  SLOT_OCCUPANCY_READER,
+  type SlotOccupancyReader,
+} from './domain/mission-store.repository'
 import { PROJECT_REPOSITORY, type ProjectRepository } from './domain/project.repository'
-import { NoActiveMissions } from './infrastructure/no-active-missions'
+import { CompleteMissionOnSlotSettled } from './infrastructure/complete-mission-on-slot-settled'
+import { ExpireMissionJob } from './infrastructure/expire-mission.job'
+import { NoSlotOccupancy } from './infrastructure/no-slot-occupancy'
+import { DrizzleActiveMissions } from './infrastructure/persistence/drizzle-active-missions'
+import { DrizzleMissionRepository } from './infrastructure/persistence/drizzle-mission.repository'
 import { DrizzleProjectRepository } from './infrastructure/persistence/drizzle-project.repository'
+import { MissionsController, ProjectMissionsController } from './presentation/missions.controller'
 import { ProjectsController } from './presentation/projects.controller'
 
 /**
@@ -29,11 +47,34 @@ import { ProjectsController } from './presentation/projects.controller'
   // all global, but naming them keeps the module self-sufficient: the probe
   // verifies a live url (PROJ-2), storage resolves a cover, and auth answers who
   // the owner is
-  imports: [AuthModule, HttpModule, StorageModule],
-  controllers: [ProjectsController],
+  imports: [AuthModule, CreditModule, HttpModule, JobsModule, StorageModule],
+  controllers: [ProjectsController, ProjectMissionsController, MissionsController],
   providers: [
     { provide: PROJECT_REPOSITORY, useClass: DrizzleProjectRepository },
-    { provide: ACTIVE_MISSION_READER, useClass: NoActiveMissions },
+    { provide: MISSION_REPOSITORY, useClass: DrizzleMissionRepository },
+    { provide: ACTIVE_MISSION_READER, useClass: DrizzleActiveMissions },
+    { provide: SLOT_OCCUPANCY_READER, useClass: NoSlotOccupancy },
+    {
+      provide: ManageMissionUseCase,
+      inject: [
+        MISSION_REPOSITORY,
+        PROJECT_REPOSITORY,
+        SLOT_OCCUPANCY_READER,
+        CREDIT_OPERATIONS,
+        JOB_SCHEDULER,
+        TRANSACTION_MANAGER,
+      ],
+      useFactory: (
+        missions: MissionRepository,
+        repository: ProjectRepository,
+        occupancy: SlotOccupancyReader,
+        credits: CreditOperations,
+        jobs: JobScheduler,
+        transactions: TransactionManager,
+      ) => new ManageMissionUseCase(missions, repository, occupancy, credits, jobs, transactions),
+    },
+    ExpireMissionJob,
+    CompleteMissionOnSlotSettled,
     {
       provide: ManageProjectUseCase,
       inject: [
@@ -64,6 +105,6 @@ import { ProjectsController } from './presentation/projects.controller'
       ) => new GetProjectUseCase(repository, missions, users, storage),
     },
   ],
-  exports: [PROJECT_REPOSITORY, ACTIVE_MISSION_READER],
+  exports: [PROJECT_REPOSITORY, MISSION_REPOSITORY, ACTIVE_MISSION_READER, ManageMissionUseCase],
 })
 export class ProjectModule {}

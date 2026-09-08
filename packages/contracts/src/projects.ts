@@ -95,3 +95,42 @@ export const updateProjectRequestSchema = z
   .partial()
 
 export type UpdateProjectRequest = z.infer<typeof updateProjectRequestSchema>
+
+export const MISSION_STATES = ['open', 'closed', 'expired', 'completed'] as const
+
+export const missionStateSchema = z.enum(MISSION_STATES)
+
+export type MissionState = z.infer<typeof missionStateSchema>
+
+export const TASK_TEXT_MAX_LENGTH = 1000
+export const QUESTION_MAX_LENGTH = 200
+export const MAX_QUESTIONS = 3
+export const MIN_SLOTS = 1
+export const MAX_SLOTS = 10
+
+export const missionSchema = z.object({
+  id: entityId,
+  projectId: entityId,
+  taskText: z.string().min(1).max(TASK_TEXT_MAX_LENGTH),
+  questions: z.array(z.string().min(1).max(QUESTION_MAX_LENGTH)).max(MAX_QUESTIONS),
+  slots: z.int().min(MIN_SLOTS).max(MAX_SLOTS),
+  openSlots: z.int().nonnegative(),
+  state: missionStateSchema,
+  openedAt: isoDate,
+  expiresAt: isoDate,
+  endedAt: isoDate.nullable(),
+})
+
+export type Mission = z.infer<typeof missionSchema>
+
+/**
+ * Everything a mission is, decided once. PROJ-7 freezes all of it for the life
+ * of the mission, which is why there is no update counterpart.
+ */
+export const openMissionRequestSchema = z.object({
+  taskText: z.string().min(1).max(TASK_TEXT_MAX_LENGTH),
+  questions: z.array(z.string().min(1).max(QUESTION_MAX_LENGTH)).max(MAX_QUESTIONS).optional(),
+  slots: z.int().min(MIN_SLOTS).max(MAX_SLOTS),
+})
+
+export type OpenMissionRequest = z.infer<typeof openMissionRequestSchema>

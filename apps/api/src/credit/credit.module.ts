@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import {
+  CREDIT_OPERATIONS,
   CREDIT_SUMMARY_READER,
   TRANSACTION_MANAGER,
   type TransactionManager,
@@ -28,6 +29,8 @@ import { CreditsController } from './presentation/credits.controller'
         new CreditLedgerService(ledger, transactions),
     },
     { provide: CREDIT_SERVICE, useExisting: CreditLedgerService },
+    // the write surface another context may reach, and only what it needs
+    { provide: CREDIT_OPERATIONS, useExisting: CreditLedgerService },
     // the same object under the narrower contract, so a consumer that only reads
     // cannot reach an operation that writes
     { provide: CREDIT_SUMMARY_READER, useExisting: CreditLedgerService },
@@ -38,6 +41,6 @@ import { CreditsController } from './presentation/credits.controller'
     },
     GrantSeedOnAccountCreated,
   ],
-  exports: [CREDIT_SERVICE, CREDIT_SUMMARY_READER, CreditLedgerService],
+  exports: [CREDIT_SERVICE, CREDIT_OPERATIONS, CREDIT_SUMMARY_READER, CreditLedgerService],
 })
 export class CreditModule {}

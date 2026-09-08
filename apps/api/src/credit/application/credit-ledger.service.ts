@@ -1,4 +1,5 @@
 import type {
+  CreditOperations,
   CreditSummary,
   CreditSummaryReader,
   TransactionManager,
@@ -29,7 +30,7 @@ export type CreditOperationError = InsufficientCreditsError | InvalidCreditAmoun
  * idempotent on its `(type, account, ref)` key, so a retry after a timeout is
  * safe and a redelivered job pays nobody twice.
  */
-export class CreditLedgerService implements CreditSummaryReader {
+export class CreditLedgerService implements CreditSummaryReader, CreditOperations {
   constructor(
     private readonly ledger: CreditLedger,
     private readonly transactions: TransactionManager,

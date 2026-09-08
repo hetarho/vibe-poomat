@@ -8,9 +8,16 @@ import type {
   UserSummaryReader,
 } from '../../shared/application'
 import { UrlUnreachableError } from '../../shared/application'
-import type { EntityId } from '../../shared/kernel'
+import type { DomainEvent, EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
+import type { Mission } from '../domain/mission'
 import type { ActiveMissionReader, ActiveMissionSummary } from '../domain/mission.repository'
+import {
+  type MissionRepository,
+  NO_OCCUPANCY,
+  type SlotOccupancy,
+  type SlotOccupancyReader,
+} from '../domain/mission-store.repository'
 import type { Project } from '../domain/project'
 import type { ProjectRepository } from '../domain/project.repository'
 
@@ -121,4 +128,44 @@ export class StubFileStorage implements FileStorage {
 
 export const passthroughTransactions = {
   run: async <T>(work: () => Promise<T>): Promise<T> => work(),
+}
+
+export class InMemoryMissionRepository implements MissionRepository {
+  readonly rows = new Map<string, Mission>()
+  /** Drained on save, the way the Drizzle adapter's collector does. */
+  readonly pulled: DomainEvent[] = []
+
+  async findById(id: EntityId): Promise<Mission | null> {
+    return this.rows.get(id.value) ?? null
+  }
+
+  async findOpenFor(projectId: EntityId): Promise<Mission | null> {
+    for (const mission of this.rows.values()) {
+      if (mission.projectId.equals(projectId) && mission.isOpen()) return mission
+    }
+
+    return null
+  }
+
+  async save(mission: Mission): Promise<void> {
+    this.rows.set(mission.id.value, mission)
+    this.pulled.push(...mission.pullEvents())
+  }
+}
+
+/** Says how much of each mission is spoken for, which T025 will answer for real. */
+export class StubSlotOccupancy implements SlotOccupancyReader {
+  private readonly byMission = new Map<string, SlotOccupancy>()
+
+  set(missionId: string, occupancy: SlotOccupancy): void {
+    this.byMission.set(missionId, occupancy)
+  }
+
+  async occupancyFor(missionId: string): Promise<SlotOccupancy> {
+    return this.byMission.get(missionId) ?? NO_OCCUPANCY
+  }
+
+  async occupancyForMany(missionIds: readonly string[]): Promise<Map<string, SlotOccupancy>> {
+    return new Map(missionIds.map((id) => [id, this.byMission.get(id) ?? NO_OCCUPANCY]))
+  }
 }
