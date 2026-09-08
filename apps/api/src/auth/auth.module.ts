@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD, Reflector } from '@nestjs/core'
 import { CreditModule } from '../credit/credit.module'
+import { ClaimStoreModule } from '../feedback/claim-store.module'
 import {
   CREDIT_SUMMARY_READER,
   type CreditSummaryReader,
@@ -8,6 +9,8 @@ import {
   type FileStorage,
   JOB_SCHEDULER,
   type JobScheduler,
+  MAKER_STATS_READER,
+  type MakerStatsReader,
   TRANSACTION_MANAGER,
   type TransactionManager,
   USER_SUMMARY_READER,
@@ -44,10 +47,12 @@ import { UsersController } from './presentation/users.controller'
  * Symbol tokens, which is the only way another context may reach in (ARCH-11).
  */
 @Module({
-  // Both are global, but naming them keeps the module self-sufficient: the
-  // cleanup job registers itself with the JobRegistry, and the profile use cases
-  // resolve an avatar key through the storage port
-  imports: [ConfigModule, JobsModule, StorageModule, CreditModule],
+  // All global, but naming them keeps the module self-sufficient: the cleanup
+  // job registers itself with the JobRegistry, the profile use cases resolve an
+  // avatar key through the storage port, and a profile carries CRED-7's counters
+  // and FDBK-8's stats. `ClaimStoreModule` rather than the whole feedback
+  // context, which imports this one — the store holds no dependency back on auth.
+  imports: [ConfigModule, JobsModule, StorageModule, CreditModule, ClaimStoreModule],
   controllers: [AuthController, UsersController],
   providers: [
     { provide: USER_REPOSITORY, useClass: DrizzleUserRepository },
@@ -89,19 +94,30 @@ import { UsersController } from './presentation/users.controller'
     },
     {
       provide: GetMyProfileUseCase,
-      inject: [USER_REPOSITORY, IDENTITY_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER],
+      inject: [
+        USER_REPOSITORY,
+        IDENTITY_REPOSITORY,
+        FILE_STORAGE,
+        CREDIT_SUMMARY_READER,
+        MAKER_STATS_READER,
+      ],
       useFactory: (
         users: UserRepository,
         identities: IdentityRepository,
         storage: FileStorage,
         credits: CreditSummaryReader,
-      ) => new GetMyProfileUseCase(users, identities, storage, credits),
+        makerStats: MakerStatsReader,
+      ) => new GetMyProfileUseCase(users, identities, storage, credits, makerStats),
     },
     {
       provide: GetPublicProfileUseCase,
-      inject: [USER_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER],
-      useFactory: (users: UserRepository, storage: FileStorage, credits: CreditSummaryReader) =>
-        new GetPublicProfileUseCase(users, storage, credits),
+      inject: [USER_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER, MAKER_STATS_READER],
+      useFactory: (
+        users: UserRepository,
+        storage: FileStorage,
+        credits: CreditSummaryReader,
+        makerStats: MakerStatsReader,
+      ) => new GetPublicProfileUseCase(users, storage, credits, makerStats),
     },
     {
       provide: UpdateProfileUseCase,
@@ -109,6 +125,7 @@ import { UsersController } from './presentation/users.controller'
         USER_REPOSITORY,
         FILE_STORAGE,
         CREDIT_SUMMARY_READER,
+        MAKER_STATS_READER,
         JOB_SCHEDULER,
         TRANSACTION_MANAGER,
       ],
@@ -116,19 +133,27 @@ import { UsersController } from './presentation/users.controller'
         users: UserRepository,
         storage: FileStorage,
         credits: CreditSummaryReader,
+        makerStats: MakerStatsReader,
         jobs: JobScheduler,
         transactions: TransactionManager,
-      ) => new UpdateProfileUseCase(users, storage, credits, jobs, transactions),
+      ) => new UpdateProfileUseCase(users, storage, credits, makerStats, jobs, transactions),
     },
     {
       provide: ChangeHandleUseCase,
-      inject: [USER_REPOSITORY, FILE_STORAGE, CREDIT_SUMMARY_READER, TRANSACTION_MANAGER],
+      inject: [
+        USER_REPOSITORY,
+        FILE_STORAGE,
+        CREDIT_SUMMARY_READER,
+        MAKER_STATS_READER,
+        TRANSACTION_MANAGER,
+      ],
       useFactory: (
         users: UserRepository,
         storage: FileStorage,
         credits: CreditSummaryReader,
+        makerStats: MakerStatsReader,
         transactions: TransactionManager,
-      ) => new ChangeHandleUseCase(users, storage, credits, transactions),
+      ) => new ChangeHandleUseCase(users, storage, credits, makerStats, transactions),
     },
     SessionCleanupJob,
     UserSummaryAdapter,

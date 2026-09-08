@@ -1,4 +1,4 @@
-import type { CreditSummaryReader, FileStorage } from '../../shared/application'
+import type { CreditSummaryReader, FileStorage, MakerStatsReader } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import { UserNotFoundError } from '../domain/auth-errors'
@@ -17,6 +17,7 @@ export class GetMyProfileUseCase {
     private readonly identities: IdentityRepository,
     private readonly storage: FileStorage,
     private readonly credits: CreditSummaryReader,
+    private readonly makerStats: MakerStatsReader,
   ) {}
 
   async execute(userId: string): Promise<Result<MyProfileView, UserNotFoundError>> {
@@ -32,7 +33,12 @@ export class GetMyProfileUseCase {
     const preferred = identities.find((identity) => identity.emailVerified) ?? identities[0]
 
     return ok({
-      ...toPublicProfile(user, this.storage, await this.credits.summaryFor(user.id.value)),
+      ...toPublicProfile(
+        user,
+        this.storage,
+        await this.credits.summaryFor(user.id.value),
+        await this.makerStats.statsFor(user.id.value),
+      ),
       email: preferred?.email ?? '',
       providers: identities.map((identity) => identity.provider),
     })

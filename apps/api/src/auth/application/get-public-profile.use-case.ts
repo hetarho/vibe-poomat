@@ -1,4 +1,4 @@
-import type { CreditSummaryReader, FileStorage } from '../../shared/application'
+import type { CreditSummaryReader, FileStorage, MakerStatsReader } from '../../shared/application'
 import { err, ok, type Result } from '../../shared/result'
 import { UserNotFoundError } from '../domain/auth-errors'
 import { Handle } from '../domain/handle'
@@ -15,6 +15,7 @@ export class GetPublicProfileUseCase {
     private readonly users: UserRepository,
     private readonly storage: FileStorage,
     private readonly credits: CreditSummaryReader,
+    private readonly makerStats: MakerStatsReader,
   ) {}
 
   async execute(rawHandle: string): Promise<Result<PublicProfileView, UserNotFoundError>> {
@@ -24,6 +25,13 @@ export class GetPublicProfileUseCase {
     const user = await this.users.findByHandle(handle.value)
     if (user === null) return err(new UserNotFoundError('no such account'))
 
-    return ok(toPublicProfile(user, this.storage, await this.credits.summaryFor(user.id.value)))
+    return ok(
+      toPublicProfile(
+        user,
+        this.storage,
+        await this.credits.summaryFor(user.id.value),
+        await this.makerStats.statsFor(user.id.value),
+      ),
+    )
   }
 }

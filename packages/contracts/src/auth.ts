@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { entityId, isoDate } from './common'
+import { entityId, isoDate, type RejectionReason } from './common'
 
 /** The two ways in (AUTH-1). */
 export const authProviderSchema = z.enum(['github', 'google'])
@@ -30,6 +30,31 @@ export const creditSummarySchema = z.object({
 export type CreditSummary = z.infer<typeof creditSummarySchema>
 
 /**
+ * FDBK-8's check on maker power, public and ungated (AUTH-7): how often this
+ * account rejected the work it asked for, and what it said when it did.
+ *
+ * `rejectionRate` is null rather than 0 when nothing has settled yet, so a
+ * client can say "no history" instead of showing a spotless 0%.
+ */
+export const makerStatsSchema = z.object({
+  settledCount: z.int().nonnegative(),
+  rejectedCount: z.int().nonnegative(),
+  rejectionRate: z.number().min(0).max(1).nullable(),
+  /**
+   * Every reason, zeroes included, so a client can render the whole set without
+   * knowing the list. `satisfies` is what keeps it in step with the list: adding
+   * a reason and forgetting it here stops compiling.
+   */
+  reasons: z.object({
+    task_not_done: z.int().nonnegative(),
+    no_substance: z.int().nonnegative(),
+    spam_abuse: z.int().nonnegative(),
+  } satisfies Record<RejectionReason, z.ZodType>),
+})
+
+export type MakerStats = z.infer<typeof makerStatsSchema>
+
+/**
  * What anyone may see of an account (AUTH-3). The provider email is deliberately
  * absent: AUTH-4 keeps it for notifications, never for display.
  */
@@ -43,6 +68,7 @@ export const publicProfileSchema = z.object({
   link: z.url().nullable(),
   createdAt: isoDate,
   credits: creditSummarySchema,
+  makerStats: makerStatsSchema,
 })
 
 export type PublicProfile = z.infer<typeof publicProfileSchema>

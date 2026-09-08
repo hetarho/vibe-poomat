@@ -1,5 +1,5 @@
-import type { CreditSummary, FileStorage } from '../../shared/application'
-import { EMPTY_CREDIT_SUMMARY } from '../../shared/application'
+import type { CreditSummary, FileStorage, MakerStats } from '../../shared/application'
+import { EMPTY_CREDIT_SUMMARY, EMPTY_MAKER_STATS } from '../../shared/application'
 import type { AuthProvider } from '../domain/auth-provider'
 import type { User } from '../domain/user'
 
@@ -12,6 +12,8 @@ export type PublicProfileView = {
   link: string | null
   createdAt: Date
   credits: CreditSummary
+  /** FDBK-8, public and ungated (AUTH-7): how this account judges the work it asks for. */
+  makerStats: MakerStats
 }
 
 export type MyProfileView = PublicProfileView & {
@@ -31,6 +33,7 @@ export function toPublicProfile(
   user: User,
   storage: FileStorage,
   credits: CreditSummary = EMPTY_CREDIT_SUMMARY,
+  makerStats: MakerStats = EMPTY_MAKER_STATS,
 ): PublicProfileView {
   const avatar = user.avatar
 
@@ -44,5 +47,6 @@ export function toPublicProfile(
     link: user.link?.value ?? null,
     createdAt: user.createdAt,
     credits,
+    makerStats,
   }
 }

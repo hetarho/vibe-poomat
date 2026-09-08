@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { cursorPageSchema, entityId, isoDate } from './common'
+import {
+  cursorPageSchema,
+  entityId,
+  isoDate,
+  REJECTION_REASONS,
+  type RejectionReason,
+  rejectionReasonSchema,
+} from './common'
 
 /**
  * `held`, `submitted` and `settled` all occupy a slot; `released` is the only
@@ -31,11 +38,7 @@ export const feedbackStateSchema = z.enum(FEEDBACK_STATES)
 export type FeedbackState = z.infer<typeof feedbackStateSchema>
 
 /** FDBK-6: a fixed list, so a rejection says something the feedbacker can read. */
-export const REJECTION_REASONS = ['task_not_done', 'no_substance', 'spam_abuse'] as const
-
-export const rejectionReasonSchema = z.enum(REJECTION_REASONS)
-
-export type RejectionReason = z.infer<typeof rejectionReasonSchema>
+export { REJECTION_REASONS, type RejectionReason, rejectionReasonSchema }
 
 /** FDBK-10: enough to block an empty submission, not to measure effort. */
 export const MIN_FIELD_LENGTH = 20

@@ -14,7 +14,7 @@ import { OAUTH_STATE_COOKIE, SESSION_COOKIE } from '../../auth/presentation/auth
 import { registerPlugins } from '../../bootstrap'
 import { CreditLedgerService } from '../../credit/application/credit-ledger.service'
 import { CreditModule } from '../../credit/credit.module'
-import { ClaimStoreModule } from '../../feedback/feedback.module'
+import { ClaimStoreModule } from '../../feedback/claim-store.module'
 import { HTTP_PROBE } from '../../shared/application'
 import { ConfigModule } from '../../shared/config/config.module'
 import { DbModule } from '../../shared/db/db.module'

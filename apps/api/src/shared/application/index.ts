@@ -19,6 +19,8 @@ export type { JobHandler, JobOptions, JobRetryPolicy, JobScheduler } from './job
 export { JOB_SCHEDULER, PermanentJobFailure } from './job-scheduler'
 export type { Mailer, MailRequest } from './mailer'
 export { MAILER } from './mailer'
+export type { MakerStats, MakerStatsReader } from './maker-stats'
+export { EMPTY_MAKER_STATS, MAKER_STATS_READER } from './maker-stats'
 export type { MissionForClaim, MissionReader } from './mission-access'
 export { MISSION_READER } from './mission-access'
 export type { SlotOccupancy, SlotOccupancyReader } from './slot-occupancy'

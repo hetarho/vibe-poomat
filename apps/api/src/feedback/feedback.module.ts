@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
 import { CreditModule } from '../credit/credit.module'
 import { ProjectModule } from '../project/project.module'
@@ -9,7 +9,6 @@ import {
   type JobScheduler,
   MISSION_READER,
   type MissionReader,
-  SLOT_OCCUPANCY_READER,
   TRANSACTION_MANAGER,
   type TransactionManager,
   USER_SUMMARY_READER,
@@ -21,33 +20,15 @@ import { ReadFeedbackUseCase } from './application/read-feedback.use-case'
 import { SettleFeedbackUseCase } from './application/settle-feedback.use-case'
 import { SubmitFeedbackUseCase } from './application/submit-feedback.use-case'
 import { ThreadUseCase } from './application/thread.use-case'
+import { ClaimStoreModule } from './claim-store.module'
 import { CLAIM_REPOSITORY, type ClaimRepository } from './domain/claim.repository'
 import { FEEDBACK_REPOSITORY, type FeedbackRepository } from './domain/feedback.repository'
 import { REPLY_REPOSITORY, type ReplyRepository } from './domain/reply.repository'
-import { DrizzleClaimRepository } from './infrastructure/persistence/drizzle-claim.repository'
-import { DrizzleFeedbackRepository } from './infrastructure/persistence/drizzle-feedback.repository'
 import { DrizzleReplyRepository } from './infrastructure/persistence/drizzle-reply.repository'
 import { ReleaseSlotJob } from './infrastructure/release-slot.job'
 import { AutoAcceptFeedbackJob, WarnMakerJob } from './infrastructure/settlement-timers.job'
 import { ClaimsController } from './presentation/claims.controller'
 import { FeedbacksController } from './presentation/feedbacks.controller'
-
-/**
- * The claim rows, and the one question another context asks of them. Global,
- * because the project context's slot arithmetic (PROJ-6, PROJ-9) needs the
- * answer and cannot import this module without a cycle — `feedback` already
- * imports `project` to read a mission.
- */
-@Global()
-@Module({
-  providers: [
-    { provide: CLAIM_REPOSITORY, useClass: DrizzleClaimRepository },
-    { provide: FEEDBACK_REPOSITORY, useClass: DrizzleFeedbackRepository },
-    { provide: SLOT_OCCUPANCY_READER, useExisting: CLAIM_REPOSITORY },
-  ],
-  exports: [CLAIM_REPOSITORY, FEEDBACK_REPOSITORY, SLOT_OCCUPANCY_READER],
-})
-export class ClaimStoreModule {}
 
 /**
  * The `feedback` bounded context (ARCH-9): who is working on what, and what they

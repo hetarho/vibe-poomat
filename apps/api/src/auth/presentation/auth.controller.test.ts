@@ -18,6 +18,7 @@ import { SignOutUseCase } from '../application/sign-out.use-case'
 import { SessionId } from '../domain/session-id'
 import { FakeCreditSummaryReader } from '../test-support/fake-credit-summary'
 import { FakeFileStorage } from '../test-support/fake-file-storage'
+import { FakeMakerStatsReader } from '../test-support/fake-maker-stats'
 import {
   InMemoryIdentityRepository,
   InMemorySessionRepository,
@@ -97,6 +98,7 @@ describe('the OAuth endpoints', () => {
             identities,
             new FakeFileStorage(),
             new FakeCreditSummaryReader(),
+            new FakeMakerStatsReader(),
           ),
         },
         { provide: SignOutUseCase, useValue: new SignOutUseCase(sessions) },

@@ -26,6 +26,7 @@ function toFeedback(row: Row): Feedback {
     claimId: must(EntityId.parse(row.claimId), 'claim id'),
     missionId: must(EntityId.parse(row.missionId), 'mission id'),
     projectId: must(EntityId.parse(row.projectId), 'project id'),
+    makerId: must(EntityId.parse(row.makerId), 'maker id'),
     authorId: row.authorId === null ? null : must(EntityId.parse(row.authorId), 'author id'),
     report: {
       firstImpression: must(
@@ -95,6 +96,7 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
       claimId: feedback.claimId.value,
       missionId: feedback.missionId.value,
       projectId: feedback.projectId.value,
+      makerId: feedback.makerId.value,
       authorId: feedback.authorId?.value ?? null,
       firstImpression: feedback.report.firstImpression.value,
       stuckAt: feedback.report.stuckAt.value,

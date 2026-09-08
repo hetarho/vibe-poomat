@@ -5,6 +5,7 @@ import { Handle } from '../domain/handle'
 import { User } from '../domain/user'
 import { FakeCreditSummaryReader } from '../test-support/fake-credit-summary'
 import { FAKE_PUBLIC_BASE, FakeFileStorage } from '../test-support/fake-file-storage'
+import { FakeMakerStatsReader } from '../test-support/fake-maker-stats'
 import {
   InMemoryUserRepository,
   passthroughTransactions,
@@ -40,6 +41,7 @@ describe('UpdateProfileUseCase', () => {
       users,
       storage,
       new FakeCreditSummaryReader(),
+      new FakeMakerStatsReader(),
       jobs,
       passthroughTransactions,
     )
@@ -74,7 +76,14 @@ describe('UpdateProfileUseCase', () => {
   it('carries the credit counters the ledger reports (CRED-7)', async () => {
     const credits = new FakeCreditSummaryReader()
     credits.set(ada.id.value, { balance: 2, received: 3, given: 1 })
-    useCase = new UpdateProfileUseCase(users, storage, credits, jobs, passthroughTransactions)
+    useCase = new UpdateProfileUseCase(
+      users,
+      storage,
+      credits,
+      new FakeMakerStatsReader(),
+      jobs,
+      passthroughTransactions,
+    )
 
     const view = (await useCase.execute({ userId: ada.id.value }))._unsafeUnwrap()
 
@@ -164,6 +173,7 @@ describe('ChangeHandleUseCase', () => {
       users,
       new FakeFileStorage(),
       new FakeCreditSummaryReader(),
+      new FakeMakerStatsReader(),
       passthroughTransactions,
     )
     ada = User.create({ handle: handle('ada'), displayName: 'Ada' })._unsafeUnwrap()

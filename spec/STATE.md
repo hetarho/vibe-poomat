@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T029 | maker rejection stats | FDBK CRED AUTH | T027 | todo |
 | T030 | notification context: events, emails & preferences | NOTI AUTH ARCH | T013 T027 | todo |
 | T031 | account deletion | AUTH CRED PROJ FDBK ARCH | T027 T023 T021 | todo |
 | T032 | web: auth shell & sign-in | AUTH ARCH | T008 T019 | todo |
@@ -39,11 +38,13 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T029 — maker rejection stats, or T030 notification context; both are unblocked
-- order: T029-T031 feedback/notification → T032-T040 web+e2e
+- implement-task T030 — the notification context, or T031 account deletion; both are unblocked
+- order: T030-T031 notification/deletion → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T029 done: FDBK-8 rejection rate and reason distribution on every profile, one grouped aggregate over a denormalised feedbacks.maker_id rather than a cross-context join to projects; ClaimStoreModule moved to its own file so AuthModule can name it instead of relying on @Global()
+- 260908 note: four auth/credit use cases each take storage+credits+makerStats to build one profile view — a ProfileComposer would collapse that; candidate for review-code
 - 260908 T028 done: flat two-party thread on each report, participants resolved per request rather than stored, public keyset read oldest-first, ThreadReplied for T030; the page now walks (created_at, id) so the mandated index is the one it uses
 - 260908 T027 done: accept/reject/auto-accept through one settle path with identical credit movement, 48h warn + 72h auto-accept bodies, SlotSettled completing the mission; fixed three repositories never draining their aggregates' events (T023 MissionEnded had been going nowhere)
 - 260908 T026 done: fixed-shape report with per-field 20-char rule, immutable by having no update path, slot flipped to submitted and FDBK-7 timers started; the two timer queues registered with logging placeholders for T027
@@ -62,5 +63,3 @@
 - 260907 T014 done: S3/MinIO FileStorage with signed content-type+length, uploads endpoint, delete job; openapi generator now uses Nest preview mode
 - 260907 T015 done: SSRF-guarded undici probe, PG-backed throttler with trustProxy=1, first real migration; fixed migrate running a stale image
 - 260907 T013 done: @repo/email templates, console+Resend adapters, email.send job with PermanentJobFailure dead-lettering; Dockerfiles now copy every workspace manifest
-- 260907 T012 done: pg-boss 11 scheduler joining the ambient tx, queue-level retry+dead-letter, JOBS_ENABLED; tx manager rewritten to pool-based for the raw connection
-- 260907 T011 done: ALS transaction manager with getDb(), post-commit in-process event bus with an in-transaction guard

@@ -30,3 +30,14 @@ export type CursorPage<TItem> = {
   items: TItem[]
   nextCursor: string | null
 }
+
+/**
+ * FDBK-6's fixed reasons. They sit here rather than in the feedback contract
+ * because FDBK-8 puts their distribution on a profile, so the auth contract
+ * names them too.
+ */
+export const REJECTION_REASONS = ['task_not_done', 'no_substance', 'spam_abuse'] as const
+
+export const rejectionReasonSchema = z.enum(REJECTION_REASONS)
+
+export type RejectionReason = z.infer<typeof rejectionReasonSchema>

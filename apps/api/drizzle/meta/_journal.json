@@ -71,6 +71,13 @@
       "when": 1788843316262,
       "tag": "0009_even_timeslip",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788844629586,
+      "tag": "0010_worried_sheva_callister",
+      "breakpoints": true
     }
   ]
 }

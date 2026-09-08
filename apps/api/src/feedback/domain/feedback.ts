@@ -1,4 +1,11 @@
-import { AggregateRoot, CROSS_CONTEXT_EVENTS, DomainEvent, EntityId } from '../../shared/kernel'
+import {
+  AggregateRoot,
+  CROSS_CONTEXT_EVENTS,
+  DomainEvent,
+  EntityId,
+  REJECTION_REASONS,
+  type RejectionReason,
+} from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
 import { FeedbackNotPendingError } from './claim-errors'
 import type { Report } from './report'
@@ -8,10 +15,12 @@ export const FEEDBACK_STATES = ['pending', 'accepted', 'rejected'] as const
 
 export type FeedbackState = (typeof FEEDBACK_STATES)[number]
 
-/** FDBK-6: a fixed list, so a rejection says something the feedbacker can read. */
-export const REJECTION_REASONS = ['task_not_done', 'no_substance', 'spam_abuse'] as const
-
-export type RejectionReason = (typeof REJECTION_REASONS)[number]
+/**
+ * FDBK-6: a fixed list, so a rejection says something the feedbacker can read.
+ * Re-exported from the kernel, where it has to live because FDBK-8 shows the
+ * distribution of these on a profile the `auth` context renders.
+ */
+export { REJECTION_REASONS, type RejectionReason }
 
 /**
  * One slot's credit has moved (CRED-4). The mission listens for this to notice
@@ -69,6 +78,12 @@ type FeedbackProps = {
   claimId: EntityId
   missionId: EntityId
   projectId: EntityId
+  /**
+   * The maker this report was written for, denormalised from the mission at
+   * submit time. FDBK-8 counts settled reports by maker, and PROJ-12 gives a
+   * project one owner for life, so the value can never go stale.
+   */
+  makerId: EntityId
   /** Null once the account is gone (AUTH-9): the report stays, the name does not. */
   authorId: EntityId | null
   report: Report
@@ -107,6 +122,7 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
       claimId: input.claimId,
       missionId: input.missionId,
       projectId: input.projectId,
+      makerId: input.makerId,
       authorId: input.authorId,
       report: input.report,
       state: 'pending',
@@ -145,6 +161,10 @@ export class Feedback extends AggregateRoot<FeedbackProps> {
 
   get projectId(): EntityId {
     return this.props.projectId
+  }
+
+  get makerId(): EntityId {
+    return this.props.makerId
   }
 
   get authorId(): EntityId | null {

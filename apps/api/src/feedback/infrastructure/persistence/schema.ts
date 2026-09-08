@@ -48,8 +48,10 @@ export const feedbackClaims = pgTable(
  * `author_id` is nullable precisely so AUTH-9 can anonymise a deleted account
  * without deleting the report: FDBK-9 keeps it public, shown as a deleted user.
  *
- * `project_id` is denormalised so the maker's own list and the profile stats
- * (T029) never need a mission join to answer.
+ * `project_id` and `maker_id` are denormalised from the mission so neither the
+ * maker's own list nor FDBK-8's profile stats needs a join into another
+ * context's tables to answer. PROJ-12 gives a project one owner for life, so
+ * `maker_id` cannot go stale.
  */
 export const feedbacks = pgTable(
   'feedbacks',
@@ -58,6 +60,8 @@ export const feedbacks = pgTable(
     claimId: uuid('claim_id').notNull().unique(),
     missionId: uuid('mission_id').notNull(),
     projectId: uuid('project_id').notNull(),
+    /** The account that owns the project this report was written for (FDBK-8). */
+    makerId: uuid('maker_id').notNull(),
     authorId: uuid('author_id'),
     firstImpression: text('first_impression').notNull(),
     stuckAt: text('stuck_at').notNull(),
@@ -79,6 +83,9 @@ export const feedbacks = pgTable(
     index('feedbacks_mission_idx').on(table.missionId),
     index('feedbacks_author_idx').on(table.authorId),
     index('feedbacks_project_idx').on(table.projectId),
+    // FDBK-8 groups a maker's settled reports by state; leading with the maker
+    // and carrying the state keeps that aggregate off a sequential scan
+    index('feedbacks_maker_state_idx').on(table.makerId, table.state),
   ],
 )
 
