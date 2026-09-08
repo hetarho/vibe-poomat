@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T018 | OAuth sign-in & session issue | AUTH ARCH | T017 | todo |
 | T019 | session guard, me & logout | AUTH ARCH | T018 | todo |
 | T020 | profile read & update | AUTH CRED ARCH | T019 T014 | todo |
 | T021 | credit ledger context | CRED AUTH ARCH | T018 T012 | todo |
@@ -50,11 +49,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T018 — OAuth sign-in and session issue on top of the auth context
-- order: T018-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
-- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header; review-code after the backend contexts land (around T031)
+- implement-task T019 — the session guard, /me and logout, which the rest of the API waits on
+- order: T019-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones); review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T018 done: arctic OAuth start+callback behind redirect-only endpoints, sign-in use case with all four AUTH-5 branches, session cookie + rotation, AccountCreated after commit; arctic is ESM so it loads via import() in the module factory
 - 260908 note: 4 pre-existing biome warnings in shared int tests (unused import/var, non-null assertion) — candidates for review-code
 - 260908 T017 done: auth schema (citext handle, partial verified-email index), User/Session/ProviderIdentity domain, three Drizzle repositories; isUniqueViolation now walks Drizzle's cause chain
 - 260908 T016 done: GHCR buildx push, ssh+compose roll behind Caddy with migrate-first and a tag roll back; docker-smoke.sh gained SMOKE_REMOTE; actionlint wrapper now ignores its stale vars context
@@ -74,4 +74,3 @@
 - 260907 T003 done: NestJS+Fastify skeleton, pino reqId, readiness registry; biome useImportType off for apps/api (NestJS DI)
 - 260907 T002 done: @repo/config zod env, CJS package build convention, no-process-env guard
 - 260907 T001 done: pnpm/turbo workspace + biome + vitest projects + husky, verify loop green
-- 260907 create-narrative done: NARRATIVE.md refreshed to ARCH@2 + domains r2 + T001..T040

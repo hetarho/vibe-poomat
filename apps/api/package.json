@@ -19,6 +19,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.1127.0",
     "@aws-sdk/s3-request-presigner": "3.1127.0",
+    "@fastify/cookie": "11.1.2",
     "@nestjs/common": "11.2.3",
     "@nestjs/core": "11.2.3",
     "@nestjs/platform-fastify": "11.2.3",
@@ -27,6 +28,7 @@
     "@repo/config": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/email": "workspace:*",
+    "arctic": "3.7.0",
     "drizzle-orm": "0.45.2",
     "fastify": "5.11.3",
     "nestjs-pino": "5.1.0",

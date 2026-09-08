@@ -1,3 +1,4 @@
+import fastifyCookie from '@fastify/cookie'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import type { Env } from './shared/config/env.token'
 import { requestIdFastifyOptions } from './shared/logging/request-id'
@@ -25,4 +26,13 @@ export function configureApp(app: NestFastifyApplication, config: Env): void {
   app.setGlobalPrefix(GLOBAL_PREFIX, { exclude: PREFIX_EXCLUDED_ROUTES })
   app.enableCors({ origin: config.WEB_URL, credentials: true })
   app.enableShutdownHooks()
+}
+
+/**
+ * Fastify plugins the app needs before it serves anything. Cookies carry the
+ * session (ARCH-18) and the short-lived OAuth state, so both the process and the
+ * tests register them here rather than each wiring their own.
+ */
+export async function registerPlugins(app: NestFastifyApplication): Promise<void> {
+  await app.register(fastifyCookie)
 }

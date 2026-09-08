@@ -28,6 +28,15 @@ export const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().min(1).default('minioadmin'),
   S3_SECRET_ACCESS_KEY: z.string().min(1).default('minioadmin'),
   S3_PUBLIC_BASE_URL: z.url().default('http://localhost:9000/vibe-poomat'),
+  // OAuth is the only way in (AUTH-1). Optional so a checkout boots without four
+  // provider apps registered; production is held to all of them below.
+  GITHUB_CLIENT_ID: z.string().min(1).optional(),
+  GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  // where the provider sends the browser back; defaults to the api's own origin,
+  // and is separate because the registered redirect URI must match exactly
+  OAUTH_REDIRECT_BASE_URL: z.url().optional(),
 })
 
 /** The Resend driver is useless without a key, so the pair is validated together. */
@@ -41,6 +50,31 @@ const withMailDriverKey = <TSchema extends z.ZodObject>(schema: TSchema) =>
         path: ['RESEND_API_KEY'],
         message: 'is required when MAIL_DRIVER is resend',
       })
+    }
+  })
+
+/** Sign-in is the only door into the product, so production may not be missing one. */
+const OAUTH_KEYS = [
+  'GITHUB_CLIENT_ID',
+  'GITHUB_CLIENT_SECRET',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+] as const
+
+const withOAuthCredentials = <TSchema extends z.ZodObject>(schema: TSchema) =>
+  schema.check((ctx) => {
+    const value = ctx.value as Record<string, string | undefined>
+    if (value.NODE_ENV !== 'production') return
+
+    for (const key of OAUTH_KEYS) {
+      if (value[key] === undefined) {
+        ctx.issues.push({
+          code: 'custom',
+          input: value[key],
+          path: [key],
+          message: 'is required in production, because OAuth is the only way to sign in',
+        })
+      }
     }
   })
 
@@ -89,7 +123,7 @@ export function parseEnvWith<TSchema extends z.ZodObject>(
 }
 
 export function parseEnv(raw: Record<string, string | undefined>): Env {
-  return parseEnvWith(withMailDriverKey(envSchema), raw)
+  return parseEnvWith(withOAuthCredentials(withMailDriverKey(envSchema)), raw)
 }
 
 /**

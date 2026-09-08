@@ -1,5 +1,6 @@
 import { AggregateRoot, EntityId } from '../../shared/kernel'
 import { err, ok, type Result } from '../../shared/result'
+import { AccountCreated } from './account-created.event'
 import { AvatarNotAllowedError, DisplayNameNotAllowedError } from './auth-errors'
 import type { Bio } from './bio'
 import type { ExternalLink } from './external-link'
@@ -125,6 +126,27 @@ export class User extends AggregateRoot<UserProps> {
         updatedAt: now,
       }),
     )
+  }
+
+  /**
+   * Signup, which AUTH-2 defines as the first successful sign-in. Same checks as
+   * `create`, plus the event that tells the rest of the product a person now
+   * exists — recorded on the aggregate so it can only reach anyone after the
+   * transaction commits (ARCH-39).
+   */
+  static signUp(input: {
+    id?: EntityId
+    handle: Handle
+    displayName: string
+    avatarUrl?: string | null
+    now?: Date
+  }): Result<User, ProfileError> {
+    const created = User.create(input)
+    if (created.isErr()) return err(created.error)
+
+    created.value.record(new AccountCreated(created.value.id, input.handle.value, input.now))
+
+    return created
   }
 
   /** Rebuilds a stored row, which was validated on the way in. */

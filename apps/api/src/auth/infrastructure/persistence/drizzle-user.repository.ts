@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto'
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { eq, inArray } from 'drizzle-orm'
+import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import type { EntityId } from '../../../shared/kernel'
 import { err, ok, type Result } from '../../../shared/result'
@@ -26,6 +27,8 @@ const RANDOM_SUFFIX_MAX = 999_999
 
 @Injectable()
 export class DrizzleUserRepository implements UserRepository {
+  constructor(@Inject(DOMAIN_EVENT_COLLECTOR) private readonly events: DomainEventCollector) {}
+
   async findById(id: EntityId): Promise<User | null> {
     const rows = await getDb().select().from(users).where(eq(users.id, id.value)).limit(1)
     const row = rows[0]
@@ -64,6 +67,10 @@ export class DrizzleUserRepository implements UserRepository {
       }
       throw error
     }
+
+    // drained here rather than by the use case, so an aggregate's events cannot
+    // be published without the write that produced them having landed (ARCH-39)
+    this.events.collect(user.pullEvents())
 
     return ok(undefined)
   }

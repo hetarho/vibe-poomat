@@ -170,6 +170,20 @@ describe('server environment', () => {
     expect(render.run).toContain('chmod 600')
   })
 
+  it('carries the OAuth credentials the api refuses to boot without', () => {
+    const render = deployStep('render the server environment')
+
+    // GitHub reserves the GITHUB_ secret prefix, so the secret and the key the
+    // server reads have different names; the mapping has to be here
+    expect(render.env?.GITHUB_OAUTH_CLIENT_ID).toBe('${{ secrets.GITHUB_OAUTH_CLIENT_ID }}')
+    expect(render.run).toContain('put GITHUB_CLIENT_ID "$GITHUB_OAUTH_CLIENT_ID"')
+    expect(render.run).toContain('put GOOGLE_CLIENT_SECRET "$GOOGLE_OAUTH_CLIENT_SECRET"')
+
+    const guard = deployStep('every required secret and variable is set')
+    expect(guard.run).toContain('GITHUB_OAUTH_CLIENT_ID')
+    expect(guard.run).toContain('GOOGLE_OAUTH_CLIENT_SECRET')
+  })
+
   it('fails before the roll when something is not configured', () => {
     const guard = deployStep('every required secret and variable is set')
     expect(deploySteps.indexOf(guard)).toBeLessThan(
@@ -244,6 +258,9 @@ describe('production compose stack', () => {
       expect(service.image, `${name} needs an image`).toBeTruthy()
     }
     expect(services.api?.image).toContain('${IMAGE_BASE')
+    // the stack cannot serve anyone without them, so compose fails rather than
+    // starting an api that would refuse to boot anyway
+    expect(readText('docker-compose.prod.yml')).toContain('GITHUB_CLIENT_ID is required')
     expect(services.api?.image).toContain('${IMAGE_TAG')
     expect(services.web?.image).toContain('${IMAGE_TAG')
   })

@@ -29,6 +29,62 @@
         ]
       }
     },
+    "/api/v1/auth/{provider}": {
+      "get": {
+        "operationId": "AuthController_start",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "github",
+                "google"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "The provider's authorize URL"
+          }
+        },
+        "summary": "Start sign-in by redirecting to the provider",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/{provider}/callback": {
+      "get": {
+        "operationId": "AuthController_callback",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "github",
+                "google"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Where the sign-in started, or the sign-in page with an error code"
+          }
+        },
+        "summary": "Finish sign-in and issue the session cookie",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "operationId": "UploadsController_create",
