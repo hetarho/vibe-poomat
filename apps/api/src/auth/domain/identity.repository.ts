@@ -1,3 +1,4 @@
+import type { EntityId } from '../../shared/kernel'
 import type { Result } from '../../shared/result'
 import type { IdentityAlreadyLinkedError } from './auth-errors'
 import type { AuthProvider } from './auth-provider'
@@ -13,5 +14,7 @@ export type IdentityRepository = {
    * existing account, so an unverified row must never answer this question.
    */
   findByVerifiedEmail(email: string): Promise<ProviderIdentity | null>
+  /** Every provider attached to one account, oldest first (AUTH-5). */
+  listByUserId(userId: EntityId): Promise<ProviderIdentity[]>
   save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>>
 }

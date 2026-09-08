@@ -42,6 +42,12 @@ export type JobHandler<TData extends object = object> = {
   readonly jobName: string
   /** Overrides the default three attempts with exponential backoff. */
   readonly retryPolicy?: JobRetryPolicy
+  /**
+   * A five-field cron expression turns this into a recurring job, registered at
+   * boot with no payload. Declared beside the handler rather than in a central
+   * schedule, so the job that recurs and the reason it recurs stay together.
+   */
+  readonly cron?: string
   /** Must be idempotent: pg-boss delivers at least once. */
   handle(data: TData): Promise<void>
 }

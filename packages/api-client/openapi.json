@@ -29,6 +29,36 @@
         ]
       }
     },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The signed-in account's own profile",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Delete the session and clear the cookie",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/{provider}": {
       "get": {
         "operationId": "AuthController_start",

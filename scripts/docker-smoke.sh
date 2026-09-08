@@ -28,9 +28,9 @@ trap teardown EXIT
 
 # Polls until the endpoint answers with the expected status, or gives up.
 expect_status() {
-  local url=$1 expected=$2 attempts=${3:-60} status=''
+  local url=$1 expected=$2 attempts=${3:-60} method=${4:-GET} status=''
   for _ in $(seq 1 "$attempts"); do
-    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url" || true)
+    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -X "$method" "$url" || true)
     [ "$status" = "$expected" ] && { echo "  ok   $url -> $status"; return 0; }
     sleep 2
   done
@@ -44,6 +44,17 @@ expect_body() {
     echo "  ok   $url contains '$needle'"
   else
     echo "  FAIL $url does not contain '$needle'" >&2
+    return 1
+  fi
+}
+
+expect_body_of_post() {
+  local url=$1 needle=$2 body=''
+  body=$(curl -s --max-time 10 -X POST "$url" -H 'content-type: application/json' -d '{}')
+  if printf '%s' "$body" | grep -q -- "$needle"; then
+    echo "  ok   POST $url contains '$needle'"
+  else
+    echo "  FAIL POST $url does not contain '$needle': $body" >&2
     return 1
   fi
 }
@@ -66,19 +77,13 @@ expect_body "$API_URL/health" '"status":"ok"'
 expect_body "$API_URL/ready" '"db":true'
 expect_body "$API_URL/ready" '"jobs":true'
 
-log 'checking that an upload can be signed'
-# the api never takes the bytes; this proves it hands out a URL that could
-UPLOAD=$(curl -s -X POST "$API_URL/api/v1/uploads" \
-  -H 'content-type: application/json' \
-  -d '{"purpose":"avatar","contentType":"image/png","sizeBytes":1024}')
-if printf '%s' "$UPLOAD" | grep -q '"X-Amz-Signature'; then
-  echo "  ok   POST /api/v1/uploads returned a signed URL"
-elif printf '%s' "$UPLOAD" | grep -q 'X-Amz-Signature'; then
-  echo "  ok   POST /api/v1/uploads returned a signed URL"
-else
-  echo "  FAIL POST /api/v1/uploads did not return a signed URL: $UPLOAD" >&2
-  exit 1
-fi
+log 'checking that the session guard is live'
+# every route is authenticated unless it says otherwise, so an anonymous write
+# must be refused. There is no way to sign in from here without a real OAuth
+# provider, which is why signing an upload is proven by the integration tests
+# and this only proves the route exists and the guard is in front of it.
+expect_status "$API_URL/api/v1/uploads" 401 1 POST
+expect_body_of_post "$API_URL/api/v1/uploads" '"code":"UNAUTHENTICATED"'
 
 log 'checking the web app'
 expect_status "$WEB_URL/" 200

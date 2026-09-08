@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { eq, lte } from 'drizzle-orm'
 import { getDb } from '../../../shared/db'
 import type { Session } from '../../domain/session'
 import type { SessionRepository } from '../../domain/session.repository'
@@ -35,5 +35,18 @@ export class DrizzleSessionRepository implements SessionRepository {
 
   async delete(id: SessionId): Promise<void> {
     await getDb().delete(sessions).where(eq(sessions.id, id.value))
+  }
+
+  /**
+   * A lapsed row is already refused by the guard, so this only reclaims space —
+   * which is why it can be an hourly sweep rather than part of any request.
+   */
+  async deleteExpired(now: Date): Promise<number> {
+    const removed = await getDb()
+      .delete(sessions)
+      .where(lte(sessions.expiresAt, now))
+      .returning({ id: sessions.id })
+
+    return removed.length
   }
 }

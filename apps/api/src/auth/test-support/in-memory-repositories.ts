@@ -75,6 +75,10 @@ export class InMemoryIdentityRepository implements IdentityRepository {
     return this.rows.find((row) => row.emailVerified && row.email === wanted) ?? null
   }
 
+  async listByUserId(userId: EntityId): Promise<ProviderIdentity[]> {
+    return this.rows.filter((row) => row.userId.equals(userId))
+  }
+
   async save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>> {
     const clash = await this.findByProviderId(identity.provider, identity.providerUserId)
     if (clash !== null && !clash.id.equals(identity.id)) {
@@ -100,6 +104,17 @@ export class InMemorySessionRepository implements SessionRepository {
 
   async delete(id: SessionId): Promise<void> {
     this.rows.delete(id.value)
+  }
+
+  async deleteExpired(now: Date): Promise<number> {
+    let removed = 0
+    for (const [id, session] of this.rows) {
+      if (!session.isExpired(now)) continue
+      this.rows.delete(id)
+      removed += 1
+    }
+
+    return removed
   }
 }
 

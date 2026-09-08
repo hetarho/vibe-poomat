@@ -1,9 +1,23 @@
-import { Controller, Get, Inject, Param, Query, Req, Res } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common'
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
+import { auth } from '@repo/contracts'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { ENV, type Env } from '../../shared/config/env.token'
 import { WRITE_THROTTLER } from '../../shared/infrastructure/throttling/throttler-policy'
+import { Public, unwrap } from '../../shared/presentation'
+import { GetMyProfileUseCase } from '../application/get-my-profile.use-case'
 import {
   OAUTH_PROVIDERS,
   type OAuthProviderRegistry,
@@ -13,10 +27,12 @@ import {
 } from '../application/oauth-provider'
 import { safeReturnTo } from '../application/return-to'
 import { SignInWithProviderUseCase } from '../application/sign-in-with-provider.use-case'
+import { SignOutUseCase } from '../application/sign-out.use-case'
 import { AUTH_PROVIDERS, parseAuthProvider } from '../domain/auth-provider'
 import { SessionId } from '../domain/session-id'
 import {
   clearedOauthCookieOptions,
+  clearedSessionCookieOptions,
   OAUTH_RETURN_TO_COOKIE,
   OAUTH_STATE_COOKIE,
   OAUTH_VERIFIER_COOKIE,
@@ -24,6 +40,7 @@ import {
   SESSION_COOKIE,
   sessionCookieOptions,
 } from './auth-cookies'
+import { CurrentUser } from './current-user.decorator'
 
 const FOUND = 302
 
@@ -55,11 +72,57 @@ function timingSafeEqualStrings(expected: string, actual: string): boolean {
 export class AuthController {
   constructor(
     private readonly signIn: SignInWithProviderUseCase,
+    private readonly myProfile: GetMyProfileUseCase,
+    private readonly signOut: SignOutUseCase,
     @Inject(OAUTH_PROVIDERS) private readonly providers: OAuthProviderRegistry,
     @Inject(ENV) private readonly config: Env,
   ) {}
 
+  /**
+   * Declared above `:provider` for the reader's sake; the router already
+   * prefers a static segment over a parameter, and a test pins that down.
+   */
+  @Get('me')
+  @ApiOperation({ summary: "The signed-in account's own profile" })
+  async me(@CurrentUser() userId: string): Promise<auth.Me> {
+    const profile = unwrap(await this.myProfile.execute(userId))
+    const { user } = profile
+
+    return {
+      id: user.id.value,
+      handle: user.handle.value,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio?.value ?? null,
+      link: user.link?.value ?? null,
+      createdAt: user.createdAt.toISOString(),
+      email: profile.email,
+      providers: profile.providers,
+    }
+  }
+
+  /**
+   * Public on purpose: signing out must work whatever state the cookie is in,
+   * and telling a browser holding a dead cookie that it is not signed in enough
+   * to sign out would be an absurd place to draw a line.
+   */
+  @Post('logout')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ [WRITE_THROTTLER]: {} })
+  @ApiOperation({ summary: 'Delete the session and clear the cookie' })
+  async logout(@Req() request: FastifyRequest, @Res() reply: FastifyReply): Promise<undefined> {
+    const parsed = SessionId.parse(request.cookies?.[SESSION_COOKIE] ?? '')
+    await this.signOut.execute(parsed.isOk() ? parsed.value : null)
+
+    reply.setCookie(SESSION_COOKIE, '', clearedSessionCookieOptions)
+    reply.status(HttpStatus.NO_CONTENT).send()
+
+    return undefined
+  }
+
   @Get(':provider')
+  @Public()
   @Throttle({ [WRITE_THROTTLER]: {} })
   // the document has to say 302: these endpoints never return a body, and a
   // generated client that expected one would be wrong about every call
@@ -91,6 +154,7 @@ export class AuthController {
   }
 
   @Get(':provider/callback')
+  @Public()
   @Throttle({ [WRITE_THROTTLER]: {} })
   @ApiOperation({ summary: 'Finish sign-in and issue the session cookie' })
   @ApiParam({ name: 'provider', enum: AUTH_PROVIDERS })

@@ -5,6 +5,7 @@ import { registerPlugins } from '../../bootstrap'
 import { ENV } from '../../shared/config/env.token'
 import { PresentationModule } from '../../shared/presentation/presentation.module'
 import { fakeEnv } from '../../test-support/fake-env'
+import { GetMyProfileUseCase } from '../application/get-my-profile.use-case'
 import {
   OAUTH_PROVIDERS,
   type OAuthProviderClient,
@@ -13,6 +14,7 @@ import {
   type ProviderProfile,
 } from '../application/oauth-provider'
 import { SignInWithProviderUseCase } from '../application/sign-in-with-provider.use-case'
+import { SignOutUseCase } from '../application/sign-out.use-case'
 import { SessionId } from '../domain/session-id'
 import {
   InMemoryIdentityRepository,
@@ -41,6 +43,8 @@ const profile: ProviderProfile = {
 describe('the OAuth endpoints', () => {
   let app: NestFastifyApplication
   let users: InMemoryUserRepository
+  let identities: InMemoryIdentityRepository
+  let sessions: InMemorySessionRepository
   let fetchProfile: ReturnType<typeof vi.fn>
 
   function cookiesOf(headers: Record<string, unknown>): Record<string, string> {
@@ -52,6 +56,8 @@ describe('the OAuth endpoints', () => {
 
   beforeEach(async () => {
     users = new InMemoryUserRepository()
+    identities = new InMemoryIdentityRepository()
+    sessions = new InMemorySessionRepository()
     fetchProfile = vi.fn(async () => ({ isErr: () => false, isOk: () => true, value: profile }))
 
     const client: OAuthProviderClient = {
@@ -76,12 +82,14 @@ describe('the OAuth endpoints', () => {
           provide: SignInWithProviderUseCase,
           useValue: new SignInWithProviderUseCase(
             users,
-            new InMemoryIdentityRepository(),
-            new InMemorySessionRepository(),
+            identities,
+            sessions,
             new StubSessionIdGenerator([ISSUED_SESSION]),
             passthroughTransactions,
           ),
         },
+        { provide: GetMyProfileUseCase, useValue: new GetMyProfileUseCase(users, identities) },
+        { provide: SignOutUseCase, useValue: new SignOutUseCase(sessions) },
       ],
     }).compile()
 

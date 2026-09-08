@@ -41,3 +41,8 @@ export const clearedOauthCookieOptions: CookieSerializeOptions = {
   ...oauthCookieOptions,
   maxAge: 0,
 }
+
+export const clearedSessionCookieOptions: CookieSerializeOptions = {
+  ...sessionCookieOptions,
+  maxAge: 0,
+}

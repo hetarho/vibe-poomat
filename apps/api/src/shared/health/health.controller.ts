@@ -1,9 +1,12 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common'
 import type { FastifyReply } from 'fastify'
+import { Public } from '../presentation/public.decorator'
 // a value import, not `import type`: NestJS reads the runtime class from the
 // emitted decorator metadata to resolve this dependency
 import { ReadinessRegistry } from './readiness-registry'
 
+// an orchestrator holds no cookie, so the probes opt out of the session guard
+@Public()
 @Controller()
 export class HealthController {
   constructor(private readonly readiness: ReadinessRegistry) {}

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { and, eq } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 import { getDb, isUniqueViolation } from '../../../shared/db'
+import type { EntityId } from '../../../shared/kernel'
 import { err, ok, type Result } from '../../../shared/result'
 import { IdentityAlreadyLinkedError } from '../../domain/auth-errors'
 import type { AuthProvider } from '../../domain/auth-provider'
@@ -43,6 +44,16 @@ export class DrizzleIdentityRepository implements IdentityRepository {
     const row = rows[0]
 
     return row === undefined ? null : toProviderIdentity(row)
+  }
+
+  async listByUserId(userId: EntityId): Promise<ProviderIdentity[]> {
+    const rows = await getDb()
+      .select()
+      .from(identities)
+      .where(eq(identities.userId, userId.value))
+      .orderBy(asc(identities.createdAt))
+
+    return rows.map(toProviderIdentity)
   }
 
   async save(identity: ProviderIdentity): Promise<Result<void, IdentityAlreadyLinkedError>> {

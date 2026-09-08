@@ -208,6 +208,8 @@ describe('post-deploy smoke', () => {
     expect(script).toContain('expect_status "$API_URL/health" 200')
     expect(script).toContain('expect_status "$API_URL/ready" 200')
     expect(script).toContain('expect_status "$WEB_URL/" 200')
+    // the guard went in with T019, so an anonymous write must now be refused
+    expect(script).toContain('expect_status "$API_URL/api/v1/uploads" 401 1 POST')
     // SMOKE_REMOTE must suppress both the build and the teardown
     expect(script).toContain('SKIP_BUILD=${SMOKE_SKIP_BUILD:-$REMOTE}')
     expect(script).toContain('SKIP_STACK=${SMOKE_SKIP_STACK:-$REMOTE}')

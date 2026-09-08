@@ -10,6 +10,7 @@ export {
   statusForDomainError,
 } from './http-status'
 export { PresentationModule } from './presentation.module'
+export { IS_PUBLIC, Public } from './public.decorator'
 export { unwrap } from './unwrap'
 export {
   VALIDATION_FAILED_CODE,

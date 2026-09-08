@@ -54,6 +54,8 @@ export class PgBossService implements OnApplicationBootstrap, OnApplicationShutd
       )
     }
 
+    await this.registerSchedules()
+
     if (this.config.JOBS_ENABLED) await this.attachWorkers()
     else this.logger.warn('JOBS_ENABLED is off: this instance schedules jobs but runs none')
 
@@ -67,6 +69,22 @@ export class PgBossService implements OnApplicationBootstrap, OnApplicationShutd
     if (!this.started) return
     this.started = false
     await this.boss.stop({ graceful: true })
+  }
+
+  /**
+   * Recurring jobs, declared by the handler that owns them. pg-boss keys a
+   * schedule by queue name, so re-registering the same one at every boot updates
+   * it rather than adding a second — which is what makes this safe to run on
+   * every instance.
+   */
+  private async registerSchedules(): Promise<void> {
+    for (const name of this.registry.names()) {
+      const { cron } = this.registry.require(name)
+      if (cron === undefined) continue
+
+      await this.boss.schedule(name, cron)
+      this.logger.log(`scheduled ${name} at ${cron}`)
+    }
   }
 
   private async attachWorkers(): Promise<void> {
