@@ -8,6 +8,13 @@
       "when": 1788770424236,
       "tag": "0000_bizarre_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788829703036,
+      "tag": "0001_outstanding_natasha_romanoff",
+      "breakpoints": true
     }
   ]
 }

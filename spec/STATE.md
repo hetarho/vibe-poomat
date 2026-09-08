@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T017 | auth context: schema & domain model | AUTH ARCH | T011 | todo |
 | T018 | OAuth sign-in & session issue | AUTH ARCH | T017 | todo |
 | T019 | session guard, me & logout | AUTH ARCH | T018 | todo |
 | T020 | profile read & update | AUTH CRED ARCH | T019 T014 | todo |
@@ -51,11 +50,13 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T017 — auth schema and domain model, the first product context; every infra task is now done
-- order: T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- implement-task T018 — OAuth sign-in and session issue on top of the auth context
+- order: T018-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header; review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 note: 4 pre-existing biome warnings in shared int tests (unused import/var, non-null assertion) — candidates for review-code
+- 260908 T017 done: auth schema (citext handle, partial verified-email index), User/Session/ProviderIdentity domain, three Drizzle repositories; isUniqueViolation now walks Drizzle's cause chain
 - 260908 T016 done: GHCR buildx push, ssh+compose roll behind Caddy with migrate-first and a tag roll back; docker-smoke.sh gained SMOKE_REMOTE; actionlint wrapper now ignores its stale vars context
 - 260907 T014 done: S3/MinIO FileStorage with signed content-type+length, uploads endpoint, delete job; openapi generator now uses Nest preview mode
 - 260907 T015 done: SSRF-guarded undici probe, PG-backed throttler with trustProxy=1, first real migration; fixed migrate running a stale image
@@ -74,5 +75,3 @@
 - 260907 T002 done: @repo/config zod env, CJS package build convention, no-process-env guard
 - 260907 T001 done: pnpm/turbo workspace + biome + vitest projects + husky, verify loop green
 - 260907 create-narrative done: NARRATIVE.md refreshed to ARCH@2 + domains r2 + T001..T040
-- 260907 create-task done: ARCH r2 delta → T011..T016; AUTH CRED PROJ FDBK NOTI → T017..T040 (40 tasks total)
-- 260907 create-task ARCH(r2 delta) AUTH PROJ CRED FDBK NOTI start

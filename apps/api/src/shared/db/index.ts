@@ -1,4 +1,4 @@
-export { entityId, timestamps } from './columns'
+export { citext, entityId, timestamps } from './columns'
 export { createPool } from './create-pool'
 export { DbModule } from './db.module'
 export type { Db } from './db.token'
@@ -15,3 +15,4 @@ export {
   hasAmbientTransaction,
   transactionScope,
 } from './transaction-scope'
+export { isUniqueViolation } from './unique-violation'

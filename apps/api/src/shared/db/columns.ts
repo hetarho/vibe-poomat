@@ -1,4 +1,4 @@
-import { timestamp, uuid } from 'drizzle-orm/pg-core'
+import { customType, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 /**
  * Primary key of every table: a UUIDv7 the application generates, with no
@@ -18,3 +18,14 @@ export function timestamps() {
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   }
 }
+
+/**
+ * Case-insensitive text, for columns whose equality must not depend on case —
+ * the account handle above all (AUTH: unique and case-insensitive). A column
+ * type rather than a `lower()` functional index, because the type holds for
+ * every query ever written, while the index only helps the ones that remembered
+ * to call `lower()`. The migration enables the extension.
+ */
+export const citext = customType<{ data: string; driverData: string }>({
+  dataType: () => 'citext',
+})

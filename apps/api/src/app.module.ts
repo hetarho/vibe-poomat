@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from './shared/config/config.module'
 import { DbModule } from './shared/db/db.module'
 import { EventsModule } from './shared/events/events.module'
@@ -25,6 +26,7 @@ import { UploadsModule } from './uploads/uploads.module'
     HttpModule,
     ThrottlingModule,
     StorageModule,
+    AuthModule,
     UploadsModule,
   ],
 })
