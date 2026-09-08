@@ -13,6 +13,8 @@ export type ProjectView = {
   coverUrl: string | null
   tags: readonly ProjectTag[]
   upvoteCount: number
+  /** Whether the caller's own vote stands, so the button renders right (PROJ-11). */
+  upvotedByViewer: boolean
   activeMission: ActiveMissionSummary | null
   /** Non-null only for the owner, who keeps reading their archive (PROJ-8). */
   deletedAt: Date | null
@@ -39,6 +41,7 @@ export function toProjectView(input: {
   owner: UserSummary | null
   storage: FileStorage
   activeMission?: ActiveMissionSummary | null
+  upvotedByViewer?: boolean
 }): ProjectView {
   const { project } = input
 
@@ -52,6 +55,7 @@ export function toProjectView(input: {
     coverUrl: project.cover === null ? null : input.storage.publicUrl(project.cover.key),
     tags: project.tags.values,
     upvoteCount: project.upvoteCount,
+    upvotedByViewer: input.upvotedByViewer ?? false,
     activeMission: input.activeMission ?? null,
     deletedAt: project.deletedAt,
     createdAt: project.createdAt,

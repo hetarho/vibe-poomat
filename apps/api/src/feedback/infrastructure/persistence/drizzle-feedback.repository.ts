@@ -115,6 +115,27 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
     return rows.map(toFeedback)
   }
 
+  /** Walks `feedbacks_project_idx`, the same backwards-through-time id walk. */
+  async listForProject(
+    projectId: EntityId,
+    options: { limit: number; before?: string },
+  ): Promise<Feedback[]> {
+    const before = options.before ?? null
+    const rows = await getDb()
+      .select()
+      .from(feedbacks)
+      .where(
+        and(
+          eq(feedbacks.projectId, projectId.value),
+          before === null ? undefined : lt(feedbacks.id, before),
+        ),
+      )
+      .orderBy(desc(feedbacks.id))
+      .limit(options.limit)
+
+    return rows.map(toFeedback)
+  }
+
   /**
    * A single statement, not a load-and-save: FDBK-4 makes the report immutable,
    * so there is no aggregate method that could do this and nothing to announce.

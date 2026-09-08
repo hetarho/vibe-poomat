@@ -1,3 +1,5 @@
+export type { FeedSearch } from './lib/feed-search'
+export { feedSearchFor, parseFeedSearch } from './lib/feed-search'
 export {
   DESCRIPTION_MAX_LENGTH,
   descriptionProblem,
@@ -13,6 +15,8 @@ export {
   titleProblem,
 } from './lib/project-rules'
 export { serverProblems } from './lib/server-problems'
+export type { FeedParams } from './model/feed.query'
+export { feedCardsOf, feedQueryKey, feedQueryOptions } from './model/feed.query'
 export {
   FEED_QUERY_ROOT,
   fetchProject,

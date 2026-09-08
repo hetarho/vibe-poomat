@@ -135,13 +135,20 @@ import { ProjectsController } from './presentation/projects.controller'
     },
     {
       provide: GetProjectUseCase,
-      inject: [PROJECT_REPOSITORY, ACTIVE_MISSION_READER, USER_SUMMARY_READER, FILE_STORAGE],
+      inject: [
+        PROJECT_REPOSITORY,
+        ACTIVE_MISSION_READER,
+        USER_SUMMARY_READER,
+        FILE_STORAGE,
+        UPVOTE_REPOSITORY,
+      ],
       useFactory: (
         repository: ProjectRepository,
         missions: ActiveMissionReader,
         users: UserSummaryReader,
         storage: FileStorage,
-      ) => new GetProjectUseCase(repository, missions, users, storage),
+        upvotes: UpvoteRepository,
+      ) => new GetProjectUseCase(repository, missions, users, storage, upvotes),
     },
     ProjectAccountPurge,
     // AUTH-9 asks this context for two things and nothing else

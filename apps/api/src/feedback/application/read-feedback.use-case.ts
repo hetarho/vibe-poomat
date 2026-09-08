@@ -103,6 +103,50 @@ export class ReadFeedbackUseCase {
     })
   }
 
+  /**
+   * FDBK-9: every report a project has received, newest first, public like the
+   * rest. Keyed on the project rather than the mission because a project's
+   * feedback outlives the mission it was written for, and the project view only
+   * ever carries the mission that is still open (PROJ-5).
+   */
+  async forProject(input: {
+    projectId: string
+    limit?: number
+    cursor?: string
+  }): Promise<Result<FeedbackPage, FeedbackNotFoundError>> {
+    const id = EntityId.parse(input.projectId)
+    if (id.isErr()) return ok({ items: [], nextCursor: null })
+
+    const limit = Math.min(Math.max(input.limit ?? GIVEN_PAGE_SIZE, 1), MAX_GIVEN_PAGE_SIZE)
+    const before = decodeGivenCursor(input.cursor)
+    if (before.isErr()) return err(new FeedbackNotFoundError('this page does not exist'))
+
+    const rows = await this.feedbacks.listForProject(id.value, {
+      limit: limit + 1,
+      ...(before.value === null ? {} : { before: before.value }),
+    })
+    const hasMore = rows.length > limit
+    const page = rows.slice(0, limit)
+
+    // every report on a project has a different author, so one batched lookup
+    // rather than one per row
+    const authors = await this.users.summariesFor(
+      page
+        .map((feedback) => feedback.authorId?.value)
+        .filter((value): value is string => value !== undefined),
+    )
+
+    return ok({
+      items: page.map((feedback) =>
+        toFeedbackView(
+          feedback,
+          feedback.authorId === null ? null : (authors.get(feedback.authorId.value) ?? null),
+        ),
+      ),
+      nextCursor: hasMore ? encodeGivenCursor(page.at(-1) as Feedback) : null,
+    })
+  }
+
   private async authorOf(feedback: Feedback): Promise<UserSummary | null> {
     if (feedback.authorId === null) return null
 

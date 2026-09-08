@@ -179,6 +179,32 @@ export class FeedbacksController {
     return { items: page.items.map(render), nextCursor: page.nextCursor }
   }
 
+  /**
+   * PROJ-1's detail page: everything this project has received, across every
+   * mission it has ever run. Public (FDBK-9), and paged with the same opaque
+   * cursor the profile list uses.
+   */
+  @Get('projects/:projectId/feedbacks')
+  @Public()
+  @ApiOperation({ summary: 'The reports a project has received, newest first' })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async forProject(
+    @Param('projectId') projectId: string,
+    @Query('cursor') cursor: string | undefined,
+    @Query('limit') limit: string | undefined,
+  ): Promise<contract.FeedbackPage> {
+    const page = unwrap(
+      await this.read.forProject({
+        projectId,
+        cursor,
+        limit: limit === undefined ? undefined : Number(limit),
+      }),
+    )
+
+    return { items: page.items.map(render), nextCursor: page.nextCursor }
+  }
+
   @Get('missions/:missionId/feedbacks')
   @Public()
   @ApiOperation({ summary: 'Every report turned in against a mission' })

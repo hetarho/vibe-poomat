@@ -215,6 +215,46 @@ describe('the project endpoints, against a real PostgreSQL', () => {
       })
     })
 
+    /** PROJ-11: the page has to know whether this reader's own vote stands. */
+    it('says the reader has not upvoted when nobody has', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+
+      const response = await app.inject({ method: 'GET', url: `/projects/${projectId}` })
+
+      expect(contract.projectSchema.parse(response.json())).toMatchObject({
+        upvoteCount: 0,
+        upvotedByViewer: false,
+      })
+    })
+
+    it('says the reader has upvoted once they have, and only to them', async () => {
+      const owner = await signIn()
+      const projectId = await createProject(owner)
+      const voter = await signIn('bob-1', 'bob')
+      await app.inject({
+        method: 'POST',
+        url: `/projects/${projectId}/upvote`,
+        cookies: { [SESSION_COOKIE]: voter },
+      })
+
+      const mine = await app.inject({
+        method: 'GET',
+        url: `/projects/${projectId}`,
+        cookies: { [SESSION_COOKIE]: voter },
+      })
+      const anonymous = await app.inject({ method: 'GET', url: `/projects/${projectId}` })
+
+      expect(contract.projectSchema.parse(mine.json())).toMatchObject({
+        upvoteCount: 1,
+        upvotedByViewer: true,
+      })
+      expect(contract.projectSchema.parse(anonymous.json())).toMatchObject({
+        upvoteCount: 1,
+        upvotedByViewer: false,
+      })
+    })
+
     it.each(['not-an-id', '01920000-0000-7000-8000-0000000000ff'])('is 404 for %s', async (id) => {
       const response = await app.inject({ method: 'GET', url: `/projects/${id}` })
 

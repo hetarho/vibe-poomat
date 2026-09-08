@@ -102,6 +102,17 @@ class InMemoryFeedbacks implements FeedbackRepository {
       .slice(0, options.limit)
   }
 
+  async listForProject(
+    projectId: EntityId,
+    options: { limit: number; before?: string },
+  ): Promise<Feedback[]> {
+    return [...this.rows.values()]
+      .filter((feedback) => feedback.projectId.equals(projectId))
+      .sort((left, right) => right.id.value.localeCompare(left.id.value))
+      .filter((feedback) => options.before === undefined || feedback.id.value < options.before)
+      .slice(0, options.limit)
+  }
+
   readonly anonymised = new Set<string>()
 
   async listPendingForMaker(makerId: EntityId): Promise<Feedback[]> {

@@ -4,6 +4,7 @@ import { err, ok, type Result } from '../../shared/result'
 import type { ActiveMissionReader } from '../domain/mission.repository'
 import type { ProjectRepository } from '../domain/project.repository'
 import { ProjectNotFoundError } from '../domain/project-errors'
+import type { UpvoteRepository } from '../domain/upvote.repository'
 import { type ProjectView, toProjectView } from './project-view'
 
 /**
@@ -17,6 +18,7 @@ export class GetProjectUseCase {
     private readonly missions: ActiveMissionReader,
     private readonly users: UserSummaryReader,
     private readonly storage: FileStorage,
+    private readonly upvotes: UpvoteRepository,
   ) {}
 
   async execute(input: {
@@ -29,20 +31,34 @@ export class GetProjectUseCase {
     const project = await this.projects.findById(id.value)
     if (project === null) return err(new ProjectNotFoundError('no such project'))
 
+    const viewer =
+      input.viewerId === undefined || input.viewerId === null
+        ? null
+        : EntityId.parse(input.viewerId)
+
     if (project.isDeleted()) {
-      const viewer =
-        input.viewerId === undefined || input.viewerId === null
-          ? null
-          : EntityId.parse(input.viewerId)
       const isOwner = viewer !== null && viewer.isOk() && project.isOwnedBy(viewer.value)
       if (!isOwner) return err(new ProjectNotFoundError('no such project'))
     }
 
-    const [owner, activeMission] = await Promise.all([
+    const [owner, activeMission, upvoted] = await Promise.all([
       this.users.summaryFor(project.ownerId.value),
       this.missions.activeFor(project.id.value),
+      // PROJ-11: the page has to know whether this caller's vote already stands,
+      // the same thing every feed card is told
+      viewer !== null && viewer.isOk()
+        ? this.upvotes.upvotedBy(viewer.value, [project.id.value])
+        : Promise.resolve(new Set<string>()),
     ])
 
-    return ok(toProjectView({ project, owner, storage: this.storage, activeMission }))
+    return ok(
+      toProjectView({
+        project,
+        owner,
+        storage: this.storage,
+        activeMission,
+        upvotedByViewer: upvoted.has(project.id.value),
+      }),
+    )
   }
 }

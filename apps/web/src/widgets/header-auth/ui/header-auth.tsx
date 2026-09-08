@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
-import { UserAvatar, useCurrentUser } from '../../../entities/session'
+import { useCurrentUser } from '../../../entities/session'
 import { SignInDialog, useSignOut } from '../../../features/auth'
-import { Button } from '../../../shared/ui'
+import { Button, UserAvatar } from '../../../shared/ui'
 
 export const SIGN_IN_LABEL = 'Sign in'
 export const SIGN_OUT_LABEL = 'Sign out'

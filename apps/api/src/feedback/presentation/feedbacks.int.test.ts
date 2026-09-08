@@ -137,6 +137,7 @@ describe('feedback reports, against a real PostgreSQL', () => {
   async function heldSlot(questions: string[] = []): Promise<{
     maker: string
     feedbacker: string
+    projectId: string
     missionId: string
     claimId: string
   }> {
@@ -169,7 +170,13 @@ describe('feedback reports, against a real PostgreSQL', () => {
       cookies: { [SESSION_COOKIE]: feedbacker },
     })
 
-    return { maker, feedbacker, missionId, claimId: (claim.json() as { id: string }).id }
+    return {
+      maker,
+      feedbacker,
+      projectId,
+      missionId,
+      claimId: (claim.json() as { id: string }).id,
+    }
   }
 
   function report(overrides: Record<string, unknown> = {}) {
@@ -414,6 +421,92 @@ describe('feedback reports, against a real PostgreSQL', () => {
       const authorId = await accountBehind(await signIn('cara-1', 'cara'))
 
       expect((await given(authorId, '?cursor=nonsense')).statusCode).toBe(404)
+    })
+  })
+
+  describe('GET /projects/:projectId/feedbacks (FDBK-9)', () => {
+    function received(projectId: string, query = '') {
+      return app.inject({ method: 'GET', url: `/projects/${projectId}/feedbacks${query}` })
+    }
+
+    /** Two reports on one project: the mission opened with two slots. */
+    async function twoOnOneProject(): Promise<{ projectId: string; ids: string[] }> {
+      const { feedbacker, projectId, missionId, claimId } = await heldSlot()
+      const first = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+
+      const other = await signIn('cara-1', 'cara')
+      const claim = await app.inject({
+        method: 'POST',
+        url: `/missions/${missionId}/claims`,
+        cookies: { [SESSION_COOKIE]: other },
+      })
+      const second = contract.feedbackSchema.parse(
+        (await submit(other, (claim.json() as { id: string }).id, report())).json(),
+      )
+
+      return { projectId, ids: [first.id, second.id] }
+    }
+
+    it('is public, with no session at all', async () => {
+      const { feedbacker, projectId, claimId } = await heldSlot()
+      const written = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+
+      const response = await received(projectId)
+
+      expect(response.statusCode).toBe(200)
+      const page = contract.feedbackPageSchema.parse(response.json())
+      expect(page.items.map((item) => item.id)).toEqual([written.id])
+      expect(page.items[0]?.author?.handle).toBe('bob')
+    })
+
+    it('reads newest first, whoever wrote them', async () => {
+      const { projectId, ids } = await twoOnOneProject()
+
+      const page = contract.feedbackPageSchema.parse((await received(projectId)).json())
+
+      expect(page.items.map((item) => item.id)).toEqual([...ids].reverse())
+      expect(page.items.map((item) => item.author?.handle)).toEqual(['cara', 'bob'])
+    })
+
+    it('walks the whole list through the cursor, once each', async () => {
+      const { projectId, ids } = await twoOnOneProject()
+
+      const first = contract.feedbackPageSchema.parse(
+        (await received(projectId, '?limit=1')).json(),
+      )
+      expect(first.nextCursor).not.toBeNull()
+      const rest = contract.feedbackPageSchema.parse(
+        (await received(projectId, `?limit=1&cursor=${first.nextCursor}`)).json(),
+      )
+
+      expect([...first.items, ...rest.items].map((item) => item.id)).toEqual([...ids].reverse())
+      expect(rest.nextCursor).toBeNull()
+    })
+
+    /** A project nobody has reviewed yet is the empty state the page renders. */
+    it('answers with nothing for a project that has received none', async () => {
+      const { projectId } = await heldSlot()
+
+      expect(contract.feedbackPageSchema.parse((await received(projectId)).json())).toEqual({
+        items: [],
+        nextCursor: null,
+      })
+    })
+
+    it('answers with nothing for something that is not a project id', async () => {
+      expect(contract.feedbackPageSchema.parse((await received('not-an-id')).json()).items).toEqual(
+        [],
+      )
+    })
+
+    it('refuses a cursor a caller made up', async () => {
+      const { projectId } = await heldSlot()
+
+      expect((await received(projectId, '?cursor=nonsense')).statusCode).toBe(404)
     })
   })
 

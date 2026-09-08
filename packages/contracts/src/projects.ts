@@ -58,6 +58,8 @@ export const projectSchema = z.object({
   coverUrl: z.url().nullable(),
   tags: projectTagsSchema,
   upvoteCount: z.int().nonnegative(),
+  /** Whether the caller's own vote stands, so the button renders right (PROJ-11). */
+  upvotedByViewer: z.boolean(),
   activeMission: activeMissionSummarySchema.nullable(),
   /** Only ever non-null for the owner, who keeps reading their archive (PROJ-8). */
   deletedAt: isoDate.nullable(),

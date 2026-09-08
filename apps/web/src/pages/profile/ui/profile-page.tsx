@@ -1,6 +1,7 @@
 import type { feedback, projects } from '@repo/contracts'
-import { UserAvatar, useCurrentUser } from '../../../entities/session'
+import { useCurrentUser } from '../../../entities/session'
 import { CreditCounters, MakerStats, type PublicProfile } from '../../../entities/user'
+import { UserAvatar } from '../../../shared/ui'
 
 export const UNKNOWN_HANDLE_HEADING = 'No such account'
 

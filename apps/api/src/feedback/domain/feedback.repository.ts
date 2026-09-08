@@ -21,6 +21,15 @@ export type FeedbackRepository = {
     authorId: EntityId,
     options: { limit: number; before?: string },
   ): Promise<Feedback[]>
+  /**
+   * FDBK-9: every report a project has received, newest first. Keyed on the
+   * project rather than the mission, because a project's feedback outlives the
+   * mission it was written for and only the open one is on the project view.
+   */
+  listForProject(
+    projectId: EntityId,
+    options: { limit: number; before?: string },
+  ): Promise<Feedback[]>
   /** FDBK-9: the report stays public, the name on it does not. */
   anonymiseAuthor(userId: EntityId): Promise<void>
   save(feedback: Feedback): Promise<void>

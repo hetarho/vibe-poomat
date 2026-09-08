@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as AtChar123handleChar125RouteImport } from './routes/@{$handle}'
+import { Route as PopularRouteImport } from './routes/popular'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as ProjectsNewRouteImport } from './routes/projects.new'
 import { Route as ProjectsIdEditRouteImport } from './routes/projects.$id.edit'
 
@@ -32,6 +34,11 @@ const AtChar123handleChar125Route = AtChar123handleChar125RouteImport.update({
   path: '/@{$handle}',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PopularRoute = PopularRouteImport.update({
+  id: '/popular',
+  path: '/popular',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -42,23 +49,30 @@ const SignInRoute = SignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsIdRoute = ProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectsNewRoute = ProjectsNewRouteImport.update({
   id: '/projects/new',
   path: '/projects/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsIdEditRoute = ProjectsIdEditRouteImport.update({
-  id: '/projects/$id/edit',
-  path: '/projects/$id/edit',
-  getParentRoute: () => rootRouteImport,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProjectsIdRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
@@ -66,8 +80,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
@@ -76,8 +92,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/projects/$id/edit': typeof ProjectsIdEditRoute
 }
@@ -87,8 +105,10 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/projects/$id'
     | '/projects/new'
     | '/projects/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -96,8 +116,10 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/projects/$id'
     | '/projects/new'
     | '/projects/$id/edit'
   id:
@@ -105,8 +127,10 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/projects/$id'
     | '/projects/new'
     | '/projects/$id/edit'
   fileRoutesById: FileRoutesById
@@ -115,10 +139,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   AtChar123handleChar125Route: typeof AtChar123handleChar125Route
+  PopularRoute: typeof PopularRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  ProjectsIdRoute: typeof ProjectsIdRouteWithChildren
   ProjectsNewRoute: typeof ProjectsNewRoute
-  ProjectsIdEditRoute: typeof ProjectsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -144,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123handleChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/popular': {
+      id: '/popular'
+      path: '/popular'
+      fullPath: '/popular'
+      preLoaderRoute: typeof PopularRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -158,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects/$id': {
+      id: '/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof ProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects/new': {
       id: '/projects/new'
       path: '/projects/new'
@@ -167,22 +206,35 @@ declare module '@tanstack/react-router' {
     }
     '/projects/$id/edit': {
       id: '/projects/$id/edit'
-      path: '/projects/$id/edit'
+      path: '/edit'
       fullPath: '/projects/$id/edit'
       preLoaderRoute: typeof ProjectsIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ProjectsIdRoute
     }
   }
 }
+
+interface ProjectsIdRouteChildren {
+  ProjectsIdEditRoute: typeof ProjectsIdEditRoute
+}
+
+const ProjectsIdRouteChildren: ProjectsIdRouteChildren = {
+  ProjectsIdEditRoute: ProjectsIdEditRoute,
+}
+
+const ProjectsIdRouteWithChildren = ProjectsIdRoute._addFileChildren(
+  ProjectsIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   AtChar123handleChar125Route: AtChar123handleChar125Route,
+  PopularRoute: PopularRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  ProjectsIdRoute: ProjectsIdRouteWithChildren,
   ProjectsNewRoute: ProjectsNewRoute,
-  ProjectsIdEditRoute: ProjectsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

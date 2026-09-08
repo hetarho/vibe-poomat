@@ -1,8 +1,7 @@
 import type { auth } from '@repo/contracts'
 import { type FormEvent, useState } from 'react'
-import { UserAvatar } from '../../../entities/session'
 import { fieldErrors } from '../../../shared/api'
-import { Button, Input, Textarea } from '../../../shared/ui'
+import { Button, Input, Textarea, UserAvatar } from '../../../shared/ui'
 import { ImagePicker, type PickedImage } from '../../../shared/upload'
 import {
   BIO_MAX_LENGTH,

@@ -1,8 +1,8 @@
-import { cn } from '../../../shared/lib'
-import type { CurrentUser } from '../model/session.query'
+import { cn } from '../lib'
 
 type UserAvatarProps = {
-  user: Pick<CurrentUser, 'displayName' | 'avatarUrl'>
+  /** Anything with a name and maybe a picture: an account, a report's author. */
+  user: { displayName: string; avatarUrl: string | null }
   className?: string
 }
 
