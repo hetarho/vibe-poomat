@@ -18,7 +18,9 @@ export function CreditCounters({ credits }: CreditCountersProps) {
         {LABELS.map(([key, label]) => (
           <div key={key}>
             <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-            <dd className="font-semibold text-lg tabular-nums">{credits[key]}</dd>
+            <dd className="font-semibold text-lg tabular-nums" data-testid={`credits-${key}`}>
+              {credits[key]}
+            </dd>
           </div>
         ))}
       </dl>

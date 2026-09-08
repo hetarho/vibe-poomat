@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AccountModule } from './account/account.module'
 import { AuthModule } from './auth/auth.module'
+import { TestSessionModule } from './auth/test-session.module'
 import { CreditModule } from './credit/credit.module'
 import { FeedbackModule } from './feedback/feedback.module'
 import { NotificationModule } from './notification/notification.module'
@@ -38,6 +39,9 @@ import { UploadsModule } from './uploads/uploads.module'
     NotificationModule,
     AccountModule,
     UploadsModule,
+    // empty unless NODE_ENV=test, so the bypass is absent from a production
+    // graph rather than present and refusing (T040)
+    ...TestSessionModule.forEnv(),
   ],
 })
 export class AppModule {}

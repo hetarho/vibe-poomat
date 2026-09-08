@@ -63,7 +63,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm --filter web exec playwright install --with-deps chromium
-      - run: pnpm turbo run build --filter=web
+      # T040's five flows run the whole stack: the runner has Docker, so
+      # `globalSetup` brings up PostgreSQL, migrates it, and builds both apps.
+      # The api runs with NODE_ENV=test, which is the only thing that enables
+      # the sign-in bypass and the fixture URL probe.
       - run: pnpm --filter web run test:e2e
         env:
           CI: 'true'

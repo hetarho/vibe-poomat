@@ -25,15 +25,17 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
+| - | - | - | - | - |
 
 ## next
-- implement-task T040 — e2e core flows; it is the only task left
-- then: review-code is overdue (the whole api and web are written), and six api read gaps were filled from web tasks — worth a create-task pass on the read models
-- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
-- update-ssot candidates: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031). PROJ-7 does not say whether the title is frozen with the URL; T034 froze it and the api does not (T034)
+- every task is done. review-code is the next step: T034-T040 left three standing findings — the dev server never hydrates (react-dom/server in the client graph), nothing outside the deploy stack proxies /api to the api, and six api read models were added ad hoc from web tasks
+- update-ssot candidates: AUTH-9 calls a deleted account's projects "deleted" when they are hidden (T031); PROJ-7 is silent on whether the title is frozen with the URL (T034); NOTI-4 is silent on which side holds the unsubscribe token (T039)
+- before the first deploy: set the repository variables and secrets listed in the .github/workflows/deploy.yml header, including the four OAuth ones and NOTIFICATION_SECRET
 
 ## log
+- 260909 T040 done: the five reciprocity flows in chromium against the built artifact, api and db started by globalSetup, in ~7s; the AUTH-1 bypass lives in the auth context and is absent from a production graph, and NODE_ENV=test binds a probe that answers for reserved .test hosts because ARCH-40 refuses loopback
+- 260909 note: T040 found that the dev server never hydrates (its client graph imports react-dom/server and throws) and that nothing outside the deploy stack proxies /api to the api — both need their own task
+- 260909 T040 claimed (wb)
 - 260909 T039 done: NOTI-2's seven toggles optimistic with rollback and the NOTI-3 row always-on with its reason, NOTI-4's /unsubscribe landing page needing no session, a NOTI-7 guard on the shell; the api's unsubscribe now redirects on failure too, so a tampered token is a page rather than a 422 body, carrying the code and never the account
 - 260909 note: T039 acceptance 3 diverges — the api holds the token and redirects to /unsubscribe (T030's design) rather than the page calling the endpoint; NOTI-4 does not decide which side, so this is a decomposition conflict to confirm
 - 260909 T039 claimed (wb)
@@ -51,6 +53,3 @@
 - 260908 T034 done: PROJ-1's create and edit forms sharing one ProjectFields group, the api's per-field refusal codes mapped onto their fields with the probed status shown, PROJ-7 freezing title+URL with the reason, PROJ-8 delete behind a confirmation that states what survives; one sanitising Markdown in shared/ui and one image upload in shared/upload, which the avatar flow now uses too
 - 260908 note: apps/api mail.int.test.ts times out under a full parallel `turbo run test` and passes alone — CI will flake on it; candidate for review-code
 - 260908 T033 done: /@handle profile with CRED-7 counters and FDBK-8 stats, settings with avatar presign, handle change, notification toggles and AUTH-9 deletion; the feed gained ?owner= and GET /users/:authorId/feedbacks was added, because the profile lists had no endpoint at all
-- 260908 note: create-task candidates — annotate the api's responses with DTOs so the generated client is typed both ways (shared/api/body.ts exists only for that), and the two profile endpoints deserved a task of their own
-- 260908 T032 done: session resolved once in the root beforeLoad with the cookie forwarded during SSR, so the header never flashes the wrong state; sign-in as a dialog carrying returnTo, /sign-in for the callback's ?error=, requireSession as a beforeLoad guard; smoke now asserts the server-rendered header
-- 260908 note: the account menu links to /users/:handle and /settings with plain anchors — T033 turns them into typed Links once those routes exist

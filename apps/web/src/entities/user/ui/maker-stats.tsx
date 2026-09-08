@@ -31,7 +31,9 @@ export function MakerStats({ stats }: MakerStatsProps) {
       ) : (
         <div className="mt-1">
           <p className="text-sm">
-            <span className="font-semibold tabular-nums">{asPercent(stats.rejectionRate)}</span>{' '}
+            <span className="font-semibold tabular-nums" data-testid="rejection-rate">
+              {asPercent(stats.rejectionRate)}
+            </span>{' '}
             rejected — {stats.rejectedCount} of {stats.settledCount} settled
           </p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs">
