@@ -71,6 +71,31 @@ export class FeedbacksController {
   }
 
   /** Public (FDBK-9), rejected ones included, with the reason that was given. */
+  /**
+   * The maker's inbox. Declared before `feedbacks/:id` because it is a sibling
+   * of it — the Fastify router prefers a static segment over a parametric one,
+   * but reading them in this order is how somebody sees that it has to.
+   */
+  @Get('feedbacks/received')
+  @ApiOperation({ summary: 'Reports on your projects, the undecided ones first' })
+  @ApiQuery({ name: 'cursor', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async received(
+    @CurrentUser() makerId: string,
+    @Query('cursor') cursor: string | undefined,
+    @Query('limit') limit: string | undefined,
+  ): Promise<contract.FeedbackPage> {
+    const page = unwrap(
+      await this.read.received({
+        makerId,
+        cursor,
+        limit: limit === undefined ? undefined : Number(limit),
+      }),
+    )
+
+    return { items: page.items.map(render), nextCursor: page.nextCursor }
+  }
+
   @Get('feedbacks/:id')
   @Public()
   @ApiOperation({ summary: 'A submitted report' })

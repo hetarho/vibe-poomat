@@ -4,6 +4,7 @@ import { SignInDialog, useSignOut } from '../../../features/auth'
 import { Button, UserAvatar } from '../../../shared/ui'
 
 export const SIGN_IN_LABEL = 'Sign in'
+export const INBOX_LABEL = 'Feedback'
 export const SIGN_OUT_LABEL = 'Sign out'
 
 /**
@@ -28,6 +29,9 @@ export function HeaderAuth() {
       <Link to="/@{$handle}" params={{ handle: user.handle }} className="flex items-center gap-2">
         <UserAvatar user={user} />
         <span className="hidden font-medium text-sm sm:inline">{user.displayName}</span>
+      </Link>
+      <Link to="/inbox" className="text-muted-foreground text-sm hover:text-foreground">
+        {INBOX_LABEL}
       </Link>
       <Link to="/settings" className="text-muted-foreground text-sm hover:text-foreground">
         Settings

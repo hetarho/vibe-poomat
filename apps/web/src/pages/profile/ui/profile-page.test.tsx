@@ -1,5 +1,6 @@
 import type { auth, feedback, projects } from '@repo/contracts'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createRootRoute, createRoute, createRouter, RouterProvider } from '@tanstack/react-router'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { SESSION_QUERY_KEY } from '../../../entities/session'
@@ -27,7 +28,7 @@ const ADA: auth.PublicProfile = {
 const EMPTY_PROJECTS: projects.FeedPage = { items: [], nextCursor: null }
 const EMPTY_GIVEN: feedback.FeedbackPage = { items: [], nextCursor: null }
 
-function renderProfile(options: {
+async function renderProfile(options: {
   profile?: auth.PublicProfile | null
   viewer?: { id: string } | null
   owned?: projects.FeedPage
@@ -36,22 +37,36 @@ function renderProfile(options: {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   client.setQueryData(SESSION_QUERY_KEY, options.viewer ?? null)
 
-  render(
-    <QueryClientProvider client={client}>
+  // the page links to typed routes now, so it needs a router; one is enough
+  const rootRoute = createRootRoute()
+  const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: () => (
       <ProfilePage
         profile={options.profile === undefined ? ADA : options.profile}
         handle="ada"
         projects={options.owned ?? EMPTY_PROJECTS}
         given={options.given ?? EMPTY_GIVEN}
       />
+    ),
+  })
+  const router = createRouter({ routeTree: rootRoute.addChildren([indexRoute]) })
+
+  render(
+    <QueryClientProvider client={client}>
+      <RouterProvider router={router as never} />
     </QueryClientProvider>,
   )
+
+  // the router mounts asynchronously; nothing is on screen until it has
+  await screen.findByRole('heading', { level: 1 })
 }
 
 describe('ProfilePage (AUTH-3)', () => {
   describe('what it shows about the account', () => {
-    it('renders the name, handle, bio, link and joining month', () => {
-      renderProfile({})
+    it('renders the name, handle, bio, link and joining month', async () => {
+      await renderProfile({})
 
       expect(screen.getByRole('heading', { name: 'Ada Lovelace' })).toBeInTheDocument()
       expect(screen.getByText('@ada')).toBeInTheDocument()
@@ -63,8 +78,8 @@ describe('ProfilePage (AUTH-3)', () => {
       expect(screen.getByText(/March 2026/)).toBeInTheDocument()
     })
 
-    it('renders CRED-7’s three public counters', () => {
-      renderProfile({})
+    it('renders CRED-7’s three public counters', async () => {
+      await renderProfile({})
 
       const credits = screen.getByRole('region', { name: 'Credits' })
       expect(credits).toHaveTextContent('Balance')
@@ -74,14 +89,14 @@ describe('ProfilePage (AUTH-3)', () => {
     })
 
     /** AUTH-4: the provider address is for notifications, never for display. */
-    it('never renders an email address', () => {
-      renderProfile({ profile: { ...ADA, email: 'ada@example.com' } as auth.PublicProfile })
+    it('never renders an email address', async () => {
+      await renderProfile({ profile: { ...ADA, email: 'ada@example.com' } as auth.PublicProfile })
 
       expect(screen.queryByText(/ada@example\.com/)).not.toBeInTheDocument()
     })
 
-    it('leaves out a bio and a link that are not there', () => {
-      renderProfile({ profile: { ...ADA, bio: null, link: null } })
+    it('leaves out a bio and a link that are not there', async () => {
+      await renderProfile({ profile: { ...ADA, bio: null, link: null } })
 
       expect(screen.queryByText(ADA.bio as string)).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'https://ada.test' })).not.toBeInTheDocument()
@@ -89,8 +104,8 @@ describe('ProfilePage (AUTH-3)', () => {
   })
 
   describe('the rejection stats (FDBK-8)', () => {
-    it('says "no history yet" rather than a spotless 0%', () => {
-      renderProfile({})
+    it('says "no history yet" rather than a spotless 0%', async () => {
+      await renderProfile({})
 
       expect(screen.getByRole('region', { name: 'Rejection rate' })).toHaveTextContent(
         NO_HISTORY_YET,
@@ -98,8 +113,8 @@ describe('ProfilePage (AUTH-3)', () => {
       expect(screen.queryByText(/0%/)).not.toBeInTheDocument()
     })
 
-    it('renders the rate and every reason once there is history', () => {
-      renderProfile({
+    it('renders the rate and every reason once there is history', async () => {
+      await renderProfile({
         profile: {
           ...ADA,
           makerStats: {
@@ -121,8 +136,8 @@ describe('ProfilePage (AUTH-3)', () => {
   })
 
   describe('the two lists', () => {
-    it('renders the account’s projects', () => {
-      renderProfile({
+    it('renders the account’s projects', async () => {
+      await renderProfile({
         owned: {
           items: [{ id: 'p1', title: 'Poomat', pitch: 'Trade real feedback' }] as never,
           nextCursor: null,
@@ -134,8 +149,8 @@ describe('ProfilePage (AUTH-3)', () => {
       expect(screen.getByRole('link', { name: 'Poomat' })).toHaveAttribute('href', '/projects/p1')
     })
 
-    it('renders the feedback the account has given', () => {
-      renderProfile({
+    it('renders the feedback the account has given', async () => {
+      await renderProfile({
         given: {
           items: [{ id: 'f1', firstImpression: 'The sign-up worked', state: 'accepted' }] as never,
           nextCursor: null,
@@ -149,8 +164,8 @@ describe('ProfilePage (AUTH-3)', () => {
       )
     })
 
-    it('says so plainly when there is nothing in either', () => {
-      renderProfile({})
+    it('says so plainly when there is nothing in either', async () => {
+      await renderProfile({})
 
       expect(screen.getByRole('region', { name: 'Projects' })).toHaveTextContent(
         'Nothing posted yet',
@@ -162,8 +177,8 @@ describe('ProfilePage (AUTH-3)', () => {
   })
 
   describe('who is looking', () => {
-    it('offers the owner a way to edit', () => {
-      renderProfile({ viewer: { id: ADA.id } })
+    it('offers the owner a way to edit', async () => {
+      await renderProfile({ viewer: { id: ADA.id } })
 
       expect(screen.getByRole('link', { name: 'Edit profile' })).toHaveAttribute(
         'href',
@@ -171,30 +186,30 @@ describe('ProfilePage (AUTH-3)', () => {
       )
     })
 
-    it('offers a visitor nothing to edit', () => {
-      renderProfile({ viewer: { id: 'somebody-else' } })
+    it('offers a visitor nothing to edit', async () => {
+      await renderProfile({ viewer: { id: 'somebody-else' } })
 
       expect(screen.queryByRole('link', { name: 'Edit profile' })).not.toBeInTheDocument()
     })
 
-    it('offers a signed-out visitor nothing to edit either', () => {
-      renderProfile({ viewer: null })
+    it('offers a signed-out visitor nothing to edit either', async () => {
+      await renderProfile({ viewer: null })
 
       expect(screen.queryByRole('link', { name: 'Edit profile' })).not.toBeInTheDocument()
     })
   })
 
   describe('a handle nobody holds (AUTH-6)', () => {
-    it('renders its own not-found rather than an empty profile', () => {
-      renderProfile({ profile: null })
+    it('renders its own not-found rather than an empty profile', async () => {
+      await renderProfile({ profile: null })
 
       expect(screen.getByRole('heading', { name: UNKNOWN_HANDLE_HEADING })).toBeInTheDocument()
       expect(screen.getByText('@ada')).toBeInTheDocument()
       expect(screen.queryByRole('region', { name: 'Credits' })).not.toBeInTheDocument()
     })
 
-    it('explains that a released handle is why an old link can lead here', () => {
-      renderProfile({ profile: null })
+    it('explains that a released handle is why an old link can lead here', async () => {
+      await renderProfile({ profile: null })
 
       expect(screen.getByText(/released the moment they are changed/)).toBeInTheDocument()
     })

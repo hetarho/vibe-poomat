@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as AtChar123handleChar125RouteImport } from './routes/@{$handle}'
+import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as PopularRouteImport } from './routes/popular'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as FeedbacksIdRouteImport } from './routes/feedbacks.$id'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as ProjectsNewRouteImport } from './routes/projects.new'
 import { Route as MissionsIdReportRouteImport } from './routes/missions.$id.report'
@@ -35,6 +37,11 @@ const AtChar123handleChar125Route = AtChar123handleChar125RouteImport.update({
   path: '/@{$handle}',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PopularRoute = PopularRouteImport.update({
   id: '/popular',
   path: '/popular',
@@ -48,6 +55,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedbacksIdRoute = FeedbacksIdRouteImport.update({
+  id: '/feedbacks/$id',
+  path: '/feedbacks/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
@@ -75,9 +87,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/inbox': typeof InboxRoute
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/missions/$id/report': typeof MissionsIdReportRoute
@@ -87,9 +101,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/inbox': typeof InboxRoute
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/missions/$id/report': typeof MissionsIdReportRoute
@@ -100,9 +116,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/@{$handle}': typeof AtChar123handleChar125Route
+  '/inbox': typeof InboxRoute
   '/popular': typeof PopularRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/feedbacks/$id': typeof FeedbacksIdRoute
   '/projects/$id': typeof ProjectsIdRouteWithChildren
   '/projects/new': typeof ProjectsNewRoute
   '/missions/$id/report': typeof MissionsIdReportRoute
@@ -114,9 +132,11 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/inbox'
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
     | '/missions/$id/report'
@@ -126,9 +146,11 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/inbox'
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
     | '/missions/$id/report'
@@ -138,9 +160,11 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/@{$handle}'
+    | '/inbox'
     | '/popular'
     | '/settings'
     | '/sign-in'
+    | '/feedbacks/$id'
     | '/projects/$id'
     | '/projects/new'
     | '/missions/$id/report'
@@ -151,9 +175,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   AtChar123handleChar125Route: typeof AtChar123handleChar125Route
+  InboxRoute: typeof InboxRoute
   PopularRoute: typeof PopularRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  FeedbacksIdRoute: typeof FeedbacksIdRoute
   ProjectsIdRoute: typeof ProjectsIdRouteWithChildren
   ProjectsNewRoute: typeof ProjectsNewRoute
   MissionsIdReportRoute: typeof MissionsIdReportRoute
@@ -182,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123handleChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/popular': {
       id: '/popular'
       path: '/popular'
@@ -201,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feedbacks/$id': {
+      id: '/feedbacks/$id'
+      path: '/feedbacks/$id'
+      fullPath: '/feedbacks/$id'
+      preLoaderRoute: typeof FeedbacksIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects/$id': {
@@ -250,9 +290,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   AtChar123handleChar125Route: AtChar123handleChar125Route,
+  InboxRoute: InboxRoute,
   PopularRoute: PopularRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  FeedbacksIdRoute: FeedbacksIdRoute,
   ProjectsIdRoute: ProjectsIdRouteWithChildren,
   ProjectsNewRoute: ProjectsNewRoute,
   MissionsIdReportRoute: MissionsIdReportRoute,

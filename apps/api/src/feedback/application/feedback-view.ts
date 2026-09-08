@@ -8,6 +8,8 @@ export type FeedbackView = {
   id: string
   missionId: string
   projectId: string
+  /** The project's owner (FDBK-8), which is who may settle it and who may reply. */
+  makerId: string
   /** Null once the account is gone (AUTH-9), which the web layer renders as a deleted user. */
   author: UserSummary | null
   firstImpression: string
@@ -33,6 +35,7 @@ export function toFeedbackView(
     id: feedback.id.value,
     missionId: feedback.missionId.value,
     projectId: feedback.projectId.value,
+    makerId: feedback.makerId.value,
     author,
     firstImpression: feedback.report.firstImpression.value,
     stuckAt: feedback.report.stuckAt.value,

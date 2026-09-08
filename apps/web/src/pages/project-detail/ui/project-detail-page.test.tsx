@@ -45,6 +45,7 @@ const REPORT = {
   id: '0192f000-0000-7000-8000-0000000000f1',
   missionId: '0192f000-0000-7000-8000-0000000000bb',
   projectId: PROJECT.id,
+  makerId: OWNER.id,
   author: {
     id: '0192f000-0000-7000-8000-0000000000cc',
     handle: 'bob',

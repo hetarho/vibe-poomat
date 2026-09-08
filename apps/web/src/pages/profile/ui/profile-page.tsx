@@ -1,4 +1,5 @@
 import type { feedback, projects } from '@repo/contracts'
+import { Link } from '@tanstack/react-router'
 import { useCurrentUser } from '../../../entities/session'
 import { CreditCounters, MakerStats, type PublicProfile } from '../../../entities/user'
 import { UserAvatar } from '../../../shared/ui'
@@ -62,9 +63,9 @@ export function ProfilePage({ profile, handle, projects: owned, given }: Profile
           )}
         </div>
         {isOwner ? (
-          <a href="/settings" className="text-sm underline underline-offset-4">
+          <Link to="/settings" className="text-sm underline underline-offset-4">
             Edit profile
-          </a>
+          </Link>
         ) : null}
       </header>
 
@@ -79,9 +80,13 @@ export function ProfilePage({ profile, handle, projects: owned, given }: Profile
           <ul className="mt-3 flex flex-col gap-3">
             {owned.items.map((project) => (
               <li key={project.id}>
-                <a href={`/projects/${project.id}`} className="font-medium text-sm">
+                <Link
+                  to="/projects/$id"
+                  params={{ id: project.id }}
+                  className="font-medium text-sm"
+                >
                   {project.title}
-                </a>
+                </Link>
                 <p className="text-muted-foreground text-sm">{project.pitch}</p>
               </li>
             ))}
@@ -97,9 +102,13 @@ export function ProfilePage({ profile, handle, projects: owned, given }: Profile
           <ul className="mt-3 flex flex-col gap-3">
             {given.items.map((report) => (
               <li key={report.id}>
-                <a href={`/feedbacks/${report.id}`} className="font-medium text-sm">
+                <Link
+                  to="/feedbacks/$id"
+                  params={{ id: report.id }}
+                  className="font-medium text-sm"
+                >
                   {report.firstImpression.slice(0, 80)}
-                </a>
+                </Link>
                 <p className="text-muted-foreground text-xs uppercase tracking-wide">
                   {report.state}
                 </p>

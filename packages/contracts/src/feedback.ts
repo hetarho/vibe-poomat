@@ -49,6 +49,15 @@ export type FeedbackState = z.infer<typeof feedbackStateSchema>
 /** FDBK-6: a fixed list, so a rejection says something the feedbacker can read. */
 export { REJECTION_REASONS, type RejectionReason, rejectionReasonSchema }
 
+/**
+ * FDBK-7's clock, in hours: the maker is warned at 48 and the report accepts
+ * itself at 72. Mirrored in the api's `submit-feedback.use-case.ts`, which is
+ * what actually schedules the jobs — these exist so both sides render the same
+ * deadline from the same `submittedAt`.
+ */
+export const WARN_AFTER_HOURS = 48
+export const AUTO_ACCEPT_AFTER_HOURS = 72
+
 /** FDBK-10: enough to block an empty submission, not to measure effort. */
 export const MIN_FIELD_LENGTH = 20
 export const MAX_FIELD_LENGTH = 4000
@@ -81,6 +90,13 @@ export const feedbackSchema = z.object({
   id: entityId,
   missionId: entityId,
   projectId: entityId,
+  /**
+   * The account that owns the project this was written for (FDBK-8). Public,
+   * like the project's owner: it is what lets a reader tell whether the settle
+   * controls and the reply box are theirs, without reading the project — which
+   * PROJ-8 can refuse while FDBK-9 keeps the report itself public.
+   */
+  makerId: entityId,
   author: feedbackAuthorSchema,
   firstImpression: z.string(),
   stuckAt: z.string(),

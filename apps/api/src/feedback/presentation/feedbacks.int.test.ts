@@ -424,6 +424,124 @@ describe('feedback reports, against a real PostgreSQL', () => {
     })
   })
 
+  describe('GET /feedbacks/received (the maker\u2019s inbox)', () => {
+    function received(session: string, query = '') {
+      return app.inject({
+        method: 'GET',
+        url: `/feedbacks/received${query}`,
+        cookies: { [SESSION_COOKIE]: session },
+      })
+    }
+
+    it('lists what was written for this maker\u2019s projects', async () => {
+      const { maker, feedbacker, claimId } = await heldSlot()
+      const written = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+
+      const page = contract.feedbackPageSchema.parse((await received(maker)).json())
+
+      expect(page.items.map((item) => item.id)).toEqual([written.id])
+      expect(page.items[0]?.state).toBe('pending')
+    })
+
+    it('says nothing to the person who wrote it', async () => {
+      const { feedbacker, claimId } = await heldSlot()
+      await submit(feedbacker, claimId, report())
+
+      expect(contract.feedbackPageSchema.parse((await received(feedbacker)).json()).items).toEqual(
+        [],
+      )
+    })
+
+    /** FDBK-7 puts a clock on the undecided ones, so they go first. */
+    it('puts the report still waiting on a decision ahead of a settled one', async () => {
+      const { maker, feedbacker, missionId, claimId } = await heldSlot()
+      const first = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+      await app.inject({
+        method: 'POST',
+        url: `/feedbacks/${first.id}/accept`,
+        cookies: { [SESSION_COOKIE]: maker },
+      })
+
+      const other = await signIn('cara-1', 'cara')
+      const claim = await app.inject({
+        method: 'POST',
+        url: `/missions/${missionId}/claims`,
+        cookies: { [SESSION_COOKIE]: other },
+      })
+      const second = contract.feedbackSchema.parse(
+        (await submit(other, (claim.json() as { id: string }).id, report())).json(),
+      )
+
+      const page = contract.feedbackPageSchema.parse((await received(maker)).json())
+
+      // the newer one is the pending one, and it leads on both counts
+      expect(page.items.map((item) => item.id)).toEqual([second.id, first.id])
+      expect(page.items.map((item) => item.state)).toEqual(['pending', 'accepted'])
+    })
+
+    it('walks the whole inbox through the cursor, once each', async () => {
+      const { maker, feedbacker, missionId, claimId } = await heldSlot()
+      const first = contract.feedbackSchema.parse(
+        (await submit(feedbacker, claimId, report())).json(),
+      )
+      const other = await signIn('cara-1', 'cara')
+      const claim = await app.inject({
+        method: 'POST',
+        url: `/missions/${missionId}/claims`,
+        cookies: { [SESSION_COOKIE]: other },
+      })
+      const second = contract.feedbackSchema.parse(
+        (await submit(other, (claim.json() as { id: string }).id, report())).json(),
+      )
+
+      const page = contract.feedbackPageSchema.parse((await received(maker, '?limit=1')).json())
+      expect(page.nextCursor).not.toBeNull()
+      const rest = contract.feedbackPageSchema.parse(
+        (await received(maker, `?limit=1&cursor=${page.nextCursor}`)).json(),
+      )
+
+      expect([...page.items, ...rest.items].map((item) => item.id)).toEqual([second.id, first.id])
+      expect(rest.nextCursor).toBeNull()
+    })
+
+    it('names the maker on every report, so a reader can tell whose it is', async () => {
+      const { maker, feedbacker, claimId } = await heldSlot()
+      await submit(feedbacker, claimId, report())
+      const me = await app.inject({
+        method: 'GET',
+        url: '/auth/me',
+        cookies: { [SESSION_COOKIE]: maker },
+      })
+
+      const page = contract.feedbackPageSchema.parse((await received(maker)).json())
+
+      expect(page.items[0]?.makerId).toBe((me.json() as { id: string }).id)
+    })
+
+    it('is empty for a maker nobody has reviewed', async () => {
+      const fresh = await signIn('dan-1', 'dan')
+
+      expect(contract.feedbackPageSchema.parse((await received(fresh)).json())).toEqual({
+        items: [],
+        nextCursor: null,
+      })
+    })
+
+    it('refuses a caller with no session at all', async () => {
+      expect((await app.inject({ method: 'GET', url: '/feedbacks/received' })).statusCode).toBe(401)
+    })
+
+    it('refuses a cursor a caller made up', async () => {
+      const fresh = await signIn('dan-1', 'dan')
+
+      expect((await received(fresh, '?cursor=nonsense')).statusCode).toBe(422)
+    })
+  })
+
   describe('GET /projects/:projectId/feedbacks (FDBK-9)', () => {
     function received(projectId: string, query = '') {
       return app.inject({ method: 'GET', url: `/projects/${projectId}/feedbacks${query}` })

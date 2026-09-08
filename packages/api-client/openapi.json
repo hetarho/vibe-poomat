@@ -614,6 +614,34 @@
         ]
       }
     },
+    "/api/v1/feedbacks/received": {
+      "get": {
+        "operationId": "FeedbacksController_received",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Reports on your projects, the undecided ones first",
+        "tags": [
+          "Feedbacks"
+        ]
+      }
+    },
     "/api/v1/feedbacks/{id}": {
       "get": {
         "operationId": "FeedbacksController_byId",

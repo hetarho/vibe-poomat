@@ -25,17 +25,18 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T038 | web: feedback view, settle & thread | FDBK CRED ARCH | T037 T027 T028 | todo |
 | T039 | web: notification settings & unsubscribe | NOTI ARCH | T032 T030 | todo |
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T038 — feedback view, settle & thread; T039 notification settings is also unblocked
-- order: T038 → T039 → T040 e2e
+- implement-task T039 — notification settings & unsubscribe; then T040 e2e (now unblocked)
+- order: T039 → T040 e2e; every other task is done
 - before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header (now including the four OAuth ones and NOTIFICATION_SECRET); review-code is now due — the whole api is written
 - update-ssot candidates: AUTH-9 says a deleted account's projects are "deleted"; they are hidden, because FDBK-9 keeps the reports about them public (T031). PROJ-7 does not say whether the title is frozen with the URL; T034 froze it and the api does not (T034)
 
 ## log
+- 260909 T038 done: FDBK-9's public report with FDBK-7's deadline and an auto-accept label distinct from a manual one, FDBK-6 accept/reject stating CRED-4's movement before confirming, FDBK-5's thread optimistic for the two participants and read-only for everyone else, a pending-first maker inbox; the api gained GET /feedbacks/received and makerId on the report
+- 260908 T038 claimed (wb)
 - 260908 T037 done: FDBK-1's Start with each refusal code in its own words, a 24h countdown from the server's held_until with a lapsed state, FDBK-3's fixed report behind FDBK-10's 20-char floor beside the frozen task, a per-claim localStorage draft cleared on submit, FDBK-4's read-only view after; the api gained GET /missions/:id and GET /missions/:id/claims/me
 - 260908 note: five api read gaps have now been filled from web tasks (project feedback, upvotedByViewer, mission list, mission by id, my claim) — the read models the web needs were never tasked; worth a create-task or update-ssot pass before T038
 - 260908 T037 claimed (wb)
@@ -54,5 +55,3 @@
 - 260908 T031 done: AUTH-9's sequence across four contexts in one transaction, each asked through its own port, with the step order exported and asserted; pending reports found by maker_id because closing a mission settles nothing; the session cookie's name moved to shared/presentation so deletion can clear it
 - 260908 T030 done: notification context subscribing to five published events for NOTI-2's seven email types, lazy per-type opt-out with the credit-moving warning always on, HMAC unsubscribe links, seven React Email templates; each event's published payload is now declared in the kernel and implemented by the emitting class
 - 260908 note: web must build /feedbacks/:id, /projects/:id and /settings/notifications — every notification email deep-links to them (T032-T039)
-- 260908 T029 done: FDBK-8 rejection rate and reason distribution on every profile, one grouped aggregate over a denormalised feedbacks.maker_id rather than a cross-context join to projects; ClaimStoreModule moved to its own file so AuthModule can name it instead of relying on @Global()
-- 260908 note: four auth/credit use cases each take storage+credits+makerStats to build one profile view — a ProfileComposer would collapse that; candidate for review-code

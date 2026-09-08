@@ -1,4 +1,5 @@
 import type { feedback } from '@repo/contracts'
+import { Link } from '@tanstack/react-router'
 import { UserAvatar } from '../../../shared/ui'
 
 /** FDBK-6/FDBK-7 in a word, for a list that is not the report itself. */
@@ -36,9 +37,13 @@ export function FeedbackSummary({ report }: FeedbackSummaryProps) {
       <UserAvatar user={{ displayName: name, avatarUrl: report.author?.avatarUrl ?? null }} />
       <div className="min-w-0 flex-1">
         <p className="text-sm">
-          <a href={`/feedbacks/${report.id}`} className="font-medium underline underline-offset-4">
+          <Link
+            to="/feedbacks/$id"
+            params={{ id: report.id }}
+            className="font-medium underline underline-offset-4"
+          >
             {name}
-          </a>
+          </Link>
           <span className="text-muted-foreground"> · {on(report.submittedAt)}</span>
         </p>
         <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">{report.firstImpression}</p>

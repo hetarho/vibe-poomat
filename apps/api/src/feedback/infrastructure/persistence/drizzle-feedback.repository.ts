@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, lt } from 'drizzle-orm'
+import { and, asc, desc, eq, lt, or, sql } from 'drizzle-orm'
 import { DOMAIN_EVENT_COLLECTOR, type DomainEventCollector } from '../../../shared/application'
 import { getDb, isUniqueViolation } from '../../../shared/db'
 import { EntityId } from '../../../shared/kernel'
@@ -131,6 +131,40 @@ export class DrizzleFeedbackRepository implements FeedbackRepository {
         ),
       )
       .orderBy(desc(feedbacks.id))
+      .limit(options.limit)
+
+    return rows.map(toFeedback)
+  }
+
+  /**
+   * Ordered by "still waiting on a decision" and then backwards through time.
+   * The keyset carries both keys, because an id alone cannot say where a
+   * two-key order stopped. `feedbacks_maker_state_idx` serves the filter.
+   */
+  async listReceivedBy(
+    makerId: EntityId,
+    options: { limit: number; after?: { pending: boolean; id: string } },
+  ): Promise<Feedback[]> {
+    // 0 sorts first, so a pending report leads
+    const rank = sql<number>`case when ${feedbacks.state} = 'pending' then 0 else 1 end`
+    const after = options.after
+    const afterRank = after === undefined ? null : after.pending ? 0 : 1
+
+    const rows = await getDb()
+      .select()
+      .from(feedbacks)
+      .where(
+        and(
+          eq(feedbacks.makerId, makerId.value),
+          after === undefined || afterRank === null
+            ? undefined
+            : or(
+                sql`${rank} > ${afterRank}`,
+                and(sql`${rank} = ${afterRank}`, lt(feedbacks.id, after.id)),
+              ),
+        ),
+      )
+      .orderBy(rank, desc(feedbacks.id))
       .limit(options.limit)
 
     return rows.map(toFeedback)

@@ -5,6 +5,11 @@ import { FeedbackNotFoundError } from '../domain/claim-errors'
 import type { Feedback } from '../domain/feedback'
 import type { FeedbackRepository } from '../domain/feedback.repository'
 import { type FeedbackView, toFeedbackView } from './feedback-view'
+import {
+  decodeReceivedCursor,
+  encodeReceivedCursor,
+  type ReceivedCursorNotAllowedError,
+} from './received-cursor'
 
 export const GIVEN_PAGE_SIZE = 10
 const MAX_GIVEN_PAGE_SIZE = 50
@@ -144,6 +149,53 @@ export class ReadFeedbackUseCase {
         ),
       ),
       nextCursor: hasMore ? encodeGivenCursor(page.at(-1) as Feedback) : null,
+    })
+  }
+
+  /**
+   * The maker's inbox: every report written for their projects, the ones still
+   * waiting on a decision first (FDBK-7 puts a clock on those), then newest
+   * first. Answered from the denormalised `maker_id`, so no cross-context join
+   * is needed — PROJ-12 gives a project one owner for life, so it cannot go stale.
+   */
+  async received(input: {
+    makerId: string
+    limit?: number
+    cursor?: string
+  }): Promise<Result<FeedbackPage, FeedbackNotFoundError | ReceivedCursorNotAllowedError>> {
+    const id = EntityId.parse(input.makerId)
+    if (id.isErr()) return ok({ items: [], nextCursor: null })
+
+    const limit = Math.min(Math.max(input.limit ?? GIVEN_PAGE_SIZE, 1), MAX_GIVEN_PAGE_SIZE)
+    const after = input.cursor === undefined ? null : decodeReceivedCursor(input.cursor)
+    if (after?.isErr() === true) return err(after.error)
+
+    const rows = await this.feedbacks.listReceivedBy(id.value, {
+      limit: limit + 1,
+      ...(after?.isOk() === true ? { after: after.value } : {}),
+    })
+    const hasMore = rows.length > limit
+    const page = rows.slice(0, limit)
+
+    const authors = await this.users.summariesFor(
+      page
+        .map((feedback) => feedback.authorId?.value)
+        .filter((value): value is string => value !== undefined),
+    )
+
+    const last = page.at(-1)
+
+    return ok({
+      items: page.map((feedback) =>
+        toFeedbackView(
+          feedback,
+          feedback.authorId === null ? null : (authors.get(feedback.authorId.value) ?? null),
+        ),
+      ),
+      nextCursor:
+        hasMore && last !== undefined
+          ? encodeReceivedCursor({ pending: last.state === 'pending', id: last.id.value })
+          : null,
     })
   }
 

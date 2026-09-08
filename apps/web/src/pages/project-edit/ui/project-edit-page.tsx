@@ -1,4 +1,5 @@
 import type { projects } from '@repo/contracts'
+import { Link } from '@tanstack/react-router'
 import { useCurrentUser } from '../../../entities/session'
 import { DeleteProjectSection } from '../../../features/delete-project'
 import { EditProjectForm } from '../../../features/edit-project'
@@ -37,9 +38,13 @@ export function ProjectEditPage({ project, onDeleted }: ProjectEditPageProps) {
       <header>
         <h1 className="font-semibold text-2xl tracking-tight">{EDIT_PROJECT_HEADING}</h1>
         <p className="mt-1 text-muted-foreground text-sm">
-          <a href={`/projects/${project.id}`} className="underline underline-offset-4">
+          <Link
+            to="/projects/$id"
+            params={{ id: project.id }}
+            className="underline underline-offset-4"
+          >
             {project.title}
-          </a>
+          </Link>
         </p>
       </header>
 

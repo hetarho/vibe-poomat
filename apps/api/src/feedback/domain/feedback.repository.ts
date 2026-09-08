@@ -30,6 +30,15 @@ export type FeedbackRepository = {
     projectId: EntityId,
     options: { limit: number; before?: string },
   ): Promise<Feedback[]>
+  /**
+   * The maker's inbox: every report written for their projects, the ones still
+   * waiting on a decision first, then newest first. Keyed on the denormalised
+   * `maker_id`, so no cross-context join is needed to answer it (ARCH-14).
+   */
+  listReceivedBy(
+    makerId: EntityId,
+    options: { limit: number; after?: { pending: boolean; id: string } },
+  ): Promise<Feedback[]>
   /** FDBK-9: the report stays public, the name on it does not. */
   anonymiseAuthor(userId: EntityId): Promise<void>
   save(feedback: Feedback): Promise<void>

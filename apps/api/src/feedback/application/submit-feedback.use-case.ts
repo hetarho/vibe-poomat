@@ -23,6 +23,7 @@ import { type FeedbackView, toFeedbackView } from './feedback-view'
 export const FEEDBACK_WARN_JOB = 'feedback.warn'
 export const FEEDBACK_AUTO_ACCEPT_JOB = 'feedback.auto-accept'
 
+/** FDBK-7. Mirrored as hours in `@repo/contracts`, which the web renders from. */
 export const WARN_AFTER_MS = 48 * 60 * 60 * 1000
 export const AUTO_ACCEPT_AFTER_MS = 72 * 60 * 60 * 1000
 
