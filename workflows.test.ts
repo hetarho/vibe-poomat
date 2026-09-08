@@ -8,6 +8,14 @@ describe('actionlint', () => {
     expect(results.map((result) => `${result.file}:${result.line} ${result.message}`)).toEqual([])
   }, 60_000)
 
+  it('ignores the vars context its wasm build is too old to know, and nothing else', async () => {
+    const results = await lintWorkflows('test-fixtures/workflows-vars')
+
+    expect(results.map((result) => result.message)).toEqual([
+      expect.stringContaining('undefined variable "nosuchcontext"'),
+    ])
+  }, 60_000)
+
   it('still catches a broken workflow', async () => {
     const results = await lintWorkflows('test-fixtures/workflows')
 

@@ -25,7 +25,6 @@
 ## tasks
 | id | title | ssot | dep | st |
 |---|---|---|---|---|
-| T016 | deploy pipeline | ARCH | T009 T010 | todo |
 | T017 | auth context: schema & domain model | AUTH ARCH | T011 | todo |
 | T018 | OAuth sign-in & session issue | AUTH ARCH | T017 | todo |
 | T019 | session guard, me & logout | AUTH ARCH | T018 | todo |
@@ -52,11 +51,12 @@
 | T040 | e2e core flows | ARCH AUTH PROJ FDBK CRED | T038 T036 T033 | todo |
 
 ## next
-- implement-task T016 — the last infra task: GHCR build, VPS deploy behind Caddy. It needs a VPS host, an SSH key and GHCR access as repository secrets, so it cannot be verified from here beyond actionlint
-- order: T016 infra (needs deploy secrets) → T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
-- review-code after the backend contexts land (around T031) before the web tasks
+- implement-task T017 — auth schema and domain model, the first product context; every infra task is now done
+- order: T017-T021 auth+credit → T022-T031 project/feedback/notification → T032-T040 web+e2e
+- before the first deploy run, set the repository variables and secrets listed in the .github/workflows/deploy.yml header; review-code after the backend contexts land (around T031)
 
 ## log
+- 260908 T016 done: GHCR buildx push, ssh+compose roll behind Caddy with migrate-first and a tag roll back; docker-smoke.sh gained SMOKE_REMOTE; actionlint wrapper now ignores its stale vars context
 - 260907 T014 done: S3/MinIO FileStorage with signed content-type+length, uploads endpoint, delete job; openapi generator now uses Nest preview mode
 - 260907 T015 done: SSRF-guarded undici probe, PG-backed throttler with trustProxy=1, first real migration; fixed migrate running a stale image
 - 260907 T013 done: @repo/email templates, console+Resend adapters, email.send job with PermanentJobFailure dead-lettering; Dockerfiles now copy every workspace manifest
@@ -76,4 +76,3 @@
 - 260907 create-narrative done: NARRATIVE.md refreshed to ARCH@2 + domains r2 + T001..T040
 - 260907 create-task done: ARCH r2 delta → T011..T016; AUTH CRED PROJ FDBK NOTI → T017..T040 (40 tasks total)
 - 260907 create-task ARCH(r2 delta) AUTH PROJ CRED FDBK NOTI start
-- 260907 update-ssot done: AUTH PROJ CRED FDBK NOTI r2 — all open [?] closed

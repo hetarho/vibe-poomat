@@ -84,6 +84,16 @@
       }
     },
     {
+      "includes": ["deploy.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["apps/web/app/routes/**"],
       "linter": {
         "rules": {

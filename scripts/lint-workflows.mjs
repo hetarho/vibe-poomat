@@ -7,6 +7,12 @@ import { createLinter } from 'actionlint'
 
 const WORKFLOW_DIR = process.argv[2] ?? '.github/workflows'
 
+// The wasm build is pinned at the newest actionlint npm release (2.0.6) and its
+// core predates the `vars` context, so it calls every repository variable an
+// undefined one. Dropping exactly that message keeps deploy.yml honest without
+// silencing anything else actionlint has to say.
+const STALE_VARS_CONTEXT = /^undefined variable "vars"/
+
 export async function lintWorkflows(directory = WORKFLOW_DIR) {
   const lint = await createLinter()
   const entries = await readdir(directory)
@@ -14,7 +20,8 @@ export async function lintWorkflows(directory = WORKFLOW_DIR) {
 
   for (const entry of entries.filter((name) => /\.ya?ml$/.test(name)).sort()) {
     const path = join(directory, entry)
-    results.push(...lint(await readFile(path, 'utf8'), path))
+    const found = lint(await readFile(path, 'utf8'), path)
+    results.push(...found.filter((result) => !STALE_VARS_CONTEXT.test(result.message)))
   }
 
   return results

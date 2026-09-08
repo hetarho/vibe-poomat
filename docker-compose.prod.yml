@@ -1,0 +1,116 @@
+# The VPS stack (ARCH-30): the ARCH-29 images, pulled from GHCR by tag, behind
+# Caddy. This file is copied to the server by .github/workflows/deploy.yml and
+# never builds anything — the only thing it can run is a tag CI already pushed,
+# which is what makes a roll back a re-deploy of the previous sha.
+#
+# docker-compose.yml stays the local-parity stack; the two are deliberately
+# separate because production takes its PostgreSQL from DATABASE_URL (managed,
+# or a server on the same box per ARCH-30) rather than running one here.
+name: vibe-poomat
+
+# The api image runs twice — once as the service, once as the one-shot migrator
+# (ARCH-13) — and both need exactly this environment.
+x-api-environment: &api-environment
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  API_PORT: '3001'
+  API_URL: https://${DOMAIN:?DOMAIN is required}
+  WEB_URL: https://${DOMAIN:?DOMAIN is required}
+  DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+  DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-10}
+  JOBS_ENABLED: 'true'
+  MAIL_DRIVER: resend
+  MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-vibe poomat}
+  RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
+  S3_ENDPOINT: ${S3_ENDPOINT:?S3_ENDPOINT is required}
+  S3_BUCKET: ${S3_BUCKET:?S3_BUCKET is required}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}
+  S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:?S3_PUBLIC_BASE_URL is required}
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL is required}
+    ports:
+      - '80:80'
+      - '443:443'
+      # HTTP/3, which Caddy serves by default
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # issued certificates live here — losing this volume means re-issuing, and
+      # Let's Encrypt rate limits that
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:2019/config/']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # Applied by the deploy before anything is switched over, never on app boot
+  # (ARCH-13). It shares the api's tag, so the migrations that run are always
+  # the ones built alongside the code about to serve them.
+  migrate:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/api:${IMAGE_TAG:?IMAGE_TAG is required}
+    profiles: ['migrate']
+    command: ['dist/migrate.js']
+    environment: *api-environment
+    restart: 'no'
+
+  api:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/api:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    environment: *api-environment
+    # reachable from Caddy only — the host publishes nothing but 80/443
+    expose:
+      - '3001'
+    healthcheck:
+      # distroless carries no shell and no curl, so the probe is node itself
+      test:
+        [
+          'CMD',
+          '/nodejs/bin/node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    image: ${IMAGE_BASE:?IMAGE_BASE is required}/web:${IMAGE_TAG:?IMAGE_TAG is required}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      # SSR talks to the api over the compose network, not back through Caddy
+      API_URL: http://api:3001
+      WEB_URL: https://${DOMAIN:?DOMAIN is required}
+    expose:
+      - '3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          '/nodejs/bin/node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  caddy-data:
+  caddy-config:

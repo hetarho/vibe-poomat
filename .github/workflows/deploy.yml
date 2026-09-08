@@ -1,0 +1,317 @@
+# Main-branch deploy (ARCH-28): build both images, push them to GHCR, then roll
+# the single VPS compose stack behind Caddy (ARCH-30), migrations first.
+#
+# Runbook
+#   roll back    Run workflow → image_tag = <the previous sha-xxxxxxx>. The build
+#                is skipped and the server is re-pointed at images GHCR already
+#                holds, so a roll back never rebuilds and never re-migrates
+#                schema it has not seen. A failed deploy prints the tag it was
+#                replacing in the job summary, which is the tag to enter here.
+#   dry run      Run workflow → deploy = false. Builds and pushes, never opens an
+#                ssh channel — the way to prove the image build without touching
+#                production.
+#
+# Repository variables (not secret; they show up unmasked in the smoke output)
+#   DEPLOY_DOMAIN  public domain Caddy serves, e.g. vibe-poomat.com
+#   ACME_EMAIL     contact address Let's Encrypt gets
+#   DEPLOY_PATH    stack directory on the server (default /opt/vibe-poomat)
+#   LOG_LEVEL, DATABASE_POOL_MAX, MAIL_FROM, MAIL_FROM_NAME,
+#   S3_ENDPOINT, S3_BUCKET, S3_PUBLIC_BASE_URL
+#
+# Repository secrets
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS
+#   DATABASE_URL, RESEND_API_KEY, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY
+#
+# There is no `.env.production` in this repo — ARCH-31 keeps every `.env*` out of
+# git, so the server's environment is rendered from the above on every deploy.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Roll the VPS. Uncheck for a dry run: build and push only, never touch the server.'
+        type: boolean
+        default: true
+      image_tag:
+        description: 'Roll back to an already-pushed tag (sha-xxxxxxx). Leave empty to build this ref.'
+        type: string
+        default: ''
+
+# Two deploys must never interleave on one box, and cancelling mid-roll could
+# leave the stack half-switched — so queue instead of cancelling.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: resolve the image tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      image_base: ${{ steps.resolve.outputs.image_base }}
+      build: ${{ steps.resolve.outputs.build }}
+    steps:
+      - name: resolve
+        id: resolve
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REQUESTED_TAG: ${{ inputs.image_tag }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # GHCR paths are case sensitive and only accept lower case
+          base="ghcr.io/${REPOSITORY,,}"
+          if [ -n "$REQUESTED_TAG" ]; then
+            # a roll back deploys what is already in the registry
+            tag="$REQUESTED_TAG"
+            build=false
+          else
+            tag="sha-${SHA::7}"
+            build=true
+          fi
+          {
+            echo "tag=$tag"
+            echo "image_base=$base"
+            echo "build=$build"
+          } >> "$GITHUB_OUTPUT"
+          echo "deploying $base/{api,web}:$tag (build=$build)"
+
+  build:
+    name: build and push ${{ matrix.app }}
+    needs: meta
+    if: needs.meta.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          # sha-xxxxxxx is what a deploy ever names; latest exists for humans
+          tags: |
+            ${{ needs.meta.outputs.image_base }}/${{ matrix.app }}:${{ needs.meta.outputs.tag }}
+            ${{ needs.meta.outputs.image_base }}/${{ matrix.app }}:latest
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+          # a plain image rather than an attestation manifest list, so
+          # `docker compose pull` on the server gets exactly what it expects
+          provenance: false
+
+  deploy:
+    name: roll the vps
+    needs: [meta, build]
+    # build is skipped on a roll back, which would otherwise skip this job too
+    if: >-
+      !cancelled()
+      && needs.meta.result == 'success'
+      && needs.build.result != 'failure'
+      && needs.build.result != 'cancelled'
+      && (github.event_name == 'push' || inputs.deploy)
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/vibe-poomat' }}
+      DOMAIN: ${{ vars.DEPLOY_DOMAIN }}
+      SSH_FLAGS: -i ~/.ssh/deploy_key -o BatchMode=yes
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: every required secret and variable is set
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_PUBLIC_BASE_URL: ${{ vars.S3_PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          # fail here rather than half way through a roll, where the stack would
+          # already be down and the diagnosis would be a compose interpolation error
+          missing=()
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS \
+            DATABASE_URL RESEND_API_KEY S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY \
+            DOMAIN ACME_EMAIL MAIL_FROM S3_ENDPOINT S3_BUCKET S3_PUBLIC_BASE_URL; do
+            [ -n "${!name-}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::not configured for deploy, missing: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: open an ssh channel to the vps
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # a pinned host key, not StrictHostKeyChecking=no: handing the server
+          # environment to an unrecognised host must fail, not proceed
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: remember the tag currently deployed
+        id: current
+        run: |
+          set -euo pipefail
+          # read before the env file is overwritten — this is the roll back target
+          # shellcheck disable=SC2086
+          existing=$(ssh $SSH_FLAGS "$TARGET" "cat '$DEPLOY_PATH/.env' 2>/dev/null || true")
+          tag=$(printf '%s\n' "$existing" | sed -n 's/^IMAGE_TAG="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' | head -n1)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "currently deployed: ${tag:-<first deploy>}"
+
+      - name: render the server environment and copy the stack
+        env:
+          IMAGE_BASE: ${{ needs.meta.outputs.image_base }}
+          IMAGE_TAG: ${{ needs.meta.outputs.tag }}
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL }}
+          DATABASE_POOL_MAX: ${{ vars.DATABASE_POOL_MAX }}
+          MAIL_FROM: ${{ vars.MAIL_FROM }}
+          MAIL_FROM_NAME: ${{ vars.MAIL_FROM_NAME }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          S3_PUBLIC_BASE_URL: ${{ vars.S3_PUBLIC_BASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          # compose reads this as a dotenv file, where a double quoted value is
+          # unambiguous once backslashes and quotes are escaped
+          put() {
+            local name=$1 value=${2-}
+            case $value in
+              *$'\n'*)
+                echo "::error::$name contains a newline, which a compose env file cannot carry"
+                exit 1
+                ;;
+            esac
+            value=${value//\\/\\\\}
+            value=${value//\"/\\\"}
+            printf '%s="%s"\n' "$name" "$value"
+          }
+          {
+            put IMAGE_BASE "$IMAGE_BASE"
+            put IMAGE_TAG "$IMAGE_TAG"
+            put DOMAIN "$DOMAIN"
+            put ACME_EMAIL "$ACME_EMAIL"
+            put LOG_LEVEL "${LOG_LEVEL:-info}"
+            put DATABASE_URL "$DATABASE_URL"
+            put DATABASE_POOL_MAX "${DATABASE_POOL_MAX:-10}"
+            put MAIL_FROM "$MAIL_FROM"
+            put MAIL_FROM_NAME "${MAIL_FROM_NAME:-vibe poomat}"
+            put RESEND_API_KEY "$RESEND_API_KEY"
+            put S3_ENDPOINT "$S3_ENDPOINT"
+            put S3_BUCKET "$S3_BUCKET"
+            put S3_ACCESS_KEY_ID "$S3_ACCESS_KEY_ID"
+            put S3_SECRET_ACCESS_KEY "$S3_SECRET_ACCESS_KEY"
+            put S3_PUBLIC_BASE_URL "$S3_PUBLIC_BASE_URL"
+          } > server.env
+          # shellcheck disable=SC2086
+          ssh $SSH_FLAGS "$TARGET" "mkdir -p '$DEPLOY_PATH'"
+          # shellcheck disable=SC2086
+          scp $SSH_FLAGS Caddyfile docker-compose.prod.yml "$TARGET:$DEPLOY_PATH/"
+          # shellcheck disable=SC2086
+          scp $SSH_FLAGS server.env "$TARGET:$DEPLOY_PATH/.env"
+          # shellcheck disable=SC2086
+          ssh $SSH_FLAGS "$TARGET" "chmod 600 '$DEPLOY_PATH/.env'"
+          rm -f server.env
+
+      - name: migrate, then switch traffic
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2086
+          ssh $SSH_FLAGS "$TARGET" "DEPLOY_PATH='$DEPLOY_PATH' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
+          compose() { docker compose -f docker-compose.prod.yml "$@"; }
+
+          echo "==> pulling the new tags"
+          compose pull caddy api web
+
+          # ARCH-13: migrations are their own container from the api image about
+          # to serve them, and they run before a single request reaches it. A
+          # non-zero exit ends the deploy here, with the old stack still up.
+          echo "==> applying migrations"
+          compose --profile migrate run --rm --no-deps migrate
+
+          echo "==> switching traffic"
+          compose up -d --wait --wait-timeout 300 --remove-orphans caddy api web
+
+          docker image prune -f --filter 'until=168h' >/dev/null 2>&1 || true
+          REMOTE
+
+      - name: smoke the public domain
+        env:
+          # the same checks the local stack gets, pointed at what just shipped
+          SMOKE_REMOTE: '1'
+          SMOKE_API_URL: https://${{ vars.DEPLOY_DOMAIN }}
+          SMOKE_WEB_URL: https://${{ vars.DEPLOY_DOMAIN }}
+        run: bash scripts/docker-smoke.sh
+
+      - name: summarise
+        if: success()
+        env:
+          DEPLOYED_TAG: ${{ needs.meta.outputs.tag }}
+          PREVIOUS_TAG: ${{ steps.current.outputs.tag }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Deployed \`$DEPLOYED_TAG\` to https://$DOMAIN"
+            echo ""
+            echo "Roll back with Run workflow → \`image_tag\` = \`${PREVIOUS_TAG:-none}\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: how to roll back
+        if: failure()
+        env:
+          ATTEMPTED_TAG: ${{ needs.meta.outputs.tag }}
+          PREVIOUS_TAG: ${{ steps.current.outputs.tag }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Deploy of \`$ATTEMPTED_TAG\` failed"
+            echo ""
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo "The stack was on \`$PREVIOUS_TAG\`. Roll back with Run workflow → \`image_tag\` = \`$PREVIOUS_TAG\`:"
+              echo "the build is skipped and the server is re-pointed at the images already in GHCR."
+            else
+              echo "Nothing had been deployed here before, so there is no tag to roll back to."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::deploy failed; the stack was on ${PREVIOUS_TAG:-nothing}"

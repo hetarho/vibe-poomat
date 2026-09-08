@@ -1,0 +1,11 @@
+# Pairs a legitimate `vars` reference with a genuine mistake, so workflows.test.ts
+# can prove the stale-context filter in scripts/lint-workflows.mjs swallows only
+# the first one.
+name: Uses vars
+on: workflow_dispatch
+jobs:
+  only:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ vars.DEPLOY_DOMAIN }}"
+      - run: echo "${{ nosuchcontext.value }}"

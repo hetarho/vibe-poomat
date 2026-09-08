@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 # Builds both images, brings the stack up, checks the endpoints a deploy depends
 # on, then tears everything down. Not part of `turbo run test`: too slow for the
-# inner loop, and it is the pre-deploy check instead.
+# inner loop, and it is the pre-deploy check instead. The deploy workflow runs
+# the very same checks against the public domain with SMOKE_REMOTE=1.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 API_URL=${SMOKE_API_URL:-http://127.0.0.1:3001}
 WEB_URL=${SMOKE_WEB_URL:-http://127.0.0.1:3000}
-SKIP_BUILD=${SMOKE_SKIP_BUILD:-0}
-SKIP_STACK=${SMOKE_SKIP_STACK:-0}
+# SMOKE_REMOTE=1 points the same checks at an already-running target (the
+# deployed domain, from .github/workflows/deploy.yml): nothing is built here and
+# nothing is torn down afterwards, so "is it up" has exactly one implementation.
+REMOTE=${SMOKE_REMOTE:-0}
+SKIP_BUILD=${SMOKE_SKIP_BUILD:-$REMOTE}
+SKIP_STACK=${SMOKE_SKIP_STACK:-$REMOTE}
 
 log() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 

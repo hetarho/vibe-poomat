@@ -1,0 +1,34 @@
+# The public edge of the VPS stack (ARCH-30). Caddy terminates TLS, so nothing
+# else in docker-compose.prod.yml publishes a port: api and web are reachable
+# only over the compose network, through here.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		# HSTS only once TLS is proven working; Caddy has already issued by then
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Cross-Origin-Opener-Policy same-origin
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+		-Server
+	}
+
+	# The api owns its versioned routes and the two probes the deploy smoke polls
+	# (ARCH-32); everything else is the web app. reverse_proxy sets
+	# X-Forwarded-For, which is what the throttler keys anonymous callers on
+	# (ARCH-41).
+	@api path /api/* /health /ready
+	handle @api {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
