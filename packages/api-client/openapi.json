@@ -460,6 +460,30 @@
         ]
       }
     },
+    "/api/v1/missions/{id}": {
+      "get": {
+        "operationId": "MissionsController_byId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "One mission, with its frozen task and its slots",
+        "tags": [
+          "Missions"
+        ]
+      }
+    },
     "/api/v1/missions/{id}/close": {
       "post": {
         "operationId": "MissionsController_close",
@@ -481,6 +505,30 @@
         "summary": "End your own mission and take back the unfilled slots",
         "tags": [
           "Missions"
+        ]
+      }
+    },
+    "/api/v1/missions/{missionId}/claims/me": {
+      "get": {
+        "operationId": "ClaimsController_mine",
+        "parameters": [
+          {
+            "name": "missionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The slot you are holding on this mission, if any",
+        "tags": [
+          "Claims"
         ]
       }
     },

@@ -1,6 +1,37 @@
 import type { projects } from '@repo/contracts'
 import { queryOptions } from '@tanstack/react-query'
-import { apiClient, asBody } from '../../../shared/api'
+import { ApiError, apiClient, asBody, expectBody } from '../../../shared/api'
+
+export function missionQueryKey(missionId: string) {
+  return ['mission', missionId] as const
+}
+
+/**
+ * One mission. The report form is reached as `/missions/:id/report` and knows
+ * nothing but that id, so it cannot go through the project's list to find the
+ * task it is asking somebody to do.
+ */
+export function missionQueryOptions(missionId: string, headers?: Record<string, string>) {
+  return queryOptions({
+    queryKey: missionQueryKey(missionId),
+    queryFn: async (): Promise<projects.Mission | null> => {
+      const client = await apiClient(headers)
+
+      try {
+        const { data } = await client.GET('/api/v1/missions/{id}', {
+          params: { path: { id: missionId } },
+        })
+
+        return expectBody<projects.Mission>(data)
+      } catch (error) {
+        // a mission nobody can see is an answer, so the page renders not-found
+        if (error instanceof ApiError && error.status === 404) return null
+
+        throw error
+      }
+    },
+  })
+}
 
 export function projectMissionsQueryKey(projectId: string) {
   return ['mission', 'project', projectId] as const

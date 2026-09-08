@@ -70,7 +70,18 @@ export class ProjectMissionsController {
 
 @Controller('missions')
 export class MissionsController {
-  constructor(private readonly missions: ManageMissionUseCase) {}
+  constructor(
+    private readonly missions: ManageMissionUseCase,
+    private readonly read: GetMissionsUseCase,
+  ) {}
+
+  /** Public: the report form is reached by mission id and needs the frozen task. */
+  @Get(':id')
+  @Public()
+  @ApiOperation({ summary: 'One mission, with its frozen task and its slots' })
+  async byId(@Param('id') id: string): Promise<projects.Mission> {
+    return render(unwrap(await this.read.byId(id)))
+  }
 
   @Post(':id/close')
   // 200, not POST's default 201: closing creates nothing, it ends something

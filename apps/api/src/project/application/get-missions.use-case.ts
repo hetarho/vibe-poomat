@@ -1,6 +1,7 @@
 import { NO_OCCUPANCY, type SlotOccupancyReader } from '../../shared/application'
 import { EntityId } from '../../shared/kernel'
-import { ok, type Result } from '../../shared/result'
+import { err, ok, type Result } from '../../shared/result'
+import { MissionNotFoundError } from '../domain/mission-errors'
 import type { MissionRepository } from '../domain/mission-store.repository'
 import type { ProjectNotFoundError } from '../domain/project-errors'
 import { type MissionView, toMissionView } from './mission-view'
@@ -20,6 +21,20 @@ export class GetMissionsUseCase {
     private readonly missions: MissionRepository,
     private readonly occupancy: SlotOccupancyReader,
   ) {}
+
+  /**
+   * One mission by id, public for the same reason: the report form is reached as
+   * `/missions/:id/report`, and the task it asks somebody to do is the mission's.
+   */
+  async byId(missionId: string): Promise<Result<MissionView, MissionNotFoundError>> {
+    const id = EntityId.parse(missionId)
+    if (id.isErr()) return err(new MissionNotFoundError('no such mission'))
+
+    const mission = await this.missions.findById(id.value)
+    if (mission === null) return err(new MissionNotFoundError('no such mission'))
+
+    return ok(toMissionView(mission, await this.occupancy.occupancyFor(mission.id.value)))
+  }
 
   async forProject(projectId: string): Promise<Result<MissionView[], ProjectNotFoundError>> {
     const id = EntityId.parse(projectId)

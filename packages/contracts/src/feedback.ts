@@ -31,6 +31,15 @@ export const claimSchema = z.object({
 
 export type Claim = z.infer<typeof claimSchema>
 
+/**
+ * The caller's own claim on a mission, or none. Wrapped rather than nullable at
+ * the top level so "you hold nothing" is a body somebody can read, not an empty
+ * response that has to be guessed at.
+ */
+export const myClaimSchema = z.object({ claim: claimSchema.nullable() })
+
+export type MyClaim = z.infer<typeof myClaimSchema>
+
 export const FEEDBACK_STATES = ['pending', 'accepted', 'rejected'] as const
 
 export const feedbackStateSchema = z.enum(FEEDBACK_STATES)

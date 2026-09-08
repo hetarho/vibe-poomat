@@ -1,4 +1,4 @@
-import { Controller, Delete, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common'
 import { ApiOperation } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 import { feedback } from '@repo/contracts'
@@ -20,6 +20,21 @@ function render(view: ClaimView): feedback.Claim {
 @Controller()
 export class ClaimsController {
   constructor(private readonly claims: ClaimSlotUseCase) {}
+
+  /**
+   * Signed-in only, and about the caller alone: FDBK-2 gives one account one
+   * live claim per mission, so there is nothing here to enumerate.
+   */
+  @Get('missions/:missionId/claims/me')
+  @ApiOperation({ summary: 'The slot you are holding on this mission, if any' })
+  async mine(
+    @Param('missionId') missionId: string,
+    @CurrentUser() actorId: string,
+  ): Promise<feedback.MyClaim> {
+    const claim = unwrap(await this.claims.mine({ missionId, actorId }))
+
+    return { claim: claim === null ? null : render(claim) }
+  }
 
   @Post('missions/:missionId/claims')
   @HttpCode(HttpStatus.CREATED)

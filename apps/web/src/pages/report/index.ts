@@ -1,0 +1,9 @@
+export {
+  HOLD_LAPSED_HEADING,
+  IMMUTABLE_NOTICE,
+  NO_CLAIM_HEADING,
+  NO_MISSION_HEADING,
+  ReportPage,
+  SETTLE_WINDOW,
+  SUBMITTED_HEADING,
+} from './ui/report-page'

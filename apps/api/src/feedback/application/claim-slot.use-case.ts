@@ -47,6 +47,26 @@ export class ClaimSlotUseCase {
     private readonly transactions: TransactionManager,
   ) {}
 
+  /**
+   * What this account holds on this mission, or nothing (FDBK-2 allows one). The
+   * page needs it to decide between offering Start and showing the hold that is
+   * already running — and to know the claim id a report is submitted against.
+   */
+  async mine(input: {
+    missionId: string
+    actorId: string
+  }): Promise<Result<ClaimView | null, ClaimSlotError>> {
+    const missionId = EntityId.parse(input.missionId)
+    const actorId = EntityId.parse(input.actorId)
+    // an id nobody could hold names no claim, which is the honest answer
+    if (missionId.isErr()) return ok(null)
+    if (actorId.isErr()) return err(new ForbiddenError('not a signed-in account'))
+
+    const claim = await this.claims.findLiveFor(missionId.value, actorId.value)
+
+    return ok(claim === null ? null : toClaimView(claim))
+  }
+
   async claim(input: {
     missionId: string
     actorId: string

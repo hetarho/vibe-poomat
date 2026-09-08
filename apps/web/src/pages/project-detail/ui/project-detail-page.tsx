@@ -5,6 +5,7 @@ import { FeedbackSummary } from '../../../entities/feedback'
 import { MissionPanel } from '../../../entities/mission'
 import { useCurrentUser } from '../../../entities/session'
 import { SignInDialog } from '../../../features/auth'
+import { ClaimSlotBlock, StartControl } from '../../../features/claim-slot'
 import { UpvoteButton, UpvoteControl } from '../../../features/upvote-project'
 import { Button, Markdown, UserAvatar } from '../../../shared/ui'
 
@@ -155,7 +156,19 @@ export function ProjectDetailPage({
           <Suspense fallback={<p className="text-muted-foreground text-sm">Loading…</p>}>
             <OwnerMissionBlock projectId={project.id} openMission={openMission} />
           </Suspense>
-        ) : null}
+        ) : openMission === null ? null : viewer === null ? (
+          // FDBK-2 needs an account, so the press asks for one first
+          <div className="flex flex-col gap-2">
+            <SignInDialog>
+              <StartControl />
+            </SignInDialog>
+            <p className="text-muted-foreground text-sm">
+              A slot is yours for 24 hours once you are signed in.
+            </p>
+          </div>
+        ) : (
+          <ClaimSlotBlock mission={openMission} projectId={project.id} />
+        )}
       </section>
 
       <section aria-label="Feedback">

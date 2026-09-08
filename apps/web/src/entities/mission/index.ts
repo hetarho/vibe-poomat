@@ -15,6 +15,8 @@ export {
 } from './lib/mission-rules'
 export {
   latestMission,
+  missionQueryKey,
+  missionQueryOptions,
   openMissionOf,
   projectMissionsQueryKey,
   projectMissionsQueryOptions,

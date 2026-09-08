@@ -343,6 +343,32 @@ describe('missions, against a real PostgreSQL', () => {
     })
   })
 
+  describe('GET /missions/:id (PROJ-7)', () => {
+    it('is public, so the report form can read the task it is asking about', async () => {
+      const session = await signIn()
+      const projectId = await createProject(session)
+      const opened = contract.missionSchema.parse(
+        (await openMission(session, projectId, { taskText: 'Try signing up', slots: 2 })).json(),
+      )
+
+      const response = await app.inject({ method: 'GET', url: `/missions/${opened.id}` })
+
+      expect(response.statusCode).toBe(200)
+      expect(contract.missionSchema.parse(response.json())).toMatchObject({
+        id: opened.id,
+        taskText: 'Try signing up',
+        occupancy: { claimable: 2, held: 0, submitted: 0, settled: 0 },
+      })
+    })
+
+    it.each(['not-an-id', '01920000-0000-7000-8000-0000000000ff'])('is 404 for %s', async (id) => {
+      const response = await app.inject({ method: 'GET', url: `/missions/${id}` })
+
+      expect(response.statusCode).toBe(404)
+      expect(response.json()).toMatchObject({ code: 'MISSION_NOT_FOUND' })
+    })
+  })
+
   describe('POST /missions/:id/close (PROJ-6, CRED-5)', () => {
     it('refunds every slot nobody took', async () => {
       const session = await signIn()

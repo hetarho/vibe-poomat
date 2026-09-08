@@ -243,6 +243,68 @@ describe('claims, against a real PostgreSQL', () => {
     })
   })
 
+  describe('GET /missions/:id/claims/me (FDBK-2)', () => {
+    function mine(session: string, missionId: string) {
+      return app.inject({
+        method: 'GET',
+        url: `/missions/${missionId}/claims/me`,
+        cookies: { [SESSION_COOKIE]: session },
+      })
+    }
+
+    it('says nothing is held before anything is', async () => {
+      const { missionId } = await openMission(2)
+      const feedbacker = await signIn('bob-1', 'bob')
+
+      const response = await mine(feedbacker, missionId)
+
+      expect(response.statusCode).toBe(200)
+      expect(contract.myClaimSchema.parse(response.json())).toEqual({ claim: null })
+    })
+
+    it('names the claim once one is held, with the hold it runs on', async () => {
+      const { missionId } = await openMission(2)
+      const feedbacker = await signIn('bob-1', 'bob')
+      const held = contract.claimSchema.parse((await claim(feedbacker, missionId)).json())
+
+      const response = await mine(feedbacker, missionId)
+
+      const { claim: found } = contract.myClaimSchema.parse(response.json())
+      expect(found).toMatchObject({ id: held.id, state: 'held', heldUntil: held.heldUntil })
+    })
+
+    /** FDBK-2 is per account: somebody else's hold is not yours. */
+    it('says nothing to an account that holds nothing on it', async () => {
+      const { missionId } = await openMission(2)
+      const holder = await signIn('bob-1', 'bob')
+      await claim(holder, missionId)
+      const other = await signIn('cara-1', 'cara')
+
+      expect(contract.myClaimSchema.parse((await mine(other, missionId)).json())).toEqual({
+        claim: null,
+      })
+    })
+
+    it('says nothing for a mission id nobody could hold', async () => {
+      const feedbacker = await signIn('bob-1', 'bob')
+
+      expect(contract.myClaimSchema.parse((await mine(feedbacker, 'not-an-id')).json())).toEqual({
+        claim: null,
+      })
+    })
+
+    it('refuses a caller with no session at all', async () => {
+      const { missionId } = await openMission(2)
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/missions/${missionId}/claims/me`,
+      })
+
+      expect(response.statusCode).toBe(401)
+    })
+  })
+
   describe('DELETE /claims/:id (FDBK-1)', () => {
     it('gives the slot back and lets the same person take it again', async () => {
       const { missionId } = await openMission(1)
